@@ -39,6 +39,8 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
     assert.deepEqual(tools.tools.map((t) => t.name).sort(), [
       'hooserguide_generate',
       'hooserguide_inspect_capture',
+      'hooserguide_rebuild',
+      'hooserguide_steps',
       'hooserguide_validate',
     ]);
     const before = await client.callTool({
@@ -46,6 +48,17 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
       arguments: { chapter: 1, capture: 1 },
     });
     assert.equal(before.isError, true);
+    const beforeBuild = await client.callTool({
+      name: 'hooserguide_rebuild',
+      arguments: { pdf: false },
+    });
+    assert.equal(beforeBuild.isError, true);
+    const catalogue = await client.callTool({ name: 'hooserguide_steps', arguments: {} });
+    assert.ok(
+      (catalogue.structuredContent as { steps: { example: string }[] }).steps.some(
+        (s) => s.example === 'I fill the form:',
+      ),
+    );
     const validation = await client.callTool({ name: 'hooserguide_validate', arguments: {} });
     assert.equal((validation.structuredContent as { valid: boolean }).valid, true);
     const generated = await client.callTool({ name: 'hooserguide_generate', arguments: {} });
@@ -64,6 +77,15 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
     );
     const prompt = await client.getPrompt({ name: 'author-user-guide' });
     assert.equal(prompt.messages[0]!.role, 'user');
+    const rebuilt = await client.callTool({
+      name: 'hooserguide_rebuild',
+      arguments: { pdf: false },
+    });
+    assert.equal(rebuilt.isError, false);
+    assert.notEqual(
+      (rebuilt.structuredContent as { directory: string }).directory,
+      (generated.structuredContent as { directory: string }).directory,
+    );
   } finally {
     await client.close();
     await new Promise<void>((resolve) => http.close(() => resolve()));

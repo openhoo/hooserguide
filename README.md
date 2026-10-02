@@ -43,6 +43,20 @@ The same screenshots and legends are rendered through **pdfcn's Forme components
 
 **Explore the complete example:** [PDF](docs/demo/handbook.pdf) · [Markdown](docs/demo/handbook.md) · [HTML source](docs/demo/index.html) · [Execution report](docs/demo/report.json) · [BDD feature](examples/tasks.feature).
 
+## New in 0.2
+
+- **Focused screenshots:** capture one form, panel or dialog with padding and aligned annotations.
+- **Automatic references:** number or letter your marks, with explicit labels preserved and duplicates rejected.
+- **More BDD steps:** form tables, uploads, hover, double-click, drag-and-drop, browser history and saved-state checks after reload.
+- **Named profiles:** run desktop or mobile workflows with viewport, touch, scale factor, browser and color scheme settings.
+- **Evidence-only rebuilds:** export again without interacting with the app; screenshot hashes and dimensions are checked first.
+- **Branding:** customize the guide name, subtitle and accent color across HTML and pdfcn PDF.
+- **Agent discovery:** list every step with examples via CLI or MCP, including documented custom plugins.
+
+This detail view uses `focus` and automatically assigned A/B/C references. The blue reference and its legend keep the mark's configured color.
+
+<p align="center"><img src="docs/demo/screenshots/01-03.png" width="620" alt="Focused task form with automatic A, B and C annotations"></p>
+
 ## Try it in one minute
 
 Requirements: Node.js **22 or newer** and npm. No external app or credentials are needed for the demo.
@@ -75,6 +89,16 @@ npm exec hooserguide -- run --config docs/user-guide/hooserguide.config.json
 ```
 
 The `--skills` option installs authoring and review skills into your project's `.agents/skills/`. For programmatic agents add `--json`. For debugging add `--headed`. PDF is enabled by default; `--no-pdf` skips it.
+
+Discover the supported steps or regenerate an existing guide without rerunning the app:
+
+```sh
+npm exec hooserguide -- steps --json
+npm exec hooserguide -- run --config docs/user-guide/hooserguide.config.json --profile mobile
+npm exec hooserguide -- build output/guides/run-<timestamp>-<id> --output output/rebuilt
+```
+
+See [advanced workflows](docs/advanced.md) for focused captures, automatic references, form tables, profiles, branding and rebuilds.
 
 ## A small spec, a complete walkthrough
 
@@ -129,7 +153,7 @@ Minimal MCP configuration:
 }
 ```
 
-MCP exposes `hooserguide_validate`, `hooserguide_generate`, `hooserguide_inspect_capture` and an `author-user-guide` prompt. The server stays attached to the project config selected at startup.
+MCP exposes `hooserguide_steps`, `hooserguide_validate`, `hooserguide_generate`, `hooserguide_inspect_capture`, `hooserguide_rebuild` and an `author-user-guide` prompt. The server stays attached to the project config selected at startup.
 
 ```ts
 import { loadConfig, run } from '@openhoo/hooserguide';
@@ -156,7 +180,7 @@ See [integration recipes](docs/integration.md) for Codex configuration, custom s
 }
 ```
 
-Paths are relative to the configuration file. Feature files are sorted and deduplicated. `storageState` accepts an existing local Playwright authentication state. `browser` supports `chromium`, `firefox` and `webkit`; install your selected browser first. See [configuration and step reference](docs/reference.md), [config schema](schemas/config.schema.json) and [capture schema](schemas/capture.schema.json).
+Paths are relative to the configuration file. Feature files are sorted and deduplicated. `storageState` accepts an existing local Playwright authentication state. `browser` supports `chromium`, `firefox` and `webkit`; install your selected browser first. See [configuration and step reference](docs/reference.md), [config schema](schemas/config.schema.json) [capture schema](schemas/capture.schema.json) and [report schema](schemas/report.schema.json).
 
 ## What you get
 

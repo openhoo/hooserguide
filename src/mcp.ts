@@ -4,10 +4,12 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { z } from 'zod';
 import { loadConfig } from './config.js';
-import { run, validate, type RunResult } from './runner.js';
+import { run, validate, loadRegistry, type RunResult } from './runner.js';
+import { build } from './build.js';
+import { VERSION } from './version.js';
 
 export function createMcpServer(configPath: string) {
-  const server = new McpServer({ name: 'hooserguide', version: '0.1.0' });
+  const server = new McpServer({ name: 'hooserguide', version: VERSION });
   let last: RunResult | undefined;
   let busy = false;
   server.registerTool(
@@ -15,11 +17,14 @@ export function createMcpServer(configPath: string) {
     {
       description:
         'Parse Gherkin and check all step bindings for the configured project without opening a browser.',
-      inputSchema: {},
+      inputSchema: { profile: z.string().optional() },
       annotations: { readOnlyHint: true },
     },
-    async () => {
-      const result = await validate(await loadConfig(configPath));
+    async ({ profile }) => {
+      const result = await validate({
+        ...(await loadConfig(configPath)),
+        ...(profile ? { profile } : {}),
+      });
       return {
         content: [{ type: 'text', text: JSON.stringify(result) }],
         structuredContent: result,
@@ -31,17 +36,18 @@ export function createMcpServer(configPath: string) {
     {
       description:
         'Execute the configured BDD workflows with Playwright and generate annotated screenshots, pdfcn PDF, HTML and Markdown. This interacts with the target app; use authorized workflows only.',
-      inputSchema: {},
+      inputSchema: { profile: z.string().optional() },
       annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
     },
-    async () => {
+    async ({ profile }) => {
       if (busy)
         return { isError: true, content: [{ type: 'text', text: 'A run is already in progress' }] };
       busy = true;
       try {
-        last = await run(await loadConfig(configPath));
+        last = await run({ ...(await loadConfig(configPath)), ...(profile ? { profile } : {}) });
         const summary = {
           status: last.report.status,
+          profile: last.report.profile,
           exportError: last.report.exportError,
           directory: last.directory,
           artifacts: last.artifacts,
@@ -56,6 +62,62 @@ export function createMcpServer(configPath: string) {
           isError: last.report.status !== 'passed',
           content: [{ type: 'text', text: JSON.stringify(summary) }],
           structuredContent: summary,
+        };
+      } finally {
+        busy = false;
+      }
+    },
+  );
+  server.registerTool(
+    'hooserguide_steps',
+    {
+      description:
+        'List supported BDD step patterns, examples and descriptions, including configured custom plugins.',
+      inputSchema: {},
+      annotations: { readOnlyHint: true },
+    },
+    async () => {
+      const result = { steps: (await loadRegistry(await loadConfig(configPath))).list() };
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result) }],
+        structuredContent: result,
+      };
+    },
+  );
+  server.registerTool(
+    'hooserguide_rebuild',
+    {
+      description:
+        'Re-export the latest successful evidence without interacting with the app. Verifies screenshot hashes and applies branding from the configured project.',
+      inputSchema: { pdf: z.boolean().optional() },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    },
+    async ({ pdf }) => {
+      if (busy)
+        return { isError: true, content: [{ type: 'text', text: 'A run is already in progress' }] };
+      if (!last || last.report.status !== 'passed')
+        return {
+          isError: true,
+          content: [{ type: 'text', text: 'Generate a successful guide before rebuilding' }],
+        };
+      busy = true;
+      try {
+        const config = await loadConfig(configPath);
+        last = await build(last.directory, {
+          output: config.output,
+          pdf: pdf ?? config.pdf,
+          branding: config.branding,
+        });
+        const result = {
+          status: last.report.status,
+          exportError: last.report.exportError,
+          directory: last.directory,
+          artifacts: last.artifacts,
+        };
+        return {
+          isError: last.report.status !== 'passed',
+          content: [{ type: 'text', text: JSON.stringify(result) }],
+          structuredContent: result,
         };
       } finally {
         busy = false;
@@ -102,7 +164,7 @@ export function createMcpServer(configPath: string) {
           role: 'user',
           content: {
             type: 'text',
-            text: 'Inspect the actual app and write @manual Gherkin scenarios using hooserguide built-in steps. Add I explain steps for user-facing instructions and I capture steps with JSON marks (target, kind: box/arrow/both, label, caption). Use stable role/label/testid locators, assert saved outcomes and mask private data in every capture. Call hooserguide_validate, then hooserguide_generate. Inspect screenshots with hooserguide_inspect_capture and review the PDF. Report artifact paths and remaining limitations. Do not invent controls or claim success after a failed scenario.',
+            text: 'Use hooserguide_steps to discover supported steps. Inspect the actual app and write @manual Gherkin scenarios using hooserguide built-in steps. Add I explain steps for user-facing instructions and I capture steps with JSON marks (target, kind: box/arrow/both, label, caption). Use focus and autoLabels for detailed captures, named profiles for responsive workflows, and stable role/label/testid locators, assert saved outcomes and mask private data in every capture. Call hooserguide_validate, then hooserguide_generate. Inspect screenshots with hooserguide_inspect_capture and review the PDF. Report artifact paths and remaining limitations. Do not invent controls or claim success after a failed scenario.',
           },
         },
       ],

@@ -24,6 +24,16 @@ JSON config is validated strictly: unknown fields are errors. Optional `$schema`
 
 `features`, `output`, `plugins` and `storageState` are relative to the config file. API config passed directly to `run()` is relative to the process working directory. Each feature pattern must match a file. Feature files are sorted and duplicate paths are deduplicated. Scenarios run sequentially in fresh browser contexts, with the configured authentication state loaded for each one.
 
+Additional config fields:
+
+| Field      | Default       | Meaning                                                        |
+| ---------- | ------------- | -------------------------------------------------------------- |
+| `profiles` | none          | Named browser settings for responsive runs                     |
+| `profile`  | base settings | Selected profile name; CLI `--profile` overrides it            |
+| `branding` | hooserguide   | Optional `name`, `subtitle` and hex `accentColor` for HTML/PDF |
+
+See [advanced workflows](advanced.md) for complete profiles, branding, focus captures and evidence-only rebuilds.
+
 ## Selectors
 
 | String             | Object equivalent                 |
@@ -55,6 +65,30 @@ Accessible names, labels and text use exact matching. Bare strings are Playwrigh
 | `I explain "Select Save."`                        | Add user-facing prose to the chapter                           |
 | `I capture "Settings"`                            | Capture and optionally annotate the current state              |
 
+Additional built-in steps:
+
+| Phrase                                                              | Effect                                       |
+| ------------------------------------------------------------------- | -------------------------------------------- |
+| `I fill the form:`                                                  | Fill inputs from a selector/value data table |
+| `I hover "role=button:Help"`                                        | Hover a locator                              |
+| `I double click "testid=item"`                                      | Double-click a locator                       |
+| `I clear "label=Search"`                                            | Clear an input                               |
+| `I upload "fixtures/avatar.png" to "label=Avatar"`                  | Upload a feature-relative file               |
+| `I drag "testid=task" to "testid=column"`                           | Drag an element to another element           |
+| `I reload the page`                                                 | Reload for persistence checks                |
+| `I go back` / `I go forward`                                        | Navigate browser history                     |
+| `"testid=loading" is hidden`                                        | Assert hidden or detached state              |
+| `"role=button:Save" is enabled` / `is disabled`                     | Assert control state                         |
+| `"label=Notifications" is checked` / `is unchecked`                 | Assert checkbox state                        |
+| `"label=Name" has value "Demo"`                                     | Assert an input value                        |
+| `"testid=tasks" contains text "Launch"`                             | Assert a substring                           |
+| `"css=.task" has count 3`                                           | Assert the match count                       |
+| `"role=button:Save" has attribute "aria-pressed" with value "true"` | Assert an attribute                          |
+| `the URL is "/settings"`                                            | Assert exact URL relative to `baseURL`       |
+| `the page title is "Settings"`                                      | Assert the document title                    |
+
+`hooserguide steps --json` returns patterns, examples and descriptions. Add `--config` for plugins; custom bindings may pass `{example, description}` as the third argument to `registry.define`.
+
 Phrases are case-sensitive. `Given`, `When`, `Then`, `And` and `But` have normal Gherkin semantics. Use escaped quotes (`\"`) inside quoted arguments. The official Gherkin parser compiles outlines, backgrounds and localized keywords; plugins can handle additional behavior and data tables.
 
 ## Capture docstring
@@ -82,13 +116,15 @@ And I capture "Settings"
 
 `kind` defaults to `box`; alternatives are `arrow` and `both`. Labels are optional and contain 1–4 ASCII letters/digits. Captions become legend entries. `color` is a six-digit hex color. `from` is optional: automatic arrow origins try to avoid other marked targets. Explicit coordinates are screenshot CSS pixels and must be inside the image.
 
+`focus`, `padding` and `autoLabels` are described in [advanced workflows](advanced.md).
+
 `fullPage` defaults to false. Full-page captures start at the document origin for consistent scroll coordinates. Viewport captures scroll the first marked element into view and reject targets outside the final viewport. Split captures if all controls cannot fit in one image.
 
 Original and annotated PNGs are masked before writing. Missing privacy selectors fail the capture. Masking is explicit; it is not automatic PII detection. A temporary style freezes CSS motion; annotations are rendered with an SVG layer and Sharp, without adding drawing elements to the application DOM.
 
 ## Reports and failures
 
-`report.json` schema version is 1. It records the timestamp, browser, language, chapters, executed steps, errors and captures. Captures contain relative image paths, image dimensions, target bounds and the SHA-256 of the annotated PNG. Source paths in your own runs are absolute for traceability; the committed demo uses portable relative paths.
+`report.json` schema version is 1. It records the timestamp, browser, language, chapters, executed steps, errors and captures. Captures contain relative image paths, image dimensions, target bounds and the SHA-256 of the annotated PNG and, for 0.2+ captures, the masked raw PNG. The report also includes effective viewport/profile, per-step `durationMs` and optional branding. See [report schema](../schemas/report.schema.json). Source paths in your own runs are absolute for traceability; the committed demo uses portable relative paths.
 
 The run status is failed if any scenario or exporter fails. Failed scenarios retain available screenshot evidence. No HTML, Markdown or PDF handbook is published for a failed run. An export failure appears in `exportError`. Preflight errors throw before launching the browser. Exported files appear under a unique run directory; previous runs are never reused as current evidence.
 

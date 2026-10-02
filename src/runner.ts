@@ -1,19 +1,17 @@
 import { chromium, firefox, webkit } from '@playwright/test';
-import { glob, mkdir, mkdtemp, rename, writeFile, rm } from 'node:fs/promises';
+import { glob, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { randomUUID } from 'node:crypto';
 import { parseFeature } from './gherkin.js';
-import { builtinSteps, target, type StepRegistry } from './steps.js';
+import { builtinSteps, target, formRows, type StepRegistry } from './steps.js';
 import { captureScreenshot, validateCapture } from './capture.js';
-import { resolveConfig } from './config.js';
-import { renderManual } from './render.js';
-import { renderPdf } from './pdf.js';
-import type { Chapter, Config, RunReport } from './types.js';
+import { resolveConfig, selectProfile } from './config.js';
+import { publishReport } from './artifacts.js';
+import type { Chapter, Config, RunReport, RunResult } from './types.js';
 
-async function prepare(config: Config) {
+export async function loadRegistry(config?: Config) {
   const registry = builtinSteps();
-  for (const path of config.plugins ?? []) {
+  for (const path of config?.plugins ?? []) {
     const module = (await import(pathToFileURL(path).href)) as {
       register?: (registry: StepRegistry) => Promise<void> | void;
     };
@@ -21,6 +19,11 @@ async function prepare(config: Config) {
       throw new Error(`Plugin must export register(registry): ${path}`);
     await module.register(registry);
   }
+  return registry;
+}
+
+async function prepare(config: Config) {
+  const registry = await loadRegistry(config);
   const files = new Set<string>();
   for (const pattern of config.features) {
     let found = false;
@@ -42,6 +45,7 @@ async function prepare(config: Config) {
     if (!s.pickle.steps.length) throw new Error(`Scenario has no steps: ${s.pickle.name}`);
     for (const step of s.pickle.steps) {
       registry.resolve(step.text);
+      if (step.text === 'I fill the form:') formRows(step);
       if (step.text.startsWith('I capture ')) {
         validateCapture({
           ...(step.argument?.docString ? JSON.parse(step.argument.docString.content) : {}),
@@ -66,14 +70,11 @@ export async function validate(input: Config) {
   };
 }
 
-export interface RunResult {
-  report: RunReport;
-  directory: string;
-  artifacts: { report: string; html?: string; markdown?: string; pdf?: string };
-}
+export type { RunResult } from './types.js';
 export async function run(input: Config): Promise<RunResult> {
   const config = resolveConfig(input);
   const { registry, scenarios } = await prepare(config);
+  const profile = selectProfile(config);
   await mkdir(config.output, { recursive: true });
   const staging = await mkdtemp(join(config.output, '.run-'));
   const report: RunReport = {
@@ -82,10 +83,13 @@ export async function run(input: Config): Promise<RunResult> {
     language: config.language ?? 'en',
     generatedAt: new Date().toISOString(),
     status: 'passed',
-    browser: config.browser ?? 'chromium',
+    browser: profile.browser ?? 'chromium',
+    viewport: profile.viewport,
+    profile: config.profile,
+    branding: config.branding,
     chapters: [],
   };
-  const browserType = { chromium, firefox, webkit }[config.browser ?? 'chromium'];
+  const browserType = { chromium, firefox, webkit }[profile.browser ?? 'chromium'];
   // Launch errors have no successful handbook to expose.
   const browser = await browserType.launch({ headless: !config.headed }).catch(async (error) => {
     await rm(staging, { recursive: true, force: true });
@@ -107,8 +111,11 @@ export async function run(input: Config): Promise<RunResult> {
       report.chapters.push(chapter);
       const context = await browser.newContext({
         baseURL: config.baseURL,
-        viewport: config.viewport ?? { width: 1280, height: 800 },
-        deviceScaleFactor: config.deviceScaleFactor ?? 1,
+        viewport: profile.viewport,
+        deviceScaleFactor: profile.deviceScaleFactor,
+        isMobile: profile.isMobile,
+        hasTouch: profile.hasTouch,
+        colorScheme: profile.colorScheme,
         storageState: config.storageState,
         reducedMotion: 'reduce',
         locale: config.language ?? 'en',
@@ -118,6 +125,7 @@ export async function run(input: Config): Promise<RunResult> {
       page.setDefaultNavigationTimeout(config.timeoutMs ?? 10000);
       try {
         for (const step of s.pickle.steps) {
+          const started = performance.now();
           try {
             await registry.execute({
               page,
@@ -140,10 +148,19 @@ export async function run(input: Config): Promise<RunResult> {
                 return capture;
               },
             });
-            chapter.steps.push({ text: step.text, status: 'passed' });
+            chapter.steps.push({
+              text: step.text,
+              status: 'passed',
+              durationMs: Math.round(performance.now() - started),
+            });
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            chapter.steps.push({ text: step.text, status: 'failed', error: message });
+            chapter.steps.push({
+              text: step.text,
+              status: 'failed',
+              error: message,
+              durationMs: Math.round(performance.now() - started),
+            });
             throw error;
           }
         }
@@ -160,31 +177,5 @@ export async function run(input: Config): Promise<RunResult> {
   } finally {
     await browser.close();
   }
-  if (report.status === 'passed') {
-    try {
-      if (config.pdf !== false) await renderPdf(report, staging);
-      await renderManual(report, staging);
-    } catch (error) {
-      report.status = 'failed';
-      report.exportError = error instanceof Error ? error.message : String(error);
-      await Promise.all(
-        ['index.html', 'handbook.md', 'handbook.pdf'].map((name) =>
-          rm(join(staging, name), { force: true }),
-        ),
-      );
-    }
-  }
-  await writeFile(join(staging, 'report.json'), JSON.stringify(report, null, 2) + '\n');
-  const directory = join(
-    config.output,
-    `run-${report.generatedAt.replace(/[:.]/g, '-')}-${randomUUID().slice(0, 8)}`,
-  );
-  await rename(staging, directory);
-  const artifacts: RunResult['artifacts'] = { report: join(directory, 'report.json') };
-  if (report.status === 'passed') {
-    artifacts.html = join(directory, 'index.html');
-    artifacts.markdown = join(directory, 'handbook.md');
-    if (config.pdf !== false) artifacts.pdf = join(directory, 'handbook.pdf');
-  }
-  return { report, directory, artifacts };
+  return publishReport(report, staging, config.output, config.pdf !== false);
 }

@@ -1,7 +1,31 @@
 import { readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { z } from 'zod';
-import type { Config } from './types.js';
+import type { BrowserProfile, Config } from './types.js';
+
+export const viewportSchema = z
+  .object({ width: z.number().int().min(320), height: z.number().int().min(240) })
+  .strict();
+export const brandingSchema = z
+  .object({
+    name: z.string().trim().min(1).optional(),
+    subtitle: z.string().optional(),
+    accentColor: z
+      .string()
+      .regex(/^#[0-9a-f]{6}$/i)
+      .optional(),
+  })
+  .strict();
+export const profileSchema = z
+  .object({
+    viewport: viewportSchema.optional(),
+    deviceScaleFactor: z.number().min(1).max(4).optional(),
+    browser: z.enum(['chromium', 'firefox', 'webkit']).optional(),
+    isMobile: z.boolean().optional(),
+    hasTouch: z.boolean().optional(),
+    colorScheme: z.enum(['light', 'dark', 'no-preference']).optional(),
+  })
+  .strict();
 
 export const targetSchema = z.union([
   z.string().min(1),
@@ -20,10 +44,7 @@ export const configSchema = z
       .refine((v) => ['http:', 'https:'].includes(new URL(v).protocol), 'Use an HTTP(S) URL'),
     features: z.array(z.string().min(1)).min(1),
     output: z.string().min(1).default('output'),
-    viewport: z
-      .object({ width: z.number().int().min(320), height: z.number().int().min(240) })
-      .strict()
-      .optional(),
+    viewport: viewportSchema.optional(),
     deviceScaleFactor: z.number().min(1).max(4).optional(),
     browser: z.enum(['chromium', 'firefox', 'webkit']).optional(),
     headed: z.boolean().optional(),
@@ -40,14 +61,36 @@ export const configSchema = z
       .regex(/^[a-z]{2,3}(-[A-Za-z0-9]+)*$/)
       .default('en'),
     pdf: z.boolean().default(true),
+    profiles: z.record(z.string().regex(/^[A-Za-z0-9_-]+$/), profileSchema).optional(),
+    profile: z.string().min(1).optional(),
+    branding: brandingSchema.optional(),
   })
   .strict();
 
 export function defineConfig(config: Config): Config {
   return config;
 }
+export function selectProfile(config: Config): BrowserProfile {
+  const profile =
+    config.profile && config.profiles && Object.hasOwn(config.profiles, config.profile)
+      ? config.profiles[config.profile]
+      : undefined;
+  if (config.profile && !profile) throw new Error(`Unknown browser profile: ${config.profile}`);
+  const selected = {
+    viewport: config.viewport ?? { width: 1280, height: 800 },
+    deviceScaleFactor: config.deviceScaleFactor ?? 1,
+    browser: config.browser ?? 'chromium',
+    ...profile,
+  };
+  if (selected.isMobile && selected.browser === 'firefox')
+    throw new Error(
+      'Firefox does not support isMobile; use viewport-only responsiveness or another browser',
+    );
+  return selected;
+}
 export function resolveConfig(input: unknown, root = process.cwd()): Config {
   const c = configSchema.parse(input) as Config;
+  selectProfile(c);
   return {
     ...c,
     features: c.features.map((p) => resolve(root, p)),

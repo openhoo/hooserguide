@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, writeFile, rm, access } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, access, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -22,8 +22,14 @@ try {
     stdio: ['ignore', 'pipe', 'inherit'],
   });
   const binary = join(root, 'node_modules/.bin/hooserguide');
+  const catalogue = JSON.parse(
+    execFileSync(binary, ['steps', '--json'], { cwd: root, encoding: 'utf8' }),
+  );
+  if (!catalogue.steps.some((step) => step.example === 'I fill the form:'))
+    throw new Error('Installed step catalogue is incomplete');
   const version = execFileSync(binary, ['--version'], { encoding: 'utf8' }).trim();
-  if (version !== '0.1.0') throw new Error(`Unexpected version: ${version}`);
+  const expected = JSON.parse(await readFile('package.json', 'utf8')).version;
+  if (version !== expected) throw new Error(`Unexpected version: ${version}`);
   execFileSync(binary, ['init', 'docs/guide', '--skills', '--json'], { cwd: root, stdio: 'pipe' });
   execFileSync(binary, ['validate', '--config', 'docs/guide/hooserguide.config.json', '--json'], {
     cwd: root,
@@ -35,8 +41,19 @@ try {
   );
   if (demo.status !== 'passed') throw new Error('Installed package demo failed');
   for (const path of Object.values(demo.artifacts)) await access(path);
+  const rebuilt = JSON.parse(
+    execFileSync(binary, ['build', demo.directory, '--output', 'rebuilt', '--json'], {
+      cwd: root,
+      encoding: 'utf8',
+    }),
+  );
+  if (rebuilt.status !== 'passed') throw new Error('Installed package rebuild failed');
+  for (const path of Object.values(rebuilt.artifacts)) await access(path);
+  const evidence = JSON.parse(await readFile(rebuilt.artifacts.report, 'utf8'));
+  if (!evidence.rebuiltAt || !evidence.sourceReportSha256)
+    throw new Error('Rebuild provenance is missing');
   console.log(
-    '✓ Installed tarball: bin, init, skills, validation, browser capture and pdfcn PDF verified',
+    '✓ Installed tarball: bin, init, skills, step discovery, validation, browser capture, rebuild and pdfcn PDF verified',
   );
 } finally {
   await rm(root, { recursive: true, force: true });

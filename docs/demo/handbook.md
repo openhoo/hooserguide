@@ -1,6 +1,6 @@
 # HooTasks — User guide
 
-Generated: 2026-10-02T11:52:44.982Z
+Generated: 2026-10-02T12:22:36.992Z
 
 ## 1. Create your first task
 
@@ -27,6 +27,16 @@ The task now appears in your workspace. The confirmation shows that the save com
 
 - **2**: Your newly created task.
 - **3**: Successful save confirmation.
+
+### Task form in detail
+
+A focused view keeps the form readable and assigns references automatically.
+
+![Task form in detail](screenshots/01-03.png)
+
+- **A**: Your task title.
+- **B**: The selected priority.
+- **C**: The save confirmation.
 
 ## 2. Customize workspace notifications
 

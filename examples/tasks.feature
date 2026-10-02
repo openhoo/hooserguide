@@ -37,9 +37,25 @@ Feature: Work with HooTasks
       }
       """
 
+    And I capture "Task form in detail"
+      """json
+      {
+        "focus": "css=.grid > .card:first-child",
+        "padding": 40,
+        "autoLabels": "letters",
+        "description": "A focused view keeps the form readable and assigns references automatically.",
+        "marks": [
+          { "target": "label=Task title", "kind": "box", "caption": "Your task title." },
+          { "target": "label=Priority", "kind": "both", "color": "#2563eb", "caption": "The selected priority." },
+          { "target": "role=status:Task result", "kind": "arrow", "caption": "The save confirmation." }
+        ]
+      }
+      """
+
   Scenario: Customize workspace notifications
     When I scroll to "label=Email notifications"
     And I check "label=Email notifications"
+    Then "label=Email notifications" is checked
     And I click "role=button:Save preferences"
     Then "role=status:Preferences result" has text "Preferences saved."
     And I explain "Open Workspace preferences, enable Email notifications and select Save preferences."

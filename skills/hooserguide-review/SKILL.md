@@ -12,12 +12,14 @@ Locate the exact run directory from the CLI/MCP result. Review that directory's 
 - Require top-level `status: passed` and every chapter/step to pass. `exportError` means the export failed even when the browser workflows passed.
 - Compare requested tasks with scenario names and steps. A passing subset is not complete coverage.
 - Verify saved outcomes are asserted after the relevant action. A screenshot or successful click alone does not prove persistence.
-- If provenance matters, recompute each annotated PNG's SHA-256 and compare with `captures[].sha256`.
+- If provenance matters, recompute each masked raw PNG when `rawSha256` is present, and each annotated PNG's SHA-256 and compare with `captures[].sha256`.
 - Use `pdf-layout.json` to check PDF warnings. Its content audit supplements visual review; it does not replace it.
 
 ## Inspect real visuals
 
 Open annotated PNGs and compare them with the masked `.raw.png` originals. If using MCP, `hooserguide_inspect_capture` returns the annotated image and its metadata for one-based chapter/capture indices.
+
+For focused screenshots check the crop includes the intended region and references remain correctly positioned. Automatic references must be unique, skip explicit labels and agree with every legend. Check that per-mark colors match their legend entries.
 
 Confirm each box surrounds the intended control, each arrow reaches its target and every letter/number agrees with the prose legend. Check references near screenshot edges and on scrolled pages. Labels and captions should stay readable without hiding essential state.
 
@@ -28,3 +30,9 @@ Open the generated HTML at desktop and narrow widths. Check chapter navigation, 
 ## Fix and conclude
 
 Repair the feature/config or template responsible for a concrete problem, regenerate and review the new run. Keep changes scoped to the requested handbook. State which tasks and formats were verified, list any unverified coverage and deliver exact artifact paths. Publishing remains a separate action unless already authorized by the user.
+
+## Profiles and rebuilds
+
+Check the recorded `profile` and `viewport` against requested responsive coverage. A desktop run does not verify a mobile workflow. Per-step `durationMs` provides execution timing, not a performance benchmark.
+
+A report with `rebuiltAt` is an evidence-only export. Require its original `generatedAt` and `sourceReportSha256`; do not treat it as a fresh app run. Rebuild validates annotated hashes and raw hashes when available, but the report is unsigned. Inspect updated branding, subtitle and accent color in both HTML and rendered PDF; screenshots keep their original contents.

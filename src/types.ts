@@ -21,8 +21,25 @@ export interface CaptureSpec {
   title: string;
   description?: string;
   fullPage?: boolean;
+  /** Crop to this element with padding; incompatible with fullPage. */
+  focus?: Target;
+  padding?: number;
+  autoLabels?: 'numbers' | 'letters';
   marks?: Mark[];
   masks?: Target[];
+}
+export interface BrowserProfile {
+  viewport?: { width: number; height: number };
+  deviceScaleFactor?: number;
+  browser?: 'chromium' | 'firefox' | 'webkit';
+  isMobile?: boolean;
+  hasTouch?: boolean;
+  colorScheme?: 'light' | 'dark' | 'no-preference';
+}
+export interface Branding {
+  name?: string;
+  subtitle?: string;
+  accentColor?: string;
 }
 export interface Config {
   $schema?: string;
@@ -42,6 +59,9 @@ export interface Config {
   tag?: string;
   language?: string;
   pdf?: boolean;
+  profiles?: Record<string, BrowserProfile>;
+  profile?: string;
+  branding?: Branding;
 }
 export interface ResolvedMark extends Mark {
   bounds: { x: number; y: number; width: number; height: number };
@@ -55,7 +75,9 @@ export interface Capture {
   width: number;
   height: number;
   sha256: string;
+  rawSha256?: string;
   marks: ResolvedMark[];
+  crop?: { x: number; y: number; width: number; height: number };
 }
 export interface Chapter {
   title: string;
@@ -66,7 +88,7 @@ export interface Chapter {
   status: 'passed' | 'failed';
   instructions: string[];
   captures: Capture[];
-  steps: { text: string; status: 'passed' | 'failed'; error?: string }[];
+  steps: { text: string; status: 'passed' | 'failed'; error?: string; durationMs?: number }[];
   error?: string;
 }
 export interface RunReport {
@@ -78,6 +100,11 @@ export interface RunReport {
   browser: string;
   chapters: Chapter[];
   exportError?: string;
+  profile?: string;
+  branding?: Branding;
+  viewport?: { width: number; height: number };
+  rebuiltAt?: string;
+  sourceReportSha256?: string;
 }
 export interface StepContext {
   page: Page;
@@ -89,3 +116,12 @@ export interface StepContext {
   instruction(text: string): void;
 }
 export type StepHandler = (context: StepContext, ...matches: string[]) => Promise<void> | void;
+export interface StepDocumentation {
+  example: string;
+  description: string;
+}
+export interface RunResult {
+  report: RunReport;
+  directory: string;
+  artifacts: { report: string; html?: string; markdown?: string; pdf?: string };
+}

@@ -20,6 +20,9 @@ export const captureSchema = z
     title: z.string().trim().min(1),
     description: z.string().optional(),
     fullPage: z.boolean().optional(),
+    focus: targetSchema.optional(),
+    padding: z.number().int().min(0).max(500).optional(),
+    autoLabels: z.enum(['numbers', 'letters']).optional(),
     masks: z.array(targetSchema).optional(),
     marks: z
       .array(
@@ -49,6 +52,35 @@ export const captureSchema = z
 
 export function validateCapture(spec: CaptureSpec): void {
   captureSchema.parse(spec);
+  if (spec.focus && spec.fullPage) throw new Error('focus and fullPage cannot be used together');
+  if (spec.padding !== undefined && !spec.focus) throw new Error('padding requires a focus target');
+  const labels = (spec.marks ?? []).flatMap((m) => (m.label ? [m.label] : []));
+  if (new Set(labels).size !== labels.length)
+    throw new Error('Reference labels must be unique within a capture');
+}
+
+export function assignLabels(spec: CaptureSpec): NonNullable<CaptureSpec['marks']> {
+  const used = new Set((spec.marks ?? []).flatMap((m) => (m.label ? [m.label] : [])));
+  let next = 1;
+  const letters = (index: number) => {
+    let label = '';
+    while (index > 0) {
+      index--;
+      label = String.fromCharCode(65 + (index % 26)) + label;
+      index = Math.floor(index / 26);
+    }
+    return label;
+  };
+  return (spec.marks ?? []).map((mark) => {
+    if (!spec.autoLabels || mark.label) return { ...mark };
+    let label: string;
+    do {
+      label = spec.autoLabels === 'numbers' ? String(next++) : letters(next++);
+    } while (used.has(label));
+    if (label.length > 4) throw new Error('Too many automatic reference labels');
+    used.add(label);
+    return { ...mark, label };
+  });
 }
 
 /** Paint onto an image, leaving the application DOM untouched. */
@@ -138,7 +170,15 @@ export async function captureScreenshot(
   timeoutMs = 10000,
 ): Promise<Capture> {
   validateCapture(spec);
-  const locators = (spec.marks ?? []).map((m) => target(page, m.target));
+  if (!/^[A-Za-z0-9_-]+$/.test(id))
+    throw new Error('Screenshot ID must contain only letters, digits, underscores and hyphens');
+  const labelledMarks = assignLabels(spec);
+  const locators = labelledMarks.map((m) => target(page, m.target));
+  const focus = spec.focus ? target(page, spec.focus) : undefined;
+  if (focus) {
+    await expect(focus).toHaveCount(1, { timeout: timeoutMs });
+    await expect(focus).toBeVisible({ timeout: timeoutMs });
+  }
   for (const locator of locators) {
     await expect(locator).toHaveCount(1, { timeout: timeoutMs });
     await expect(locator).toBeVisible({ timeout: timeoutMs });
@@ -146,7 +186,8 @@ export async function captureScreenshot(
   const masks = [...globalMasks, ...(spec.masks ?? [])].map((m) => target(page, m));
   // Fail closed for misspelled privacy masks; multiple matches are intentional.
   for (const mask of masks) await expect(mask).not.toHaveCount(0, { timeout: timeoutMs });
-  if (spec.fullPage) await page.evaluate(() => window.scrollTo(0, 0));
+  const documentCapture = Boolean(spec.fullPage || focus);
+  if (documentCapture) await page.evaluate(() => window.scrollTo(0, 0));
   else if (locators[0]) await locators[0].scrollIntoViewIfNeeded();
   await page.evaluate(async () => {
     await document.fonts.ready;
@@ -167,25 +208,54 @@ export async function captureScreenshot(
       if (!bounds || bounds.width <= 0 || bounds.height <= 0)
         throw new Error('Annotation target has no visible bounds');
       marks.push({
-        ...spec.marks![i]!,
+        ...labelledMarks[i]!,
         bounds: {
           ...bounds,
-          x: bounds.x + (spec.fullPage ? scroll.x : 0),
-          y: bounds.y + (spec.fullPage ? scroll.y : 0),
+          x: bounds.x + (documentCapture ? scroll.x : 0),
+          y: bounds.y + (documentCapture ? scroll.y : 0),
         },
       });
     }
-    const raw = await page.screenshot({
+    const focusBounds = focus ? await focus.boundingBox() : undefined;
+    let raw = await page.screenshot({
       type: 'png',
-      fullPage: spec.fullPage ?? false,
+      fullPage: documentCapture,
       scale: 'css',
       animations: 'disabled',
       caret: 'hide',
       mask: masks,
       maskColor: '#111827',
     });
-    const { width, height } = await sharp(raw).metadata();
+    let { width, height } = await sharp(raw).metadata();
     if (!width || !height) throw new Error('Screenshot dimensions unavailable');
+    let crop: Capture['crop'];
+    if (focus) {
+      if (!focusBounds || focusBounds.width <= 0 || focusBounds.height <= 0)
+        throw new Error('Focus target has no visible bounds');
+      const padding = spec.padding ?? 24;
+      const x = Math.max(0, Math.floor(focusBounds.x + scroll.x - padding));
+      const y = Math.max(0, Math.floor(focusBounds.y + scroll.y - padding));
+      const right = Math.min(
+        width,
+        Math.ceil(focusBounds.x + scroll.x + focusBounds.width + padding),
+      );
+      const bottom = Math.min(
+        height,
+        Math.ceil(focusBounds.y + scroll.y + focusBounds.height + padding),
+      );
+      if (right <= x || bottom <= y) throw new Error('Focus target lies outside screenshot');
+      crop = { x, y, width: right - x, height: bottom - y };
+      raw = await sharp(raw)
+        .extract({ left: x, top: y, width: crop.width, height: crop.height })
+        .png()
+        .toBuffer();
+      width = crop.width;
+      height = crop.height;
+      for (const mark of marks) {
+        mark.bounds.x -= x;
+        mark.bounds.y -= y;
+      }
+    }
     for (const m of marks) {
       const b = m.bounds;
       if (b.x < 0 || b.y < 0 || b.x + b.width > width + 1 || b.y + b.height > height + 1)
@@ -213,7 +283,9 @@ export async function captureScreenshot(
       width,
       height,
       marks,
+      crop,
       sha256: createHash('sha256').update(annotated).digest('hex'),
+      rawSha256: createHash('sha256').update(raw).digest('hex'),
     };
   } finally {
     await freeze.evaluate((element) => element.parentNode?.removeChild(element));

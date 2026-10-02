@@ -11,6 +11,7 @@ import { Heading } from './pdfcn/components/pdf/heading/heading.js';
 import { PdfImage } from './pdfcn/components/pdf/pdf-image/pdf-image.js';
 import { PageNumber } from './pdfcn/components/pdf/page-number/page-number.js';
 import type { RunReport } from './types.js';
+import { brandingSchema } from './config.js';
 
 const theme = {
   ...professionalTheme,
@@ -30,12 +31,15 @@ const pageWidth = 499.28; // A4 minus 48pt margins on each side.
 /** pdfcn components are vendored as intended by its registry model. */
 export async function renderPdf(report: RunReport, directory: string): Promise<void> {
   if (report.status !== 'passed') throw new Error('Cannot export PDF from a failed run');
+  const branding = brandingSchema.parse(report.branding ?? {});
+  const accent = branding.accentColor ?? '#075e59';
+  const documentTheme = { ...theme, colors: { ...theme.colors, primary: accent } };
   const pages: ReactNode[] = [];
   const footer = (
     <Fixed position="footer">
       <View style={{ borderTopWidth: 1, borderColor: '#dce5e9', paddingTop: 10 }}>
         <Text variant="xs" color="mutedForeground" noMargin>
-          hooserguide · {report.title}
+          {branding.name ?? 'hooserguide'} · {report.title}
         </Text>
         <PageNumber align="right" size="xs" />
       </View>
@@ -50,8 +54,10 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
         <Heading level={1} style={{ fontSize: 38, marginTop: 16 }}>
           {report.title}
         </Heading>
-        <Text color="mutedForeground">Verified walkthroughs with annotated screenshots.</Text>
-        <View style={{ borderTopWidth: 3, borderColor: '#075e59', marginTop: 28, paddingTop: 18 }}>
+        <Text color="mutedForeground">
+          {branding.subtitle ?? 'Verified walkthroughs with annotated screenshots.'}
+        </Text>
+        <View style={{ borderTopWidth: 3, borderColor: accent, marginTop: 28, paddingTop: 18 }}>
           <Text variant="sm">
             Generated {report.generatedAt.slice(0, 10)} · {report.chapters.length} chapters
           </Text>
@@ -85,7 +91,10 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
     for (const [j, capture] of chapter.captures.entries()) {
       const image = await readFile(join(directory, capture.image));
       // Long screenshots are split into readable page-sized images, without shrinking or cropping content away.
-      const maxSliceHeight = Math.max(1, Math.floor((400 * capture.width) / pageWidth));
+      // A modestly taller single figure avoids a nearly empty continuation page.
+      const scaledHeight = (capture.height * pageWidth) / capture.width;
+      const imageBudget = scaledHeight <= 460 ? 460 : 400;
+      const maxSliceHeight = Math.max(1, Math.floor((imageBudget * capture.width) / pageWidth));
       const total = Math.ceil(capture.height / maxSliceHeight);
       for (let slice = 0; slice < total; slice++) {
         const top = slice * maxSliceHeight,
@@ -120,12 +129,14 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
                 {capture.marks
                   .filter((m) => m.label || m.caption)
                   .map((m, n) => (
-                    <Text key={n} variant="sm">
-                      <Text weight="bold" color="destructive">
-                        {m.label ?? String(n + 1)}{' '}
+                    <View key={n} style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                      <Text variant="sm" noMargin weight="bold" color={m.color ?? '#e11d48'}>
+                        {m.label ?? String(n + 1)}
                       </Text>
-                      {m.caption ?? ''}
-                    </Text>
+                      <Text variant="sm" noMargin style={{ flex: 1 }}>
+                        {m.caption ?? ''}
+                      </Text>
+                    </View>
                   ))}
               </View>
             ) : null}
@@ -136,7 +147,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
     }
   }
   const doc = (
-    <PdfcnThemeProvider theme={theme}>
+    <PdfcnThemeProvider theme={documentTheme}>
       <Document
         title={report.title}
         creator="hooserguide (pdfcn / Forme)"

@@ -4,7 +4,9 @@ import { realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadConfig } from './config.js';
-import { run, validate } from './runner.js';
+import { run, validate, loadRegistry } from './runner.js';
+import { build } from './build.js';
+import { VERSION } from './version.js';
 import { init } from './scaffold.js';
 import { serveMcp } from './mcp.js';
 import { demo } from './demo.js';
@@ -14,7 +16,9 @@ const help = `hooserguide — verified user guides from BDD + Playwright + pdfcn
 Usage:
   hooserguide init [directory] --base-url http://localhost:3000 [--skills]
   hooserguide validate [--config hooserguide.config.json] [--json]
-  hooserguide run [--config hooserguide.config.json] [--headed] [--no-pdf] [--json]
+  hooserguide steps [--config hooserguide.config.json] [--json]
+  hooserguide run [--config hooserguide.config.json] [--profile mobile] [--headed] [--no-pdf] [--json]
+  hooserguide build <run-directory> [--output output/rebuilt] [--config hooserguide.config.json] [--no-pdf] [--json]
   hooserguide demo [--output output/demo] [--json]
   hooserguide mcp [--config hooserguide.config.json]
 
@@ -34,13 +38,14 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
       'no-pdf': { type: 'boolean' },
       'base-url': { type: 'string' },
       output: { type: 'string' },
+      profile: { type: 'string' },
       skills: { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
       version: { type: 'boolean', short: 'v' },
     },
   });
   if (values.version) {
-    console.log('0.1.0');
+    console.log(VERSION);
     return;
   }
   const command = positionals[0];
@@ -48,11 +53,25 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     console.log(help);
     return;
   }
-  if (!['init', 'run', 'validate', 'demo', 'mcp'].includes(command))
+  if (!['init', 'run', 'validate', 'steps', 'build', 'demo', 'mcp'].includes(command))
     throw new Error(`Unknown command ${command}. Use --help.`);
-  if (positionals.length > (command === 'init' ? 2 : 1))
+  if (positionals.length > (['init', 'build'].includes(command) ? 2 : 1))
     throw new Error('Unexpected positional argument. Use --help.');
   const configPath = resolve(values.config ?? 'hooserguide.config.json');
+  if (command === 'steps') {
+    const steps = (
+      await loadRegistry(values.config ? await loadConfig(configPath) : undefined)
+    ).list();
+    console.log(
+      values.json
+        ? JSON.stringify({ steps })
+        : steps
+            .map((s) => `${s.example ?? s.pattern}\n  ${s.description ?? 'Custom step'}`)
+            .join('\n'),
+    );
+    return;
+  }
+  if (command === 'build' && !positionals[1]) throw new Error('build requires a run directory');
   if (command === 'mcp') {
     await serveMcp(configPath);
     return;
@@ -67,7 +86,10 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     return;
   }
   if (command === 'validate') {
-    const result = await validate(await loadConfig(configPath));
+    const result = await validate({
+      ...(await loadConfig(configPath)),
+      ...(values.profile ? { profile: values.profile } : {}),
+    });
     console.log(
       values.json
         ? JSON.stringify(result)
@@ -76,15 +98,24 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     return;
   }
   const result =
-    command === 'demo'
-      ? await demo(resolve(values.output ?? 'output/demo'))
-      : await run({
-          ...(await loadConfig(configPath)),
-          ...(values.headed ? { headed: true } : {}),
-          ...(values['no-pdf'] ? { pdf: false } : {}),
-        });
+    command === 'build'
+      ? await build(positionals[1]!, {
+          output: values.output,
+          pdf: !values['no-pdf'],
+          branding: values.config ? (await loadConfig(configPath)).branding : undefined,
+        })
+      : command === 'demo'
+        ? await demo(resolve(values.output ?? 'output/demo'))
+        : await run({
+            ...(await loadConfig(configPath)),
+            ...(values.headed ? { headed: true } : {}),
+            ...(values['no-pdf'] ? { pdf: false } : {}),
+            ...(values.profile ? { profile: values.profile } : {}),
+            ...(values.output ? { output: resolve(values.output) } : {}),
+          });
   const summary = {
     status: result.report.status,
+    profile: result.report.profile,
     exportError: result.report.exportError,
     directory: result.directory,
     artifacts: result.artifacts,

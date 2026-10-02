@@ -79,7 +79,7 @@ test('end to end demo produces pdfcn PDF, HTML, Markdown, hashes and readable lo
     const result = await demo(root);
     assert.equal(result.report.status, 'passed', result.report.exportError);
     assert.equal(result.report.chapters.length, 2);
-    assert.equal(result.report.chapters[0]!.captures.length, 2);
+    assert.equal(result.report.chapters[0]!.captures.length, 3);
     assert.ok(result.artifacts.pdf);
     const bytes = await readFile(result.artifacts.pdf);
     assert.ok(bytes.subarray(0, 5).toString().startsWith('%PDF-'));

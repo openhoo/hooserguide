@@ -2,9 +2,13 @@
   "schemaVersion": 1,
   "title": "HooTasks — User guide",
   "language": "en",
-  "generatedAt": "2026-10-02T11:52:44.982Z",
+  "generatedAt": "2026-10-02T12:22:36.992Z",
   "status": "passed",
   "browser": "chromium",
+  "viewport": {
+    "width": 1280,
+    "height": 900
+  },
   "chapters": [
     {
       "title": "Create your first task",
@@ -66,7 +70,8 @@
               }
             }
           ],
-          "sha256": "6ee81c2b8fb1137c725bb4fe2f5097f9a37512fc0df3a77ad53826aa97e71a1e"
+          "sha256": "6ee81c2b8fb1137c725bb4fe2f5097f9a37512fc0df3a77ad53826aa97e71a1e",
+          "rawSha256": "321a554118cc0bce0103563916818c687e9207069669114edece197409373615"
         },
         {
           "id": "01-02",
@@ -102,53 +107,126 @@
               }
             }
           ],
-          "sha256": "c89bcb7f7acf8ec8c5cb3d7e5de181e17ddd12d0df4659042c49f3a3df1e1d93"
+          "sha256": "c89bcb7f7acf8ec8c5cb3d7e5de181e17ddd12d0df4659042c49f3a3df1e1d93",
+          "rawSha256": "9033586700735d312b229350920422830d9abf56bbf3d1e91dfe9182f0be3f82"
+        },
+        {
+          "id": "01-03",
+          "title": "Task form in detail",
+          "description": "A focused view keeps the form readable and assigns references automatically.",
+          "image": "screenshots/01-03.png",
+          "raw": "screenshots/01-03.raw.png",
+          "width": 576,
+          "height": 519,
+          "marks": [
+            {
+              "target": "label=Task title",
+              "kind": "box",
+              "caption": "Your task title.",
+              "label": "A",
+              "bounds": {
+                "x": 69,
+                "y": 192.5625,
+                "width": 438,
+                "height": 50
+              }
+            },
+            {
+              "target": "label=Priority",
+              "kind": "both",
+              "color": "#2563eb",
+              "caption": "The selected priority.",
+              "label": "B",
+              "bounds": {
+                "x": 69,
+                "y": 292.5625,
+                "width": 438,
+                "height": 46
+              }
+            },
+            {
+              "target": "role=status:Task result",
+              "kind": "arrow",
+              "caption": "The save confirmation.",
+              "label": "C",
+              "bounds": {
+                "x": 69,
+                "y": 425.5625,
+                "width": 438,
+                "height": 24
+              }
+            }
+          ],
+          "crop": {
+            "x": 90,
+            "y": 243,
+            "width": 576,
+            "height": 519
+          },
+          "sha256": "daa3f0f4fec89d4a0bb68c9f81fdd81b27107add2840d348092fbdb3139c4f8c",
+          "rawSha256": "eaf40b62fa59adcda78ed1117f479f4658906423dbe62601f288b15faca64346"
         }
       ],
       "steps": [
         {
           "text": "I open \"/\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 17
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 28
         },
         {
           "text": "I explain \"Enter a clear task title and choose its priority.\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 0
         },
         {
           "text": "I capture \"Fill in the task details\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 189
         },
         {
           "text": "I fill \"label=Task title\" with \"Prepare the launch checklist\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 14
         },
         {
           "text": "I select \"high\" in \"label=Priority\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 3
         },
         {
           "text": "I click \"role=button:Create task\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 37
         },
         {
           "text": "\"role=status:Task result\" has text \"Task created successfully.\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 1
         },
         {
           "text": "\"testid=task-list\" has text \"Prepare the launch checklistHigh priority\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 1
         },
         {
           "text": "I explain \"Select Create task. Check that the task appears in the list and that a confirmation is shown.\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 0
         },
         {
           "text": "I capture \"Check the saved task\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 132
+        },
+        {
+          "text": "I capture \"Task form in detail\"",
+          "status": "passed",
+          "durationMs": 121
         }
       ]
     },
@@ -199,41 +277,55 @@
               }
             }
           ],
-          "sha256": "b8c19bb802fb9122b9db55f43275de8798514b3d8023f93272053c09692264f7"
+          "sha256": "b8c19bb802fb9122b9db55f43275de8798514b3d8023f93272053c09692264f7",
+          "rawSha256": "17db28a0b497be30dff2ec3a9af9631fa24b4e416f0f46b7da031d417ea01704"
         }
       ],
       "steps": [
         {
           "text": "I open \"/\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 4
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 12
         },
         {
           "text": "I scroll to \"label=Email notifications\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 40
         },
         {
           "text": "I check \"label=Email notifications\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 34
+        },
+        {
+          "text": "\"label=Email notifications\" is checked",
+          "status": "passed",
+          "durationMs": 1
         },
         {
           "text": "I click \"role=button:Save preferences\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 31
         },
         {
           "text": "\"role=status:Preferences result\" has text \"Preferences saved.\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 1
         },
         {
           "text": "I explain \"Open Workspace preferences, enable Email notifications and select Save preferences.\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 0
         },
         {
           "text": "I capture \"Workspace preferences\"",
-          "status": "passed"
+          "status": "passed",
+          "durationMs": 171
         }
       ]
     }
