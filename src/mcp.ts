@@ -11,6 +11,7 @@ import { VERSION } from './version.js';
 export function createMcpServer(configPath: string) {
   const server = new McpServer({ name: 'hooserguide', version: VERSION });
   let last: RunResult | undefined;
+  let successful: RunResult | undefined;
   let busy = false;
   server.registerTool(
     'hooserguide_validate',
@@ -21,10 +22,7 @@ export function createMcpServer(configPath: string) {
       annotations: { readOnlyHint: true },
     },
     async ({ profile }) => {
-      const result = await validate({
-        ...(await loadConfig(configPath)),
-        ...(profile ? { profile } : {}),
-      });
+      const result = await validate(await loadConfig(configPath, profile ? { profile } : {}));
       return {
         content: [{ type: 'text', text: JSON.stringify(result) }],
         structuredContent: result,
@@ -44,7 +42,9 @@ export function createMcpServer(configPath: string) {
         return { isError: true, content: [{ type: 'text', text: 'A run is already in progress' }] };
       busy = true;
       try {
-        last = await run({ ...(await loadConfig(configPath)), ...(profile ? { profile } : {}) });
+        last = undefined;
+        last = await run(await loadConfig(configPath, profile ? { profile } : {}));
+        if (last.report.status === 'passed') successful = last;
         const summary = {
           status: last.report.status,
           profile: last.report.profile,
@@ -95,7 +95,7 @@ export function createMcpServer(configPath: string) {
     async ({ pdf }) => {
       if (busy)
         return { isError: true, content: [{ type: 'text', text: 'A run is already in progress' }] };
-      if (!last || last.report.status !== 'passed')
+      if (!successful)
         return {
           isError: true,
           content: [{ type: 'text', text: 'Generate a successful guide before rebuilding' }],
@@ -103,11 +103,12 @@ export function createMcpServer(configPath: string) {
       busy = true;
       try {
         const config = await loadConfig(configPath);
-        last = await build(last.directory, {
+        last = await build(successful.directory, {
           output: config.output,
           pdf: pdf ?? config.pdf,
           branding: config.branding,
         });
+        if (last.report.status === 'passed') successful = last;
         const result = {
           status: last.report.status,
           exportError: last.report.exportError,

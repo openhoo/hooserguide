@@ -114,13 +114,13 @@ And I capture "Settings"
   """
 ```
 
-`kind` defaults to `box`; alternatives are `arrow` and `both`. Labels are optional and contain 1–4 ASCII letters/digits. Captions become legend entries. `color` is a six-digit hex color. `from` is optional: automatic arrow origins try to avoid other marked targets. Explicit coordinates are screenshot CSS pixels and must be inside the image.
+`kind` defaults to `box`; alternatives are `arrow` and `both`. Labels are optional and contain 1–4 ASCII letters/digits. Captioned marks without explicit labels receive unique numeric references. Caption-less marks remain unlabeled unless `autoLabels` is selected. Legacy rebuilds display unlabeled captions without inventing references. `color` is a six-digit hex color. `from` is optional: automatic arrow origins try to avoid other marked targets. Explicit coordinates are screenshot CSS pixels and must be inside the image.
 
 `focus`, `padding` and `autoLabels` are described in [advanced workflows](advanced.md).
 
-`fullPage` defaults to false. Full-page captures start at the document origin for consistent scroll coordinates. Viewport captures scroll the first marked element into view and reject targets outside the final viewport. Split captures if all controls cannot fit in one image.
+`fullPage` defaults to false. Full-page captures start at the document origin for consistent scroll coordinates. Viewport captures scroll the first marked element into view and reject targets outside the final viewport. Split captures if all controls cannot fit in one image. On zoomed mobile pages, target coordinates are transformed into final screenshot pixels; full-page and focus captures retain document CSS pixels.
 
-Original and annotated PNGs are masked before writing. Missing privacy selectors fail the capture. Masking is explicit; it is not automatic PII detection. A temporary style freezes CSS motion; annotations are rendered with an SVG layer and Sharp, without adding drawing elements to the application DOM.
+Original and annotated PNGs are masked before writing. Missing privacy selectors fail the capture. Masking is explicit; it is not automatic PII detection. CSS motion and running Web Animations are frozen before target measurement; previously paused Web Animations remain paused; annotations are rendered with an SVG layer and Sharp, without adding drawing elements to the application DOM.
 
 ## Reports and failures
 
@@ -128,4 +128,4 @@ Original and annotated PNGs are masked before writing. Missing privacy selectors
 
 The run status is failed if any scenario or exporter fails. Failed scenarios retain available screenshot evidence. No HTML, Markdown or PDF handbook is published for a failed run. An export failure appears in `exportError`. Preflight errors throw before launching the browser. Exported files appear under a unique run directory; previous runs are never reused as current evidence.
 
-Full-page screenshots are split into page-sized images in the PDF to preserve readability. HTML and Markdown use the complete image. `pdf-layout.json` records page count and rendering warnings from the Forme content audit. Standard fonts cover common Latin text; custom embedded fonts are needed for other scripts. The default document template uses English structural labels, with authored prose and browser/document language controlled by the config.
+Full-page screenshots are split into page-sized images in the PDF to preserve readability. HTML and Markdown use the complete image. `pdf-layout.json` records page count, rendering warnings from the Forme content audit, and each figure's exact pixel slice ranges. Legends appear alongside the slice containing their target. Very tall annotation groups may span slices; inspect the rendered pages. Standard fonts cover common Latin text; custom embedded fonts are needed for other scripts. The default document template uses English structural labels, with authored prose and browser/document language controlled by the config.

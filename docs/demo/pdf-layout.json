@@ -1,4 +1,46 @@
 {
   "pages": 8,
-  "warnings": []
+  "warnings": [],
+  "figures": [
+    {
+      "id": "01-01",
+      "slices": [
+        {
+          "top": 0,
+          "height": 900
+        }
+      ]
+    },
+    {
+      "id": "01-02",
+      "slices": [
+        {
+          "top": 0,
+          "height": 900
+        }
+      ]
+    },
+    {
+      "id": "01-03",
+      "slices": [
+        {
+          "top": 0,
+          "height": 519
+        }
+      ]
+    },
+    {
+      "id": "02-01",
+      "slices": [
+        {
+          "top": 0,
+          "height": 743
+        },
+        {
+          "top": 743,
+          "height": 743
+        }
+      ]
+    }
+  ]
 }

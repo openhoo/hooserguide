@@ -43,6 +43,16 @@ The same screenshots and legends are rendered through **pdfcn's Forme components
 
 **Explore the complete example:** [PDF](docs/demo/handbook.pdf) · [Markdown](docs/demo/handbook.md) · [HTML source](docs/demo/index.html) · [Execution report](docs/demo/report.json) · [BDD feature](examples/tasks.feature).
 
+## Alignment and layout review
+
+Version 0.2.1 corrects mobile viewport scaling, animation timing, overlapping reference badges and edge outlines. PDF captions paginate safely, and long screenshot slices keep annotation groups together where possible.
+
+These are real browser regression captures comparing the pinned 0.2.0 implementation with the corrected renderer:
+
+![Before and after: dense controls, paused animations and scaled mobile screenshots](docs/media/alignment-review.png)
+
+See the [review evidence and remaining limits](docs/review.md). Maintainers can reproduce this comparison with `npm run review:gallery`.
+
 ## New in 0.2
 
 - **Focused screenshots:** capture one form, panel or dialog with padding and aligned annotations.

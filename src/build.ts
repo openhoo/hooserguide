@@ -36,6 +36,7 @@ export async function build(sourceDirectory: string, input: BuildOptions = {}) {
         c.status !== 'passed' ||
         c.error ||
         !c.captures.length ||
+        !c.steps.length ||
         c.steps.some((s) => s.status !== 'passed' || s.error),
     )
   )

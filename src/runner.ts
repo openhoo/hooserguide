@@ -1,4 +1,4 @@
-import { chromium, firefox, webkit } from '@playwright/test';
+import { chromium, firefox, webkit, type BrowserContext } from '@playwright/test';
 import { glob, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -109,21 +109,22 @@ export async function run(input: Config): Promise<RunResult> {
         steps: [],
       };
       report.chapters.push(chapter);
-      const context = await browser.newContext({
-        baseURL: config.baseURL,
-        viewport: profile.viewport,
-        deviceScaleFactor: profile.deviceScaleFactor,
-        isMobile: profile.isMobile,
-        hasTouch: profile.hasTouch,
-        colorScheme: profile.colorScheme,
-        storageState: config.storageState,
-        reducedMotion: 'reduce',
-        locale: config.language ?? 'en',
-      });
-      const page = await context.newPage();
-      page.setDefaultTimeout(config.timeoutMs ?? 10000);
-      page.setDefaultNavigationTimeout(config.timeoutMs ?? 10000);
+      let context: BrowserContext | undefined;
       try {
+        context = await browser.newContext({
+          baseURL: config.baseURL,
+          viewport: profile.viewport,
+          deviceScaleFactor: profile.deviceScaleFactor,
+          isMobile: profile.isMobile,
+          hasTouch: profile.hasTouch,
+          colorScheme: profile.colorScheme,
+          storageState: config.storageState,
+          reducedMotion: 'reduce',
+          locale: config.language ?? 'en',
+        });
+        const page = await context.newPage();
+        page.setDefaultTimeout(config.timeoutMs ?? 10000);
+        page.setDefaultNavigationTimeout(config.timeoutMs ?? 10000);
         for (const step of s.pickle.steps) {
           const started = performance.now();
           try {
@@ -171,11 +172,17 @@ export async function run(input: Config): Promise<RunResult> {
         report.status = 'failed';
         chapter.error = error instanceof Error ? error.message : String(error);
       } finally {
-        await context.close();
+        await context?.close();
       }
     }
+  } catch (error) {
+    await rm(staging, { recursive: true, force: true });
+    throw error;
   } finally {
-    await browser.close();
+    await browser.close().catch(async (error) => {
+      await rm(staging, { recursive: true, force: true });
+      throw error;
+    });
   }
   return publishReport(report, staging, config.output, config.pdf !== false);
 }

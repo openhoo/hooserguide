@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "title": "HooTasks — User guide",
   "language": "en",
-  "generatedAt": "2026-10-02T12:22:36.992Z",
+  "generatedAt": "2026-10-02T12:46:45.908Z",
   "status": "passed",
   "browser": "chromium",
   "viewport": {
@@ -70,7 +70,7 @@
               }
             }
           ],
-          "sha256": "6ee81c2b8fb1137c725bb4fe2f5097f9a37512fc0df3a77ad53826aa97e71a1e",
+          "sha256": "b06df522128e2c52e9854ed69ac4d74475ade482e164cd4bb9ca7ff557afdb54",
           "rawSha256": "321a554118cc0bce0103563916818c687e9207069669114edece197409373615"
         },
         {
@@ -107,7 +107,7 @@
               }
             }
           ],
-          "sha256": "c89bcb7f7acf8ec8c5cb3d7e5de181e17ddd12d0df4659042c49f3a3df1e1d93",
+          "sha256": "9964614988eb986f78644a86fee10eca6a2603d6f6d010d51008958e48211517",
           "rawSha256": "9033586700735d312b229350920422830d9abf56bbf3d1e91dfe9182f0be3f82"
         },
         {
@@ -163,7 +163,7 @@
             "width": 576,
             "height": 519
           },
-          "sha256": "daa3f0f4fec89d4a0bb68c9f81fdd81b27107add2840d348092fbdb3139c4f8c",
+          "sha256": "8d61a6f34634c21e3c5ea3b2761cd0e1903c6e7b10b289e43d64ee9f7f1b3927",
           "rawSha256": "eaf40b62fa59adcda78ed1117f479f4658906423dbe62601f288b15faca64346"
         }
       ],
@@ -171,12 +171,12 @@
         {
           "text": "I open \"/\"",
           "status": "passed",
-          "durationMs": 17
+          "durationMs": 7
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
           "status": "passed",
-          "durationMs": 28
+          "durationMs": 12
         },
         {
           "text": "I explain \"Enter a clear task title and choose its priority.\"",
@@ -186,22 +186,22 @@
         {
           "text": "I capture \"Fill in the task details\"",
           "status": "passed",
-          "durationMs": 189
+          "durationMs": 188
         },
         {
           "text": "I fill \"label=Task title\" with \"Prepare the launch checklist\"",
           "status": "passed",
-          "durationMs": 14
+          "durationMs": 7
         },
         {
           "text": "I select \"high\" in \"label=Priority\"",
           "status": "passed",
-          "durationMs": 3
+          "durationMs": 2
         },
         {
           "text": "I click \"role=button:Create task\"",
           "status": "passed",
-          "durationMs": 37
+          "durationMs": 28
         },
         {
           "text": "\"role=status:Task result\" has text \"Task created successfully.\"",
@@ -221,12 +221,12 @@
         {
           "text": "I capture \"Check the saved task\"",
           "status": "passed",
-          "durationMs": 132
+          "durationMs": 155
         },
         {
           "text": "I capture \"Task form in detail\"",
           "status": "passed",
-          "durationMs": 121
+          "durationMs": 156
         }
       ]
     },
@@ -277,7 +277,7 @@
               }
             }
           ],
-          "sha256": "b8c19bb802fb9122b9db55f43275de8798514b3d8023f93272053c09692264f7",
+          "sha256": "bd6af8d259c78e9902d81513e8d4757b5f0e8c029b6e43c66e01f80f49fbc2bc",
           "rawSha256": "17db28a0b497be30dff2ec3a9af9631fa24b4e416f0f46b7da031d417ea01704"
         }
       ],
@@ -295,12 +295,12 @@
         {
           "text": "I scroll to \"label=Email notifications\"",
           "status": "passed",
-          "durationMs": 40
+          "durationMs": 38
         },
         {
           "text": "I check \"label=Email notifications\"",
           "status": "passed",
-          "durationMs": 34
+          "durationMs": 36
         },
         {
           "text": "\"label=Email notifications\" is checked",
@@ -310,7 +310,7 @@
         {
           "text": "I click \"role=button:Save preferences\"",
           "status": "passed",
-          "durationMs": 31
+          "durationMs": 32
         },
         {
           "text": "\"role=status:Preferences result\" has text \"Preferences saved.\"",
@@ -325,7 +325,7 @@
         {
           "text": "I capture \"Workspace preferences\"",
           "status": "passed",
-          "durationMs": 171
+          "durationMs": 150
         }
       ]
     }

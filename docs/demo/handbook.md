@@ -1,6 +1,6 @@
 # HooTasks — User guide
 
-Generated: 2026-10-02T12:22:36.992Z
+Generated: 2026-10-02T12:46:45.908Z
 
 ## 1. Create your first task
 

@@ -27,6 +27,7 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
         features: ['welcome.feature'],
         output: 'out',
         pdf: false,
+        timeoutMs: 500,
       }),
     );
     const transport = new StdioClientTransport({
@@ -77,6 +78,12 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
     );
     const prompt = await client.getPrompt({ name: 'author-user-guide' });
     assert.equal(prompt.messages[0]!.role, 'user');
+    await writeFile(
+      join(root, 'welcome.feature'),
+      'Feature: Welcome\n Scenario: Failed attempt\n  Given I open "/"\n  Then "#missing" is visible\n  And I capture "Missing"\n',
+    );
+    const failed = await client.callTool({ name: 'hooserguide_generate', arguments: {} });
+    assert.equal(failed.isError, true);
     const rebuilt = await client.callTool({
       name: 'hooserguide_rebuild',
       arguments: { pdf: false },

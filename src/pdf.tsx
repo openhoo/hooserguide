@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ReactNode } from 'react';
-import { Document, Page, Fixed, View } from '@formepdf/react';
+import { Document, Page, Fixed, View, Strong } from '@formepdf/react';
 import { renderDocumentWithLayout } from '@formepdf/core';
 import sharp from 'sharp';
 import { PdfcnThemeProvider } from './pdfcn/components/pdf/theme-provider.js';
@@ -12,6 +12,8 @@ import { PdfImage } from './pdfcn/components/pdf/pdf-image/pdf-image.js';
 import { PageNumber } from './pdfcn/components/pdf/page-number/page-number.js';
 import type { RunReport } from './types.js';
 import { brandingSchema } from './config.js';
+import { planImageSlices } from './pdf-slices.js';
+import { badgeTextColor } from './annotations.js';
 
 const theme = {
   ...professionalTheme,
@@ -35,6 +37,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
   const accent = branding.accentColor ?? '#075e59';
   const documentTheme = { ...theme, colors: { ...theme.colors, primary: accent } };
   const pages: ReactNode[] = [];
+  const figures: { id: string; slices: { top: number; height: number }[] }[] = [];
   const footer = (
     <Fixed position="footer">
       <View style={{ borderTopWidth: 1, borderColor: '#dce5e9', paddingTop: 10 }}>
@@ -95,10 +98,10 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
       const scaledHeight = (capture.height * pageWidth) / capture.width;
       const imageBudget = scaledHeight <= 460 ? 460 : 400;
       const maxSliceHeight = Math.max(1, Math.floor((imageBudget * capture.width) / pageWidth));
-      const total = Math.ceil(capture.height / maxSliceHeight);
-      for (let slice = 0; slice < total; slice++) {
-        const top = slice * maxSliceHeight,
-          height = Math.min(maxSliceHeight, capture.height - top);
+      const slices = planImageSlices(capture, maxSliceHeight);
+      const total = slices.length;
+      figures.push({ id: capture.id, slices });
+      for (const [slice, { top, height }] of slices.entries()) {
         const data = await sharp(image)
           .extract({ left: 0, top, width: capture.width, height })
           .png()
@@ -124,22 +127,30 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
               height={(height * pageWidth) / capture.width}
               fit="contain"
             />
-            {slice === total - 1 ? (
-              <View style={{ marginTop: 16 }}>
-                {capture.marks
-                  .filter((m) => m.label || m.caption)
-                  .map((m, n) => (
-                    <View key={n} style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
-                      <Text variant="sm" noMargin weight="bold" color={m.color ?? '#e11d48'}>
-                        {m.label ?? String(n + 1)}
-                      </Text>
-                      <Text variant="sm" noMargin style={{ flex: 1 }}>
-                        {m.caption ?? ''}
-                      </Text>
-                    </View>
-                  ))}
-              </View>
-            ) : null}
+            {capture.marks
+              .filter(
+                (m) =>
+                  (m.label || m.caption) &&
+                  m.bounds.y < top + height &&
+                  m.bounds.y + m.bounds.height > top,
+              )
+              .map((m, n) => (
+                <Text key={n} variant="sm" style={{ marginTop: n === 0 ? 16 : 0 }}>
+                  {m.label ? (
+                    <Strong
+                      style={{
+                        color:
+                          badgeTextColor(m.color ?? '#e11d48') === '#ffffff'
+                            ? (m.color ?? '#e11d48')
+                            : '#142636',
+                      }}
+                    >
+                      {m.label} ·{' '}
+                    </Strong>
+                  ) : null}
+                  {m.caption ?? ''}
+                </Text>
+              ))}
             {footer}
           </Page>,
         );
@@ -161,7 +172,11 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
   const result = await renderDocumentWithLayout(doc, { auditContent: true });
   await writeFile(
     join(directory, 'pdf-layout.json'),
-    JSON.stringify({ pages: result.layout.pages.length, warnings: result.warnings }, null, 2),
+    JSON.stringify(
+      { pages: result.layout.pages.length, warnings: result.warnings, figures },
+      null,
+      2,
+    ),
   );
   if (result.warnings.some((w) => w.startsWith('render defect:')))
     throw new Error(`PDF content audit failed: ${result.warnings.join('; ')}`);

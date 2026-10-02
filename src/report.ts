@@ -38,18 +38,16 @@ export const reportSchema = z
             status: z.enum(['passed', 'failed']),
             error: z.string().optional(),
             instructions: z.array(z.string()),
-            steps: z
-              .array(
-                z
-                  .object({
-                    text: z.string(),
-                    status: z.enum(['passed', 'failed']),
-                    error: z.string().optional(),
-                    durationMs: z.number().nonnegative().optional(),
-                  })
-                  .strict(),
-              )
-              .min(1),
+            steps: z.array(
+              z
+                .object({
+                  text: z.string(),
+                  status: z.enum(['passed', 'failed']),
+                  error: z.string().optional(),
+                  durationMs: z.number().nonnegative().optional(),
+                })
+                .strict(),
+            ),
             captures: z.array(
               z
                 .object({

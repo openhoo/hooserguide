@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.1
+
+- Correct mobile screenshot geometry on pages without a viewport meta tag.
+- Freeze Web Animations before measuring targets rather than fast-forwarding during capture.
+- Avoid reference badge collisions, separate adjacent outlines, fix edge padding and preserve explicit arrow origins.
+- Paint automatic numbers for captioned marks without labels; legacy rebuilds no longer invent absent references.
+- Improve custom-color reference contrast and prevent narrow-screen overflow with long titles, branding and captions.
+- Balance PDF screenshot slices, keep annotation groups together where possible, and show matching legends on each slice.
+- Fix off-page rendering of long PDF legends using native inline text runs.
+- Reject command-specific flags that were previously ignored; allow profile overrides to replace invalid defaults.
+- Preflight init conflicts and URLs before writing project files.
+- Publish failed browser-context setup evidence and clean temporary runs on unexpected failures.
+- Retain the last successful MCP evidence for rebuilds after a failed generation.
+- Add browser, geometry, accessibility and long-document regression tests plus reproducible before/after screenshots.
+
 ## 0.2.0 — 2026-10-02
 
 - Focused element screenshots with padding, automatic numeric/alphabetical references and original-image hashes.

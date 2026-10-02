@@ -40,13 +40,13 @@ command = "node"
 args = ["/absolute/path/hooserguide/dist/cli.js", "mcp", "--config", "/absolute/path/project/hooserguide.config.json"]
 ```
 
-| Tool                          | Purpose                                                                                |
-| ----------------------------- | -------------------------------------------------------------------------------------- |
-| `hooserguide_steps`           | List built-in and custom step patterns, descriptions and examples                      |
-| `hooserguide_rebuild`         | Re-export the latest successful run without opening the application                    |
-| `hooserguide_validate`        | Parse features and check every step and capture definition without opening the browser |
-| `hooserguide_generate`        | Run authorized workflows; export PDF, HTML, Markdown and evidence                      |
-| `hooserguide_inspect_capture` | Return the latest run's screenshot and metadata to the agent for visual review         |
+| Tool                          | Purpose                                                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `hooserguide_steps`           | List built-in and custom step patterns, descriptions and examples                                                  |
+| `hooserguide_rebuild`         | Re-export the latest successful run (retained even after a newer generation fails) without opening the application |
+| `hooserguide_validate`        | Parse features and check every step and capture definition without opening the browser                             |
+| `hooserguide_generate`        | Run authorized workflows; export PDF, HTML, Markdown and evidence                                                  |
+| `hooserguide_inspect_capture` | Return the latest run's screenshot and metadata to the agent for visual review                                     |
 
 Generation and validation accept an optional `profile` argument. Rebuild accepts an optional `pdf` boolean and uses current config branding. The `author-user-guide` MCP prompt explains the authoring workflow. The agent uses its existing browser/file tools to inspect the target and write feature files. Hooserguide has no embedded LLM or provider credentials. The MCP server is pinned to one local config and refuses overlapping generation runs. Step plugins are trusted executable code. Generation can mutate the target app according to the spec, so the MCP tool advertises that behavior.
 

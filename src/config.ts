@@ -99,7 +99,13 @@ export function resolveConfig(input: unknown, root = process.cwd()): Config {
     plugins: c.plugins?.map((p) => resolve(root, p)),
   };
 }
-export async function loadConfig(path = 'hooserguide.config.json'): Promise<Config> {
+export async function loadConfig(
+  path = 'hooserguide.config.json',
+  overrides: Partial<Pick<Config, 'profile' | 'output' | 'headed' | 'pdf'>> = {},
+): Promise<Config> {
   const absolute = resolve(path);
-  return resolveConfig(JSON.parse(await readFile(absolute, 'utf8')), dirname(absolute));
+  return resolveConfig(
+    { ...JSON.parse(await readFile(absolute, 'utf8')), ...overrides },
+    dirname(absolute),
+  );
 }

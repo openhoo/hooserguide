@@ -15,9 +15,9 @@ const help = `hooserguide — verified user guides from BDD + Playwright + pdfcn
 
 Usage:
   hooserguide init [directory] --base-url http://localhost:3000 [--skills]
-  hooserguide validate [--config hooserguide.config.json] [--json]
+  hooserguide validate [--config hooserguide.config.json] [--profile mobile] [--json]
   hooserguide steps [--config hooserguide.config.json] [--json]
-  hooserguide run [--config hooserguide.config.json] [--profile mobile] [--headed] [--no-pdf] [--json]
+  hooserguide run [--config hooserguide.config.json] [--profile mobile] [--output output/guides] [--headed] [--no-pdf] [--json]
   hooserguide build <run-directory> [--output output/rebuilt] [--config hooserguide.config.json] [--no-pdf] [--json]
   hooserguide demo [--output output/demo] [--json]
   hooserguide mcp [--config hooserguide.config.json]
@@ -57,6 +57,18 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     throw new Error(`Unknown command ${command}. Use --help.`);
   if (positionals.length > (['init', 'build'].includes(command) ? 2 : 1))
     throw new Error('Unexpected positional argument. Use --help.');
+  const allowed: Record<string, string[]> = {
+    init: ['base-url', 'skills', 'json'],
+    validate: ['config', 'profile', 'json'],
+    steps: ['config', 'json'],
+    run: ['config', 'profile', 'output', 'headed', 'no-pdf', 'json'],
+    build: ['config', 'output', 'no-pdf', 'json'],
+    demo: ['output', 'json'],
+    mcp: ['config'],
+  };
+  for (const flag of Object.keys(values))
+    if (!allowed[command]!.includes(flag))
+      throw new Error(`--${flag} is not supported by ${command}`);
   const configPath = resolve(values.config ?? 'hooserguide.config.json');
   if (command === 'steps') {
     const steps = (
@@ -86,10 +98,9 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     return;
   }
   if (command === 'validate') {
-    const result = await validate({
-      ...(await loadConfig(configPath)),
-      ...(values.profile ? { profile: values.profile } : {}),
-    });
+    const result = await validate(
+      await loadConfig(configPath, values.profile ? { profile: values.profile } : {}),
+    );
     console.log(
       values.json
         ? JSON.stringify(result)
@@ -106,13 +117,14 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
         })
       : command === 'demo'
         ? await demo(resolve(values.output ?? 'output/demo'))
-        : await run({
-            ...(await loadConfig(configPath)),
-            ...(values.headed ? { headed: true } : {}),
-            ...(values['no-pdf'] ? { pdf: false } : {}),
-            ...(values.profile ? { profile: values.profile } : {}),
-            ...(values.output ? { output: resolve(values.output) } : {}),
-          });
+        : await run(
+            await loadConfig(configPath, {
+              ...(values.headed ? { headed: true } : {}),
+              ...(values['no-pdf'] ? { pdf: false } : {}),
+              ...(values.profile ? { profile: values.profile } : {}),
+              ...(values.output ? { output: resolve(values.output) } : {}),
+            }),
+          );
   const summary = {
     status: result.report.status,
     profile: result.report.profile,

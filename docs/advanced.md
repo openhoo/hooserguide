@@ -23,7 +23,7 @@ And I capture "Task form in detail"
 
 The browser first captures a masked full-page buffer and Sharp extracts the desired region. This keeps coordinates consistent at high DPI and after scrolling; very large documents still have the browser's full-page capture limits.
 
-`autoLabels: "letters"` generates A, B, … Z, AA, AB, …; `"numbers"` generates 1, 2, 3, …. Explicit labels are retained and skipped by the automatic sequence. Duplicate explicit labels fail validation. Numbers and letters are scoped to each screenshot, and captions become matching HTML/PDF/Markdown legends.
+`autoLabels: "letters"` generates A, B, … Z, AA, AB, …; `"numbers"` generates 1, 2, 3, …. Explicit labels are retained and skipped by the automatic sequence. Without `autoLabels`, captioned marks still receive missing numeric references, while marks without captions or labels remain unnumbered. Duplicate explicit labels fail validation. Numbers and letters are scoped to each screenshot, and captions become matching HTML/PDF/Markdown legends.
 
 ![Focused screenshot with automatically assigned references](demo/screenshots/01-03.png)
 

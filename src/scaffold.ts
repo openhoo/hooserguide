@@ -1,6 +1,7 @@
 import { mkdir, writeFile, access, cp } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveConfig } from './config.js';
 
 export const starterFeature = `@manual
 Feature: Your application
@@ -24,6 +25,19 @@ Feature: Your application
 export async function init(directory: string, baseURL = 'http://localhost:3000', skills = false) {
   const root = resolve(directory);
   const paths = ['hooserguide.config.json', 'features/get-started.feature'];
+  resolveConfig({ title: 'New guide', baseURL, features: ['features/*.feature'] });
+  if (skills) {
+    for (const name of ['hooserguide-author', 'hooserguide-review']) {
+      const destination = join(root, '.agents', 'skills', name);
+      if (
+        await access(destination).then(
+          () => true,
+          () => false,
+        )
+      )
+        throw new Error(`Skill already exists: ${destination}`);
+    }
+  }
   for (const path of paths) {
     const exists = await access(join(root, path)).then(
       () => true,
