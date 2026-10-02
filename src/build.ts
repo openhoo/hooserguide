@@ -23,7 +23,12 @@ const buildOptionsSchema = z
   .strict();
 const sha256 = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
 
-export async function build(sourceDirectory: string, input: BuildOptions = {}) {
+export async function build(
+  sourceDirectory: string,
+  input: BuildOptions = {},
+  controls: { signal?: AbortSignal } = {},
+) {
+  if (controls.signal?.aborted) throw new Error('Build cancelled');
   const options = buildOptionsSchema.parse(input);
   const source = await realpath(resolve(sourceDirectory));
   const reportBytes = await readFile(join(source, 'report.json'));
@@ -60,6 +65,7 @@ export async function build(sourceDirectory: string, input: BuildOptions = {}) {
     await mkdir(join(staging, 'screenshots'));
     for (const chapter of report.chapters)
       for (const capture of chapter.captures) {
+        if (controls.signal?.aborted) throw new Error('Build cancelled');
         if (
           ids.has(capture.id) ||
           paths.has(capture.image) ||
@@ -107,7 +113,7 @@ export async function build(sourceDirectory: string, input: BuildOptions = {}) {
     report.rebuiltAt = new Date().toISOString();
     report.sourceReportSha256 = sha256(reportBytes);
     if (options.branding) report.branding = { ...report.branding, ...options.branding };
-    return await publishReport(report, staging, output, options.pdf ?? true);
+    return await publishReport(report, staging, output, options.pdf ?? true, controls.signal);
   } catch (error) {
     await rm(staging, { recursive: true, force: true });
     throw error;

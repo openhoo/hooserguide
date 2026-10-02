@@ -2,6 +2,8 @@ import { execFileSync } from 'node:child_process';
 import { mkdtemp, writeFile, rm, access, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
 const root = await mkdtemp(join(tmpdir(), 'hooserguide-package-'));
 let tarball;
@@ -36,6 +38,28 @@ try {
     stdio: 'pipe',
   });
   await access(join(root, 'docs/guide/.agents/skills/hooserguide-author/SKILL.md'));
+  await access(join(root, 'docs/guide/.agents/skills/hooserguide-author/references/authoring.md'));
+  await access(
+    join(root, 'docs/guide/.agents/skills/hooserguide-review/references/mcp-workflow.md'),
+  );
+  const mcp = new Client({ name: 'installed-package-test', version: '1.0.0' });
+  try {
+    await mcp.connect(
+      new StdioClientTransport({
+        command: binary,
+        args: ['mcp', '--config', join(root, 'docs/guide/hooserguide.config.json')],
+        stderr: 'pipe',
+      }),
+    );
+    if ((await mcp.listTools()).tools.length !== 7) throw new Error('Installed MCP tools missing');
+    const status = await mcp.callTool({ name: 'hooserguide_status', arguments: {} });
+    if (status.isError || status.structuredContent?.status !== 'passed')
+      throw new Error('Installed MCP status failed');
+    const validation = await mcp.callTool({ name: 'hooserguide_validate', arguments: {} });
+    if (validation.isError) throw new Error('Installed MCP validation failed');
+  } finally {
+    await mcp.close();
+  }
   const demo = JSON.parse(
     execFileSync(binary, ['demo', '--output', 'out', '--json'], { cwd: root, encoding: 'utf8' }),
   );
@@ -53,7 +77,7 @@ try {
   if (!evidence.rebuiltAt || !evidence.sourceReportSha256)
     throw new Error('Rebuild provenance is missing');
   console.log(
-    '✓ Installed tarball: bin, init, skills, step discovery, validation, browser capture, rebuild and pdfcn PDF verified',
+    '✓ Installed tarball: bin, init, skills with references, MCP stdio, step discovery, validation, browser capture, rebuild and pdfcn PDF verified',
   );
 } finally {
   await rm(root, { recursive: true, force: true });

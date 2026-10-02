@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.2 — 2026-10-02
+
+- Add MCP project status and exact run inspection, seven strict tool contracts and a review prompt.
+- Persist run selection across server restarts; pin `runId` for inspection/rebuild and recover successful evidence after newer failures.
+- Inspect annotated and masked raw screenshots with hash, PNG dimension, size and path containment checks.
+- Add structured domain errors with repair hints, progress notifications, cancellation and serialized generation/rebuild.
+- Keep plugin console diagnostics on stderr so stdio protocol messages remain valid.
+- Rewrite author/review skills with concise workflows, self-contained references, exact-run review and cancellation guidance.
+- Add real stdio regression coverage for restart selection, tampering, symlink escapes, strict schemas, noisy plugins and cancellation cleanup.
+
 ## 0.2.1
 
 - Correct mobile screenshot geometry on pages without a viewport meta tag.

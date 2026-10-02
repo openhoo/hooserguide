@@ -1,4 +1,4 @@
-export { run, validate, loadRegistry, type RunResult } from './runner.js';
+export { run, validate, loadRegistry, type RunResult, type RunOptions } from './runner.js';
 export { loadConfig, defineConfig, resolveConfig, selectProfile } from './config.js';
 export { build, type BuildOptions } from './build.js';
 export { captureScreenshot, overlay, assignLabels } from './capture.js';

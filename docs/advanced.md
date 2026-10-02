@@ -116,4 +116,4 @@ const result = await build('output/guides/run-<timestamp>-<id>', {
 if (result.report.status !== 'passed') throw new Error(result.report.exportError);
 ```
 
-MCP clients call `hooserguide_steps` for the catalogue, pass `profile` to generation/validation, and call `hooserguide_rebuild` to export the latest successful run with current project branding. Rebuild does not require application access.
+MCP clients start with `hooserguide_status` and `hooserguide_steps`, pass the same `profile` to generation/validation, and pin the returned `runId` in inspection/rebuild calls. `hooserguide_rebuild` re-exports selected successful evidence with current project branding. Rebuild does not require application access.

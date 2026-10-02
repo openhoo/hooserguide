@@ -1,6 +1,6 @@
 {
   "name": "@openhoo/hooserguide",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "description": "Evidence-backed user manuals from Gherkin, Playwright and annotated screenshots",
   "bin": {

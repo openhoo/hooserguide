@@ -163,7 +163,7 @@ Minimal MCP configuration:
 }
 ```
 
-MCP exposes `hooserguide_steps`, `hooserguide_validate`, `hooserguide_generate`, `hooserguide_inspect_capture`, `hooserguide_rebuild` and an `author-user-guide` prompt. The server stays attached to the project config selected at startup.
+MCP exposes seven tools: project status, step discovery, validation, generation, exact run inspection, verified screenshot inspection and rebuild. Both `author-user-guide` and `review-user-guide` prompts guide agents through the workflow. Save the returned `runId` and pin it when reviewing annotated/raw screenshots or rebuilding; selection survives restarts. Generation supports progress and cancellation. See [MCP contracts and examples](docs/integration.md#recommended-agent-workflow). The server stays attached to the project config selected at startup.
 
 ```ts
 import { loadConfig, run } from '@openhoo/hooserguide';

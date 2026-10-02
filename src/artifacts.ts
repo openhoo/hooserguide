@@ -11,11 +11,14 @@ export async function publishReport(
   staging: string,
   output: string,
   pdf = true,
+  signal?: AbortSignal,
 ): Promise<RunResult> {
   if (report.status === 'passed') {
     try {
+      if (signal?.aborted) throw new Error('Export cancelled');
       if (pdf) await renderPdf(report, staging);
       await renderManual(report, staging);
+      if (signal?.aborted) throw new Error('Export cancelled');
     } catch (error) {
       report.status = 'failed';
       report.exportError = error instanceof Error ? error.message : String(error);

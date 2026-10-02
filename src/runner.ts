@@ -71,9 +71,31 @@ export async function validate(input: Config) {
 }
 
 export type { RunResult } from './types.js';
-export async function run(input: Config): Promise<RunResult> {
+export interface RunOptions {
+  signal?: AbortSignal;
+  /** Best-effort observer; callback errors do not fail or invalidate a run. */
+  onProgress?: (progress: {
+    completed: number;
+    total: number;
+    phase: 'executing' | 'exporting' | 'complete';
+  }) => Promise<void> | void;
+}
+export async function run(input: Config, options: RunOptions = {}): Promise<RunResult> {
+  if (options.signal?.aborted) throw new Error('Run cancelled');
   const config = resolveConfig(input);
   const { registry, scenarios } = await prepare(config);
+  if (options.signal?.aborted) throw new Error('Run cancelled');
+  const total = scenarios.reduce((n, s) => n + s.pickle.steps.length, 0) + 1;
+  let completed = 0;
+  const progress = async (phase: 'executing' | 'exporting' | 'complete', count = completed) => {
+    try {
+      await options.onProgress?.({ completed: count, total, phase });
+    } catch {
+      /* Observers cannot invalidate execution evidence. */
+    }
+  };
+  await progress('executing');
+  if (options.signal?.aborted) throw new Error('Run cancelled');
   const profile = selectProfile(config);
   await mkdir(config.output, { recursive: true });
   const staging = await mkdtemp(join(config.output, '.run-'));
@@ -95,6 +117,11 @@ export async function run(input: Config): Promise<RunResult> {
     await rm(staging, { recursive: true, force: true });
     throw error;
   });
+  const cancel = () => {
+    void browser.close().catch(() => {});
+  };
+  options.signal?.addEventListener('abort', cancel, { once: true });
+  if (options.signal?.aborted) cancel();
   try {
     for (const s of scenarios) {
       const chapter: Chapter = {
@@ -111,6 +138,7 @@ export async function run(input: Config): Promise<RunResult> {
       report.chapters.push(chapter);
       let context: BrowserContext | undefined;
       try {
+        if (options.signal?.aborted) throw new Error('Run cancelled');
         context = await browser.newContext({
           baseURL: config.baseURL,
           viewport: profile.viewport,
@@ -128,6 +156,7 @@ export async function run(input: Config): Promise<RunResult> {
         for (const step of s.pickle.steps) {
           const started = performance.now();
           try {
+            if (options.signal?.aborted) throw new Error('Run cancelled');
             await registry.execute({
               page,
               step,
@@ -155,7 +184,11 @@ export async function run(input: Config): Promise<RunResult> {
               durationMs: Math.round(performance.now() - started),
             });
           } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
+            const message = options.signal?.aborted
+              ? 'Run cancelled'
+              : error instanceof Error
+                ? error.message
+                : String(error);
             chapter.steps.push({
               text: step.text,
               status: 'failed',
@@ -163,6 +196,9 @@ export async function run(input: Config): Promise<RunResult> {
               durationMs: Math.round(performance.now() - started),
             });
             throw error;
+          } finally {
+            completed++;
+            await progress('executing');
           }
         }
         if (!chapter.captures.length)
@@ -170,19 +206,41 @@ export async function run(input: Config): Promise<RunResult> {
       } catch (error) {
         chapter.status = 'failed';
         report.status = 'failed';
-        chapter.error = error instanceof Error ? error.message : String(error);
+        chapter.error = options.signal?.aborted
+          ? 'Run cancelled'
+          : error instanceof Error
+            ? error.message
+            : String(error);
       } finally {
-        await context?.close();
+        await context?.close().catch((error) => {
+          if (!options.signal?.aborted) throw error;
+        });
       }
+      if (options.signal?.aborted) break;
     }
   } catch (error) {
     await rm(staging, { recursive: true, force: true });
     throw error;
   } finally {
+    options.signal?.removeEventListener('abort', cancel);
     await browser.close().catch(async (error) => {
       await rm(staging, { recursive: true, force: true });
       throw error;
     });
   }
-  return publishReport(report, staging, config.output, config.pdf !== false);
+  await progress('exporting');
+  try {
+    const result = await publishReport(
+      report,
+      staging,
+      config.output,
+      config.pdf !== false,
+      options.signal,
+    );
+    await progress('complete', completed + 1);
+    return result;
+  } catch (error) {
+    await rm(staging, { recursive: true, force: true });
+    throw error;
+  }
 }
