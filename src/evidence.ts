@@ -12,7 +12,7 @@ export const runIdSchema = z
   .describe(
     'Directory basename returned as runId; only runs under the configured output are allowed.',
   );
-export class McpToolError extends Error {
+export class GuideError extends Error {
   constructor(
     public code: string,
     message: string,
@@ -29,14 +29,14 @@ async function artifactPath(directory: string, path: string, maxBytes: number) {
     actual = await realpath(join(root, path)),
     rel = relative(root, actual);
   if (rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel))
-    throw new McpToolError(
+    throw new GuideError(
       'UNSAFE_PATH',
       'Artifact resolves outside its run directory.',
       'Use an original managed run without escaping symlinks.',
     );
   const info = await stat(actual);
   if (!info.isFile() || info.size > maxBytes)
-    throw new McpToolError(
+    throw new GuideError(
       'ARTIFACT_TOO_LARGE',
       'Artifact is not a regular file or exceeds the tool size limit.',
       'Use local artifact tools for large files or create smaller focused captures.',
@@ -51,11 +51,16 @@ export async function loadManagedRun(output: string, runId: string): Promise<Run
   const root = await realpath(output),
     directory = await realpath(join(root, runId));
   if (dirname(directory) !== root || basename(directory) !== runId)
-    throw new McpToolError(
+    throw new GuideError(
       'UNSAFE_PATH',
       'Run resolves outside its managed location.',
       'Select a runId returned by hooserguide_status.',
     );
+  return loadRunDirectory(directory);
+}
+/** Load local run evidence with the same artifact containment gates as MCP. */
+export async function loadRunDirectory(path: string): Promise<RunResult> {
+  const directory = await realpath(path);
   const report = reportSchema.parse(
     JSON.parse((await readRunArtifact(directory, 'report.json')).toString('utf8')),
   ) as RunReport;
@@ -100,6 +105,10 @@ export function summarizeRun(result: RunResult) {
     profile: r.profile,
     viewport: r.viewport,
     exportError: r.exportError,
+    document: r.document,
+    manual: r.manual,
+    selection: r.selection,
+    skippedScenarios: r.skippedScenarios,
     chapters: r.chapters.map((c, i) => ({
       chapter: i + 1,
       title: c.title,
@@ -113,19 +122,20 @@ export async function verifiedCapture(
   result: RunResult,
   capture: Capture,
   variant: 'annotated' | 'raw',
+  maxBytes = 8 * 1024 * 1024,
 ) {
   const path = variant === 'raw' ? capture.raw : capture.image;
-  const bytes = await readRunArtifact(result.directory, path, 8 * 1024 * 1024);
+  const bytes = await readRunArtifact(result.directory, path, maxBytes);
   const expected = variant === 'raw' ? capture.rawSha256 : capture.sha256;
   if (expected && digest(bytes) !== expected)
-    throw new McpToolError(
+    throw new GuideError(
       'HASH_MISMATCH',
       'Screenshot differs from its execution report.',
       'Regenerate the guide or restore the original evidence; do not review this image as verified.',
     );
   const meta = await sharp(bytes).metadata();
   if (meta.format !== 'png' || meta.width !== capture.width || meta.height !== capture.height)
-    throw new McpToolError(
+    throw new GuideError(
       'INVALID_ARTIFACT',
       'Screenshot dimensions or format differ from the report.',
       'Use original evidence or regenerate the guide.',
@@ -136,4 +146,19 @@ export async function verifiedCapture(
     sha256: digest(bytes),
     path: join(result.directory, path),
   };
+}
+
+export async function inspectRun(directory: string) {
+  const run = await loadRunDirectory(directory);
+  let verifiedImages = 0,
+    legacyRawWithoutHash = 0;
+  for (const chapter of run.report.chapters)
+    for (const capture of chapter.captures) {
+      await verifiedCapture(run, capture, 'annotated', 64 * 1024 * 1024);
+      verifiedImages++;
+      const raw = await verifiedCapture(run, capture, 'raw', 64 * 1024 * 1024);
+      if (raw.hashVerified) verifiedImages++;
+      else legacyRawWithoutHash++;
+    }
+  return { ...summarizeRun(run), report: run.report, verifiedImages, legacyRawWithoutHash };
 }

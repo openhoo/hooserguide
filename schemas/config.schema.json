@@ -160,6 +160,94 @@
       "type": "string",
       "pattern": "^@[\\w-]+$"
     },
+    "tagExpression": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenario": {
+      "type": "string",
+      "minLength": 1
+    },
+    "failFast": {
+      "type": "boolean"
+    },
+    "document": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "productVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "audience": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "manual": {
+      "type": "object",
+      "properties": {
+        "pageSize": {
+          "type": "string",
+          "enum": [
+            "A4",
+            "Letter"
+          ]
+        },
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "portrait",
+            "landscape"
+          ]
+        },
+        "margin": {
+          "type": "number",
+          "minimum": 24,
+          "maximum": 72
+        },
+        "contents": {
+          "type": "boolean"
+        },
+        "showGeneratedAt": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "captureDefaults": {
+      "type": "object",
+      "properties": {
+        "fullPage": {
+          "type": "boolean"
+        },
+        "padding": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 500
+        },
+        "autoLabels": {
+          "type": "string",
+          "enum": [
+            "numbers",
+            "letters"
+          ]
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-f]{6}$"
+        }
+      },
+      "additionalProperties": false
+    },
     "language": {
       "default": "en",
       "type": "string",

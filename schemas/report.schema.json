@@ -85,6 +85,103 @@
       "type": "string",
       "pattern": "^[a-f0-9]{64}$"
     },
+    "document": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "productVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "audience": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "manual": {
+      "type": "object",
+      "properties": {
+        "pageSize": {
+          "type": "string",
+          "enum": [
+            "A4",
+            "Letter"
+          ]
+        },
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "portrait",
+            "landscape"
+          ]
+        },
+        "margin": {
+          "type": "number",
+          "minimum": 24,
+          "maximum": 72
+        },
+        "contents": {
+          "type": "boolean"
+        },
+        "showGeneratedAt": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "selection": {
+      "type": "object",
+      "properties": {
+        "tagExpression": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scenario": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "skippedScenarios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "feature": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "fail-fast",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "feature",
+          "source",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
     "chapters": {
       "minItems": 1,
       "type": "array",
@@ -123,6 +220,38 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          },
+          "prerequisites": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "callouts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "note",
+                    "tip",
+                    "warning"
+                  ]
+                },
+                "text": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "text"
+              ],
+              "additionalProperties": false
             }
           },
           "steps": {

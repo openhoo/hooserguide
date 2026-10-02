@@ -13,6 +13,7 @@ import { PageNumber } from './pdfcn/components/pdf/page-number/page-number.js';
 import type { RunReport } from './types.js';
 import { brandingSchema } from './config.js';
 import { planImageSlices } from './pdf-slices.js';
+import { manualLabels, pageGeometry } from './manual.js';
 import { badgeTextColor } from './annotations.js';
 
 const theme = {
@@ -28,7 +29,6 @@ const theme = {
     heading: { ...professionalTheme.typography.heading, fontFamily: 'Helvetica' },
   },
 };
-const pageWidth = 499.28; // A4 minus 48pt margins on each side.
 
 /** pdfcn components are vendored as intended by its registry model. */
 export async function renderPdf(report: RunReport, directory: string): Promise<void> {
@@ -36,59 +36,108 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
   const branding = brandingSchema.parse(report.branding ?? {});
   const accent = branding.accentColor ?? '#075e59';
   const documentTheme = { ...theme, colors: { ...theme.colors, primary: accent } };
+  const l = manualLabels(report.language);
+  const geometry = pageGeometry(report.manual);
+  const pageWidth = geometry.contentWidth;
+  const document = report.document ?? {};
+  const metadata = [
+    ...(document.version ? [`${l.version}: ${document.version}`] : []),
+    ...(document.productVersion ? [`${l.productVersion}: ${document.productVersion}`] : []),
+    ...(document.audience ? [`${l.audience}: ${document.audience}`] : []),
+    ...(report.manual?.showGeneratedAt !== false
+      ? [`${l.generated}: ${report.generatedAt.slice(0, 10)}`]
+      : []),
+    ...(report.manual?.showGeneratedAt !== false && report.rebuiltAt
+      ? [`${l.rebuilt}: ${report.rebuiltAt.slice(0, 10)}`]
+      : []),
+  ];
   const pages: ReactNode[] = [];
   const figures: { id: string; slices: { top: number; height: number }[] }[] = [];
+  // Register Fixed before flowing content so native overflow pages inherit the footer.
   const footer = (
     <Fixed position="footer">
       <View style={{ borderTopWidth: 1, borderColor: '#dce5e9', paddingTop: 10 }}>
         <Text variant="xs" color="mutedForeground" noMargin>
           {branding.name ?? 'hooserguide'} · {report.title}
         </Text>
-        <PageNumber align="right" size="xs" />
+        <PageNumber align="right" size="xs" format={l.pageNumber} />
       </View>
     </Fixed>
   );
   pages.push(
-    <Page key="cover" size="A4" margin={48}>
-      <View style={{ paddingTop: 88 }}>
+    <Page key="cover" size={geometry.size} margin={geometry.margin}>
+      {footer}
+      <View style={{ paddingTop: geometry.size.width > geometry.size.height ? 28 : 88 }}>
         <Text variant="sm" weight="bold" color="primary" transform="uppercase">
-          User guide
+          {l.guide}
         </Text>
         <Heading level={1} style={{ fontSize: 38, marginTop: 16 }}>
           {report.title}
         </Heading>
-        <Text color="mutedForeground">
-          {branding.subtitle ?? 'Verified walkthroughs with annotated screenshots.'}
-        </Text>
+        <Text color="mutedForeground">{branding.subtitle ?? l.subtitle}</Text>
         <View style={{ borderTopWidth: 3, borderColor: accent, marginTop: 28, paddingTop: 18 }}>
           <Text variant="sm">
-            Generated {report.generatedAt.slice(0, 10)} · {report.chapters.length} chapters
+            {report.chapters.length} {l.chapters}
           </Text>
+          {metadata.map((text, i) => (
+            <Text key={i} variant="sm">
+              {text}
+            </Text>
+          ))}
+          {document.summary ? <Text color="mutedForeground">{document.summary}</Text> : null}
         </View>
-        <Heading level={3}>Contents</Heading>
-        {report.chapters.map((c, i) => (
-          <Text key={i} variant="sm">
-            {i + 1}. {c.title}
-          </Text>
-        ))}
+        {report.manual?.contents !== false ? <Heading level={3}>{l.contents}</Heading> : null}
+        {report.manual?.contents !== false &&
+          report.chapters.map((c, i) => (
+            <Text key={i} variant="sm">
+              {i + 1}. {c.title}
+            </Text>
+          ))}
       </View>
-      {footer}
     </Page>,
   );
   for (const [i, chapter] of report.chapters.entries()) {
     pages.push(
-      <Page key={`chapter-${i}`} size="A4" margin={48}>
+      <Page key={`chapter-${i}`} size={geometry.size} margin={geometry.margin}>
+        {footer}
         <Text variant="sm" weight="bold" color="primary">
-          CHAPTER {String(i + 1).padStart(2, '0')}
+          {l.chapter.toUpperCase()} {String(i + 1).padStart(2, '0')}
         </Text>
         <Heading level={1}>{chapter.title}</Heading>
         <Text color="mutedForeground">{chapter.description}</Text>
+        {chapter.prerequisites?.length ? (
+          <>
+            <Heading level={3}>{l.prerequisites}</Heading>
+            {chapter.prerequisites.map((text, n) => (
+              <Text key={n} variant="sm">
+                {n + 1}. {text}
+              </Text>
+            ))}
+          </>
+        ) : null}
+        {(chapter.callouts ?? []).map((callout, n) => (
+          <View
+            key={`callout-${n}`}
+            wrap
+            style={{
+              padding: 14,
+              marginBottom: 12,
+              borderLeftWidth: 3,
+              borderColor: callout.kind === 'warning' ? '#b45309' : accent,
+              backgroundColor: callout.kind === 'warning' ? '#fffbeb' : '#f1f5f9',
+            }}
+          >
+            <Text variant="sm" noMargin>
+              <Strong>{l[callout.kind]}: </Strong>
+              {callout.text}
+            </Text>
+          </View>
+        ))}
         {chapter.instructions.map((text, n) => (
           <Text key={n}>
             {n + 1}. {text}
           </Text>
         ))}
-        {footer}
       </Page>,
     );
     for (const [j, capture] of chapter.captures.entries()) {
@@ -96,7 +145,8 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
       // Long screenshots are split into readable page-sized images, without shrinking or cropping content away.
       // A modestly taller single figure avoids a nearly empty continuation page.
       const scaledHeight = (capture.height * pageWidth) / capture.width;
-      const imageBudget = scaledHeight <= 460 ? 460 : 400;
+      const maximum = Math.min(460, Math.max(140, geometry.contentHeight - 240));
+      const imageBudget = scaledHeight <= maximum ? maximum : Math.max(100, maximum - 60);
       const maxSliceHeight = Math.max(1, Math.floor((imageBudget * capture.width) / pageWidth));
       const slices = planImageSlices(capture, maxSliceHeight);
       const total = slices.length;
@@ -107,10 +157,11 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
           .png()
           .toBuffer();
         pages.push(
-          <Page key={`figure-${i}-${j}-${slice}`} size="A4" margin={48}>
+          <Page key={`figure-${i}-${j}-${slice}`} size={geometry.size} margin={geometry.margin}>
+            {footer}
             <Text variant="xs" weight="bold" color="primary">
-              FIGURE {i + 1}.{j + 1}
-              {total > 1 ? ` · PART ${slice + 1}/${total}` : ''}
+              {l.figure.toUpperCase()} {i + 1}.{j + 1}
+              {total > 1 ? ` · ${l.part.toUpperCase()} ${slice + 1}/${total}` : ''}
             </Text>
             <Heading level={3} style={{ marginTop: 12 }}>
               {capture.title}
@@ -151,7 +202,6 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
                   {m.caption ?? ''}
                 </Text>
               ))}
-            {footer}
           </Page>,
         );
       }
@@ -173,7 +223,12 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
   await writeFile(
     join(directory, 'pdf-layout.json'),
     JSON.stringify(
-      { pages: result.layout.pages.length, warnings: result.warnings, figures },
+      {
+        pages: result.layout.pages.length,
+        warnings: result.warnings,
+        figures,
+        page: { ...geometry.size, margin: geometry.margin },
+      },
       null,
       2,
     ),

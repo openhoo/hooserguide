@@ -1,10 +1,25 @@
 # HooTasks — User guide
 
-Generated: 2026-10-02T12:46:45.908Z
+Guide version: 1.0
+Audience: Workspace members
+Generated: 2026-10-02
+
+Create, organize and verify tasks in your HooTasks workspace.
+
+## Contents
+
+1. Create your first task
+2. Customize workspace notifications
 
 ## 1. Create your first task
 
 HooTasks keeps your team's work organized. Create a task, verify the saved   result and adjust your workspace preferences with these short walkthroughs.
+
+### Prerequisites
+
+- Open your workspace with permission to create tasks.
+
+> **Tip:** Use a short title that describes the next action.
 
 1. Enter a clear task title and choose its priority.
 2. Select Create task. Check that the task appears in the list and that a confirmation is shown.
@@ -41,6 +56,10 @@ A focused view keeps the form readable and assigns references automatically.
 ## 2. Customize workspace notifications
 
 HooTasks keeps your team's work organized. Create a task, verify the saved   result and adjust your workspace preferences with these short walkthroughs.
+
+> **Note:** Preferences are configured separately from individual tasks.
+
+> **Warning:** Enable email notifications only for an account you control.
 
 1. Open Workspace preferences, enable Email notifications and select Save preferences.
 

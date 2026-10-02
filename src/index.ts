@@ -6,3 +6,7 @@ export { StepRegistry, builtinSteps, target } from './steps.js';
 export { renderManual } from './render.js';
 export { renderPdf } from './pdf.js';
 export type * from './types.js';
+
+export { compareRuns } from './compare.js';
+export { bundle } from './bundle.js';
+export { inspectRun } from './evidence.js';

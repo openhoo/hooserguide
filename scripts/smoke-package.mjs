@@ -51,7 +51,7 @@ try {
         stderr: 'pipe',
       }),
     );
-    if ((await mcp.listTools()).tools.length !== 7) throw new Error('Installed MCP tools missing');
+    if ((await mcp.listTools()).tools.length !== 9) throw new Error('Installed MCP tools missing');
     const status = await mcp.callTool({ name: 'hooserguide_status', arguments: {} });
     if (status.isError || status.structuredContent?.status !== 'passed')
       throw new Error('Installed MCP status failed');
@@ -66,16 +66,54 @@ try {
   if (demo.status !== 'passed') throw new Error('Installed package demo failed');
   for (const path of Object.values(demo.artifacts)) await access(path);
   const rebuilt = JSON.parse(
-    execFileSync(binary, ['build', demo.directory, '--output', 'rebuilt', '--json'], {
-      cwd: root,
-      encoding: 'utf8',
-    }),
+    execFileSync(
+      binary,
+      [
+        'build',
+        demo.directory,
+        '--output',
+        'rebuilt',
+        '--page-size',
+        'Letter',
+        '--orientation',
+        'landscape',
+        '--margin',
+        '36',
+        '--json',
+      ],
+      {
+        cwd: root,
+        encoding: 'utf8',
+      },
+    ),
   );
   if (rebuilt.status !== 'passed') throw new Error('Installed package rebuild failed');
   for (const path of Object.values(rebuilt.artifacts)) await access(path);
   const evidence = JSON.parse(await readFile(rebuilt.artifacts.report, 'utf8'));
+  if (
+    evidence.manual.pageSize !== 'Letter' ||
+    evidence.manual.orientation !== 'landscape' ||
+    evidence.manual.margin !== 36
+  )
+    throw new Error('Installed layout overrides failed');
   if (!evidence.rebuiltAt || !evidence.sourceReportSha256)
     throw new Error('Rebuild provenance is missing');
+  const comparison = JSON.parse(
+    execFileSync(binary, ['compare', demo.directory, rebuilt.directory, '--json'], {
+      cwd: root,
+      encoding: 'utf8',
+    }),
+  );
+  if (comparison.totals.changed || !comparison.totals.unchanged)
+    throw new Error('Installed comparison failed');
+  const inspected = JSON.parse(
+    execFileSync(binary, ['inspect', demo.directory, '--json'], { cwd: root, encoding: 'utf8' }),
+  );
+  if (!inspected.verifiedImages) throw new Error('Installed evidence inspection failed');
+  const archive = JSON.parse(
+    execFileSync(binary, ['bundle', rebuilt.directory, '--json'], { cwd: root, encoding: 'utf8' }),
+  );
+  await access(archive.path);
   console.log(
     '✓ Installed tarball: bin, init, skills with references, MCP stdio, step discovery, validation, browser capture, rebuild and pdfcn PDF verified',
   );

@@ -1,5 +1,13 @@
 import { z } from 'zod';
-import { brandingSchema, viewportSchema } from './config.js';
+import {
+  brandingSchema,
+  viewportSchema,
+  documentSchema,
+  manualSchema,
+  selectionSchema,
+  calloutSchema,
+  skippedSchema,
+} from './config.js';
 import { captureSchema } from './capture.js';
 
 const rectangle = z
@@ -26,6 +34,10 @@ export const reportSchema = z
     viewport: viewportSchema.optional(),
     rebuiltAt: z.iso.datetime().optional(),
     sourceReportSha256: hash.optional(),
+    document: documentSchema.optional(),
+    manual: manualSchema.optional(),
+    selection: selectionSchema.optional(),
+    skippedScenarios: z.array(skippedSchema).optional(),
     chapters: z
       .array(
         z
@@ -38,6 +50,8 @@ export const reportSchema = z
             status: z.enum(['passed', 'failed']),
             error: z.string().optional(),
             instructions: z.array(z.string()),
+            prerequisites: z.array(z.string().min(1)).optional(),
+            callouts: z.array(calloutSchema).optional(),
             steps: z.array(
               z
                 .object({

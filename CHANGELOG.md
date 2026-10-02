@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0 — 2026-10-02
+
+- Select workflows with official Cucumber tag expressions and case-insensitive scenario-name filters; retain actual selection in reports.
+- Stop optionally after the first failed scenario and record unstarted scenarios explicitly, including cancellation skips.
+- Add prerequisites plus note, tip and warning BDD steps, rendered with escaped prose in HTML, Markdown and PDF.
+- Add guide/product versions, audience and summary; localize guide controls and PDF labels/page numbers into German or English.
+- Configure A4/Letter PDFs, portrait/landscape orientation, margins, table of contents and date visibility; preserve settings during rebuild.
+- Apply global capture defaults for references, colors, focused padding and full-page screenshots with local overrides.
+- Register fixed PDF footers before content so they survive native overflow pagination.
+- Add offline HTML search, original/annotated image switching, keyboard-friendly controls and full-guide printing.
+- Add verified local inspection and run comparison via TypeScript, CLI and MCP; distinguish original pixels from annotation-definition changes.
+- Package successful manuals as portable ZIPs with masked evidence, sanitized report paths and a SHA-256 file manifest; never overwrite existing bundles.
+- Expand MCP to nine tools and read-only project/exact-artifact resources; update both agent skills and their references.
+- Add real-browser integration coverage, all four PDF geometries and new screenshot/PDF examples in the README.
+
 ## 0.2.2 — 2026-10-02
 
 - Add MCP project status and exact run inspection, seven strict tool contracts and a review prompt.

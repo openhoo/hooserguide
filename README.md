@@ -33,15 +33,15 @@ After the workflow runs, a second screenshot shows the asserted result:
 
 ## See the finished guide
 
-The HTML handbook includes chapter navigation, reference legends, mobile layout and print styles.
+The HTML handbook includes chapter navigation, offline search, annotated/original image switching, prerequisites and callouts, mobile layout and print controls.
 
 ![Generated HTML user guide with chapter navigation and annotated screenshot](docs/media/html-guide.png)
 
-The same screenshots and legends are rendered through **pdfcn's Forme components** into an A4 PDF with a cover, chapters, page numbers and readable slices for long screenshots.
+The same screenshots and legends are rendered through **pdfcn's Forme components** into a configurable A4 or Letter PDF, in portrait or landscape, with a cover, chapters, page numbers and readable slices for long screenshots.
 
 <p align="center"><img src="docs/media/pdf-annotated.png" width="660" alt="Actual pdfcn PDF page showing an annotated screenshot and its A, B and 1 reference legend"></p>
 
-**Explore the complete example:** [PDF](docs/demo/handbook.pdf) · [Markdown](docs/demo/handbook.md) · [HTML source](docs/demo/index.html) · [Execution report](docs/demo/report.json) · [BDD feature](examples/tasks.feature).
+**Explore the complete example:** [ZIP bundle](docs/demo/handbook.zip) · [PDF](docs/demo/handbook.pdf) · [Markdown](docs/demo/handbook.md) · [HTML source](docs/demo/index.html) · [Execution report](docs/demo/report.json) · [BDD feature](examples/tasks.feature).
 
 ## Alignment and layout review
 
@@ -53,7 +53,33 @@ These are real browser regression captures comparing the pinned 0.2.0 implementa
 
 See the [review evidence and remaining limits](docs/review.md). Maintainers can reproduce this comparison with `npm run review:gallery`.
 
-## New in 0.2
+## New in 0.3
+
+- **Choose the workflows:** Cucumber tag expressions, scenario-name filters and fail-fast with explicit skipped coverage.
+- **Explain the task:** prerequisites and styled notes, tips and warnings in every export.
+- **Customize the manual:** guide/product version, audience, summary, German/English labels and optional dates/contents.
+- **Choose PDF geometry:** A4 or Letter, portrait or landscape and configurable margins, still powered by pdfcn.
+- **Set screenshot defaults:** automatic letters/numbers, mark color, crop padding and full-page behavior with local overrides.
+- **Read offline:** search chapters, switch masked raw/annotated screenshots and print the whole guide.
+- **Review changes:** verified report inspection and run comparison distinguish prose, annotation and screenshot changes.
+- **Share one file:** portable ZIP with manuals, masked screenshots and a hash manifest.
+- **Integrate agents:** nine MCP tools plus project and exact-run artifact resources; both skills cover the new workflow.
+
+The offline reader adds these controls without external dependencies:
+
+![Offline guide search, annotation switch and print controls](docs/media/html-reader-controls.png)
+
+Prerequisites and tips render as clear chapter guidance:
+
+![User guide prerequisites and tip callout](docs/media/html-guidance.png)
+
+A German Letter landscape export uses the same pdfcn pipeline:
+
+<p align="center"><img src="docs/media/pdf-landscape.png" width="900" alt="German PDF guide in Letter landscape with prerequisites and a tip"></p>
+
+[Open the landscape example](docs/layout-demo/handbook.pdf) · [See all customization options](docs/customization.md).
+
+## Screenshot and workflow features
 
 - **Focused screenshots:** capture one form, panel or dialog with padding and aligned annotations.
 - **Automatic references:** number or letter your marks, with explicit labels preserved and duplicates rejected.
@@ -108,7 +134,7 @@ npm exec hooserguide -- run --config docs/user-guide/hooserguide.config.json --p
 npm exec hooserguide -- build output/guides/run-<timestamp>-<id> --output output/rebuilt
 ```
 
-See [advanced workflows](docs/advanced.md) for focused captures, automatic references, form tables, profiles, branding and rebuilds.
+See [advanced workflows](docs/advanced.md) for focused captures, profiles and rebuilds, and [customization](docs/customization.md) for layout, guidance, workflow filters, comparison and sharing.
 
 ## A small spec, a complete walkthrough
 
@@ -163,7 +189,7 @@ Minimal MCP configuration:
 }
 ```
 
-MCP exposes seven tools: project status, step discovery, validation, generation, exact run inspection, verified screenshot inspection and rebuild. Both `author-user-guide` and `review-user-guide` prompts guide agents through the workflow. Save the returned `runId` and pin it when reviewing annotated/raw screenshots or rebuilding; selection survives restarts. Generation supports progress and cancellation. See [MCP contracts and examples](docs/integration.md#recommended-agent-workflow). The server stays attached to the project config selected at startup.
+MCP exposes nine tools: project status, step discovery, validation, generation, exact run inspection, verified screenshot inspection, rebuild, run comparison and ZIP packaging. Read-only project and run artifact resources support client context attachment. Both `author-user-guide` and `review-user-guide` prompts guide agents through the workflow. Save the returned `runId` and pin it when reviewing annotated/raw screenshots or rebuilding; selection survives restarts. Generation supports progress and cancellation. See [MCP contracts and examples](docs/integration.md#recommended-agent-workflow). The server stays attached to the project config selected at startup.
 
 ```ts
 import { loadConfig, run } from '@openhoo/hooserguide';

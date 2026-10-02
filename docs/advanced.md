@@ -100,7 +100,7 @@ hooserguide build output/guides/run-<timestamp>-<id> \
   --output output/rebuilt --config hooserguide.config.json --json
 ```
 
-`--config` is optional; it reads branding from a complete project config. Other execution settings are not used and no feature files are rerun. `--no-pdf` exports only HTML and Markdown. Without `--output`, builds are saved under a sibling `rebuilt` directory.
+`--config` is optional; it reads branding, document metadata, manual layout and PDF settings from a complete project config. Other execution settings are not used and no feature files are rerun. `--no-pdf` exports only HTML and Markdown. Without `--output`, builds are saved under a sibling `rebuilt` directory.
 
 The source report and screenshots remain untouched. Rebuild validates the report, successful chapter/step states, screenshot paths, image dimensions and annotated PNG SHA-256 values. Raw PNG hashes are checked when the source report includes them; 0.1 reports did not have raw-image hashes. Missing/changed images or symlinks escaping the source run fail the build. Hash checks detect changes against a trusted report; they do not authenticate an unsigned report.
 
@@ -117,3 +117,7 @@ if (result.report.status !== 'passed') throw new Error(result.report.exportError
 ```
 
 MCP clients start with `hooserguide_status` and `hooserguide_steps`, pass the same `profile` to generation/validation, and pin the returned `runId` in inspection/rebuild calls. `hooserguide_rebuild` re-exports selected successful evidence with current project branding. Rebuild does not require application access.
+
+## Customization, comparison and portable delivery
+
+See [customization and sharing](customization.md) for tag expressions, fail-fast, localized callouts, document metadata, A4/Letter layouts, screenshot defaults, offline HTML controls, verified run comparison and ZIP bundles.

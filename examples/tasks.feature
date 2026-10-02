@@ -7,7 +7,10 @@ Feature: Work with HooTasks
     Given I open "/"
     Then "role=heading:Your workspace, in focus." is visible
 
+  @tasks
   Scenario: Create your first task
+    And I add a prerequisite "Open your workspace with permission to create tasks."
+    And I add a tip "Use a short title that describes the next action."
     And I explain "Enter a clear task title and choose its priority."
     And I capture "Fill in the task details"
       """json
@@ -52,7 +55,10 @@ Feature: Work with HooTasks
       }
       """
 
+  @preferences
   Scenario: Customize workspace notifications
+    And I add a note "Preferences are configured separately from individual tasks."
+    And I add a warning "Enable email notifications only for an account you control."
     When I scroll to "label=Email notifications"
     And I check "label=Email notifications"
     Then "label=Email notifications" is checked

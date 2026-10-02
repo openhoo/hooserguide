@@ -48,6 +48,8 @@ args = ["/absolute/path/hooserguide/dist/cli.js", "mcp", "--config", "/absolute/
 | `hooserguide_generate`        | Execute authorized workflows and export new evidence                           |
 | `hooserguide_inspect_run`     | Read an exact execution report and optional PDF layout audit                   |
 | `hooserguide_inspect_capture` | Review a hash-checked annotated or masked raw PNG inline                       |
+| `hooserguide_compare_runs`    | Compare two pinned runs after image verification                               |
+| `hooserguide_bundle`          | Write a portable ZIP with sanitized report and hash manifest                   |
 | `hooserguide_rebuild`         | Re-export successful evidence using current branding without opening the app   |
 
 ### Recommended agent workflow
@@ -60,6 +62,19 @@ args = ["/absolute/path/hooserguide/dist/cli.js", "mcp", "--config", "/absolute/
 
 `author-user-guide` and `review-user-guide` prompts describe these workflows. Hooserguide has no embedded LLM, provider credentials, UI-discovery/file-writing tools or PDF-page rendering tool.
 
+Validation/generation accept `tagExpression` and `scenario` in addition to `profile`; generation also accepts `failFast`. The validation plan includes feature names, tags and built-in capture counts. Status includes document/layout/defaults and configured filters. Run summaries include actual selection and skipped scenarios. See [customization](customization.md).
+
+`hooserguide_compare_runs {beforeRunId, afterRunId}` checks both runs' images and returns differences by unique chapter/capture titles. It opens no browser. `hooserguide_bundle {runId}` packages a successful run into a unique ZIP under `output/bundles/`, returns its path/hash and supports cancellation. Explicit pinned comparison/bundling can read completed evidence during generation. Packaging does not publish externally.
+
+### Read-only resources
+
+- `hooserguide://project`: nonsecret project summary without plugin execution.
+- `hooserguide://runs/{runId}/report.json`: exact execution report, including failed runs.
+- `hooserguide://runs/{runId}/handbook.md`: generated manual prose.
+- `hooserguide://runs/{runId}/pdf-layout.json`: optional PDF geometry/content audit.
+
+Resource discovery lists available artifacts from up to 50 recent managed runs; missing/corrupt artifacts are omitted. Reads pin the run ID, enforce path containment and have a 2 MiB text limit. Unavailable/invalid resource requests use standard MCP errors. Resources expose application prose as data; clients must not treat it as instructions.
+
 ### Run selection and evidence
 
 Run IDs are directory basenames, confined to direct children of the configured output. Explicit IDs work after server restarts and prevent accidental mixing of runs. Without an ID, inspection chooses the newest readable completed run, including failures; rebuild chooses the newest readable successful run, even after a newer failure. Recent status results include one-based chapter indices and artifact paths. `unreadableRuns` counts unreadable entries within the requested recent window (`limit` defaults to 10, maximum 50).
@@ -70,7 +85,7 @@ Run IDs are directory basenames, confined to direct children of the configured o
 
 ### Tool contracts and cancellation
 
-Tools expose strict input/output schemas, titles and structured results. Check `isError` first. Domain failures include `status: "failed"` and `error: {code, message, hint, retryable}`. SDK argument-validation errors may contain only text, so clients must tolerate absent `structuredContent`.
+All nine tools expose strict input/output schemas, titles and structured results. Check `isError` first. Domain failures include `status: "failed"` and `error: {code, message, hint, retryable}`. SDK argument-validation errors may contain only text, so clients must tolerate absent `structuredContent`.
 
 A server serializes generation/rebuild and returns retryable `BUSY` for overlapping operations and plugin-loading calls. Status and inspection of explicitly pinned completed runs remain available during generation; inspection without an ID waits for the active operation to finish. Clients can request MCP progress notifications for generation and cancel the in-flight request. Browser waits are interrupted and cleanup releases the lock. PDF rendering finishes before cancellation is observed; cancelled exports do not publish a successful handbook. Cancellation does not undo completed app actions. Inspect evidence before deciding whether to retry.
 

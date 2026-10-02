@@ -11,13 +11,17 @@ Review one exact run's report, screenshots and exports together. Use existing br
 
 Use the run directory from the user's request or generation result. With MCP, call `hooserguide_status`, select the intended `runId` and pin it in `hooserguide_inspect_run` and every `hooserguide_inspect_capture` call. Read [mcp-workflow.md](references/mcp-workflow.md) for tool arguments, errors and restart behavior.
 
-Require `report.status` and all chapters/steps to pass, with no `exportError`. An inspection tool's `status: passed` means retrieval succeeded; the inspected run can still have failed. Compare executed scenarios with requested coverage and recorded `profile`/`viewport`. Desktop evidence does not verify a mobile workflow. Check saved outcomes are asserted after actions.
+Require `report.status` and all chapters/steps to pass, with no `exportError`. An inspection tool's `status: passed` means retrieval succeeded; the inspected run can still have failed. Compare executed scenarios with requested coverage and recorded `profile`/`viewport`. Desktop evidence does not verify a mobile workflow. Check saved outcomes are asserted after actions. Compare recorded `selection` and `skippedScenarios` with requested coverage. Prerequisite prose describes a requirement; it does not prove the app state.
 
 ## Review images and exports
 
 Inspect both `annotated` and masked `raw` captures using one-based chapter/capture indices. Require `hashVerified` for each current capture. Legacy 0.1 raw images have no stored raw hash; disclose that limitation. Hashes detect changes against an unsigned report, not independent authenticity.
 
 Read [visual-review.md](references/visual-review.md) for alignment, reference, privacy, HTML and PDF checks. Review all captures and rendered PDF content pages. `pdf-layout.json` warnings and text extraction supplement visual inspection. They do not establish correct layout.
+
+Read [customization.md](references/customization.md) for document versions/audience, localized labels, PDF geometry, capture-default precedence, comparison and ZIP manifests. Check that layout options match actual PDF page dimensions, search handles matching/empty results, the raw toggle hides annotation legends and printing includes all chapters. A label translation does not translate authored prose.
+
+To review a revision, pin both IDs in `hooserguide_compare_runs` (CLI `compare`). Verify changed and unchanged regions visually. Legacy raw hashes cannot prove whether original pixels changed; ambiguous titles require distinct names. For a delivered ZIP, inspect the extracted guide and verify manifest hashes and basename-only source paths. Confirm the package contains only the reviewed run's intended artifacts.
 
 ## Repair and conclude
 

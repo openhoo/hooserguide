@@ -4,23 +4,29 @@
 
 JSON config is validated strictly: unknown fields are errors. Optional `$schema` supports editor completion with `schemas/config.schema.json`.
 
-| Field               | Default       | Meaning                                                   |
-| ------------------- | ------------- | --------------------------------------------------------- |
-| `title`             | required      | Handbook title                                            |
-| `baseURL`           | required      | HTTP(S) application URL for relative navigation           |
-| `features`          | required      | Nonempty array of feature paths or glob patterns          |
-| `output`            | `output`      | Parent directory for isolated runs                        |
-| `tag`               | all scenarios | One tag such as `@manual`                                 |
-| `language`          | `en`          | Browser locale and document language tag                  |
-| `viewport`          | 1280 × 800    | Browser CSS viewport width/height                         |
-| `deviceScaleFactor` | 1             | Browser scale factor; screenshots still use CSS pixels    |
-| `browser`           | `chromium`    | Chromium, Firefox or WebKit                               |
-| `headed`            | false         | Open a visible browser for debugging                      |
-| `timeoutMs`         | 10000         | Browser action/assertion timeout, 100–120000 milliseconds |
-| `storageState`      | none          | Local Playwright authentication state file                |
-| `masks`             | none          | Privacy selectors applied to every capture                |
-| `plugins`           | none          | Trusted local ESM step modules                            |
-| `pdf`               | true          | Enable pdfcn / Forme PDF export                           |
+| Field               | Default       | Meaning                                                      |
+| ------------------- | ------------- | ------------------------------------------------------------ |
+| `title`             | required      | Handbook title                                               |
+| `baseURL`           | required      | HTTP(S) application URL for relative navigation              |
+| `features`          | required      | Nonempty array of feature paths or glob patterns             |
+| `output`            | `output`      | Parent directory for isolated runs                           |
+| `tag`               | all scenarios | One tag such as `@manual`                                    |
+| `tagExpression`     | none          | Cucumber tag expression; overrides `tag`                     |
+| `scenario`          | none          | Case-insensitive scenario-name substring                     |
+| `failFast`          | false         | Stop after first failed scenario and record skipped coverage |
+| `document`          | none          | Guide/product version, audience and summary                  |
+| `manual`            | A4 portrait   | Page size, orientation, margin, contents and date visibility |
+| `captureDefaults`   | none          | Default auto-labels, mark color, focus padding and fullPage  |
+| `language`          | `en`          | Browser locale and document language tag                     |
+| `viewport`          | 1280 × 800    | Browser CSS viewport width/height                            |
+| `deviceScaleFactor` | 1             | Browser scale factor; screenshots still use CSS pixels       |
+| `browser`           | `chromium`    | Chromium, Firefox or WebKit                                  |
+| `headed`            | false         | Open a visible browser for debugging                         |
+| `timeoutMs`         | 10000         | Browser action/assertion timeout, 100–120000 milliseconds    |
+| `storageState`      | none          | Local Playwright authentication state file                   |
+| `masks`             | none          | Privacy selectors applied to every capture                   |
+| `plugins`           | none          | Trusted local ESM step modules                               |
+| `pdf`               | true          | Enable pdfcn / Forme PDF export                              |
 
 `features`, `output`, `plugins` and `storageState` are relative to the config file. API config passed directly to `run()` is relative to the process working directory. Each feature pattern must match a file. Feature files are sorted and duplicate paths are deduplicated. Scenarios run sequentially in fresh browser contexts, with the configured authentication state loaded for each one.
 
@@ -33,6 +39,8 @@ Additional config fields:
 | `branding` | hooserguide   | Optional `name`, `subtitle` and hex `accentColor` for HTML/PDF |
 
 See [advanced workflows](advanced.md) for complete profiles, branding, focus captures and evidence-only rebuilds.
+
+See [customization and sharing](customization.md) for all fields and override rules.
 
 ## Selectors
 
@@ -63,6 +71,10 @@ Accessible names, labels and text use exact matching. Bare strings are Playwrigh
 | `"role=heading:Settings" is visible`              | Retry a visibility assertion                                   |
 | `"role=status:Result" has text "Saved"`           | Retry an exact text assertion                                  |
 | `I explain "Select Save."`                        | Add user-facing prose to the chapter                           |
+| `I add a prerequisite "Sign in as an editor."`    | Add a descriptive chapter prerequisite                         |
+| `I add a note "Only your profile changes."`       | Add an informational callout                                   |
+| `I add a tip "Use a recognizable name."`          | Add a tip callout                                              |
+| `I add a warning "Review before saving."`         | Add a warning callout                                          |
 | `I capture "Settings"`                            | Capture and optionally annotate the current state              |
 
 Additional built-in steps:

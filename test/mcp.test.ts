@@ -38,6 +38,8 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
     await client.connect(transport);
     const tools = await client.listTools();
     assert.deepEqual(tools.tools.map((t) => t.name).sort(), [
+      'hooserguide_bundle',
+      'hooserguide_compare_runs',
       'hooserguide_generate',
       'hooserguide_inspect_capture',
       'hooserguide_inspect_run',
@@ -70,6 +72,11 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
       arguments: { profile: 'absent' },
     });
     assert.equal((badProfile.structuredContent as any).error.code, 'CONFIG_ERROR');
+    const resources = await client.listResources();
+    assert.ok(resources.resources.some((r) => r.uri === 'hooserguide://project'));
+    assert.equal((await client.listResourceTemplates()).resourceTemplates.length, 1);
+    const project = await client.readResource({ uri: 'hooserguide://project' });
+    assert.match((project.contents[0] as { text: string }).text, /MCP guide/);
     const before = await client.callTool({
       name: 'hooserguide_inspect_capture',
       arguments: { chapter: 1, capture: 1 },
@@ -103,6 +110,25 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
     assert.ok(progress.every((p, i) => i === 0 || p >= progress[i - 1]!));
     const runId = (generated.structuredContent as any).runId;
     const directory = (generated.structuredContent as any).directory;
+    const reportResource = await client.readResource({
+      uri: `hooserguide://runs/${runId}/report.json`,
+    });
+    assert.equal(
+      JSON.parse((reportResource.contents[0] as { text: string }).text).status,
+      'passed',
+    );
+    const compared = await client.callTool({
+      name: 'hooserguide_compare_runs',
+      arguments: { beforeRunId: runId, afterRunId: runId },
+    });
+    assert.equal(compared.isError, false);
+    assert.equal((compared.structuredContent as any).comparison.totals.unchanged, 1);
+    const packaged = await client.callTool({ name: 'hooserguide_bundle', arguments: { runId } });
+    assert.equal(packaged.isError, false);
+    assert.ok((packaged.structuredContent as any).path.endsWith('.zip'));
+    await assert.rejects(
+      client.readResource({ uri: `hooserguide://runs/${runId}/../../config.json` }),
+    );
     const raw = await client.callTool({
       name: 'hooserguide_inspect_capture',
       arguments: { runId, chapter: 1, capture: 1, variant: 'raw' },

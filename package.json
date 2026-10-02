@@ -1,6 +1,6 @@
 {
   "name": "@openhoo/hooserguide",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "type": "module",
   "description": "Evidence-backed user manuals from Gherkin, Playwright and annotated screenshots",
   "bin": {
@@ -30,10 +30,12 @@
   "dependencies": {
     "@cucumber/gherkin": "42.0.1",
     "@cucumber/messages": "34.2.1",
+    "@cucumber/tag-expressions": "^11.0.1",
     "@formepdf/core": "^0.26.0",
     "@formepdf/react": "^0.26.0",
     "@modelcontextprotocol/sdk": "^1.31.0",
     "@playwright/test": "1.63.0",
+    "fflate": "^0.8.3",
     "react": "^19.3.0",
     "sharp": "0.35.5",
     "zod": "^4.6.5"

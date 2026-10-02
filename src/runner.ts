@@ -2,6 +2,8 @@ import { chromium, firefox, webkit, type BrowserContext } from '@playwright/test
 import { glob, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import parseTagExpression from '@cucumber/tag-expressions';
+import { applyCaptureDefaults } from './manual.js';
 import { parseFeature } from './gherkin.js';
 import { builtinSteps, target, formRows, type StepRegistry } from './steps.js';
 import { captureScreenshot, validateCapture } from './capture.js';
@@ -35,9 +37,14 @@ async function prepare(config: Config) {
   }
   const paths = [...files].sort();
   const features = await Promise.all(paths.map(parseFeature));
+  const tags = parseTagExpression(config.tagExpression ?? config.tag ?? '');
   const scenarios = features.flatMap((f, i) =>
     f.pickles
-      .filter((p) => !config.tag || p.tags.some((t) => t.name === config.tag))
+      .filter(
+        (p) =>
+          tags.evaluate(p.tags.map((t) => t.name)) &&
+          (!config.scenario || p.name.toLowerCase().includes(config.scenario.toLowerCase())),
+      )
       .map((p) => ({ ...f, pickle: p, source: paths[i]! })),
   );
   if (!scenarios.length) throw new Error('No scenarios selected');
@@ -47,10 +54,15 @@ async function prepare(config: Config) {
       registry.resolve(step.text);
       if (step.text === 'I fill the form:') formRows(step);
       if (step.text.startsWith('I capture ')) {
-        validateCapture({
-          ...(step.argument?.docString ? JSON.parse(step.argument.docString.content) : {}),
-          title: 'Preflight',
-        });
+        validateCapture(
+          applyCaptureDefaults(
+            {
+              ...(step.argument?.docString ? JSON.parse(step.argument.docString.content) : {}),
+              title: 'Preflight',
+            },
+            config.captureDefaults,
+          ),
+        );
       }
     }
   }
@@ -64,6 +76,9 @@ export async function validate(input: Config) {
     valid: true,
     scenarios: scenarios.map((s) => ({
       name: s.pickle.name,
+      feature: s.feature,
+      tags: s.pickle.tags.map((t) => t.name),
+      captures: s.pickle.steps.filter((step) => step.text.startsWith('I capture ')).length,
       source: s.source,
       steps: s.pickle.steps.length,
     })),
@@ -109,6 +124,10 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
     viewport: profile.viewport,
     profile: config.profile,
     branding: config.branding,
+    document: config.document,
+    manual: config.manual,
+    selection: { tagExpression: config.tagExpression ?? config.tag, scenario: config.scenario },
+    skippedScenarios: [],
     chapters: [],
   };
   const browserType = { chromium, firefox, webkit }[profile.browser ?? 'chromium'];
@@ -123,7 +142,7 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
   options.signal?.addEventListener('abort', cancel, { once: true });
   if (options.signal?.aborted) cancel();
   try {
-    for (const s of scenarios) {
+    for (const [scenarioIndex, s] of scenarios.entries()) {
       const chapter: Chapter = {
         title: s.pickle.name,
         feature: s.feature,
@@ -168,7 +187,7 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
                 const id = `${String(report.chapters.length).padStart(2, '0')}-${String(chapter.captures.length + 1).padStart(2, '0')}`;
                 const capture = await captureScreenshot(
                   page,
-                  spec,
+                  applyCaptureDefaults(spec, config.captureDefaults),
                   staging,
                   id,
                   config.masks,
@@ -216,7 +235,15 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
           if (!options.signal?.aborted) throw error;
         });
       }
-      if (options.signal?.aborted) break;
+      if (options.signal?.aborted || (config.failFast && chapter.status === 'failed')) {
+        report.skippedScenarios = scenarios.slice(scenarioIndex + 1).map((s) => ({
+          title: s.pickle.name,
+          feature: s.feature,
+          source: s.source,
+          reason: options.signal?.aborted ? 'cancelled' : 'fail-fast',
+        }));
+        break;
+      }
     }
   } catch (error) {
     await rm(staging, { recursive: true, force: true });

@@ -144,6 +144,28 @@ export function builtinSteps(): StepRegistry {
   }
   const define = (pattern: string, example: string, description: string, handler: StepHandler) =>
     registry.define(new RegExp(pattern), handler, { example, description });
+  for (const kind of ['note', 'tip', 'warning'] as const) {
+    define(
+      `^I add a ${kind} ${q}$`,
+      `I add a ${kind} "Use a test account."`,
+      `Add a user-facing ${kind} callout.`,
+      (c, text) => {
+        const value = unquote(text!);
+        if (!value.trim()) throw new Error('Callouts cannot be empty');
+        (c.chapter.callouts ??= []).push({ kind, text: value });
+      },
+    );
+  }
+  define(
+    `^I add a prerequisite ${q}$`,
+    'I add a prerequisite "Sign in as an editor."',
+    'Describe a prerequisite; this does not assert app state.',
+    (c, text) => {
+      const value = unquote(text!);
+      if (!value.trim()) throw new Error('Prerequisites cannot be empty');
+      (c.chapter.prerequisites ??= []).push(value);
+    },
+  );
   const options = (c: StepContext) => ({ timeout: c.config.timeoutMs ?? 10000 });
   define(`^I hover ${q}$`, 'I hover "role=button:Help"', 'Hover a control.', async (c, s) => {
     await c.target(unquote(s!)).hover();

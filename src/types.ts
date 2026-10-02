@@ -41,6 +41,39 @@ export interface Branding {
   subtitle?: string;
   accentColor?: string;
 }
+export interface DocumentMetadata {
+  version?: string;
+  productVersion?: string;
+  audience?: string;
+  summary?: string;
+}
+export interface ManualOptions {
+  pageSize?: 'A4' | 'Letter';
+  orientation?: 'portrait' | 'landscape';
+  margin?: number;
+  contents?: boolean;
+  showGeneratedAt?: boolean;
+}
+export interface CaptureDefaults {
+  fullPage?: boolean;
+  padding?: number;
+  autoLabels?: 'numbers' | 'letters';
+  color?: string;
+}
+export interface Callout {
+  kind: 'note' | 'tip' | 'warning';
+  text: string;
+}
+export interface RunSelection {
+  tagExpression?: string;
+  scenario?: string;
+}
+export interface SkippedScenario {
+  title: string;
+  feature: string;
+  source: string;
+  reason: 'fail-fast' | 'cancelled';
+}
 export interface Config {
   $schema?: string;
   title: string;
@@ -57,6 +90,13 @@ export interface Config {
   plugins?: string[];
   masks?: Target[];
   tag?: string;
+  tagExpression?: string;
+  /** Case-insensitive scenario name substring. */
+  scenario?: string;
+  failFast?: boolean;
+  document?: DocumentMetadata;
+  manual?: ManualOptions;
+  captureDefaults?: CaptureDefaults;
   language?: string;
   pdf?: boolean;
   profiles?: Record<string, BrowserProfile>;
@@ -87,6 +127,8 @@ export interface Chapter {
   description: string;
   status: 'passed' | 'failed';
   instructions: string[];
+  prerequisites?: string[];
+  callouts?: Callout[];
   captures: Capture[];
   steps: { text: string; status: 'passed' | 'failed'; error?: string; durationMs?: number }[];
   error?: string;
@@ -105,6 +147,10 @@ export interface RunReport {
   viewport?: { width: number; height: number };
   rebuiltAt?: string;
   sourceReportSha256?: string;
+  document?: DocumentMetadata;
+  manual?: ManualOptions;
+  selection?: RunSelection;
+  skippedScenarios?: SkippedScenario[];
 }
 export interface StepContext {
   page: Page;

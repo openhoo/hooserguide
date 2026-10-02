@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { z } from 'zod';
+import parseTagExpression from '@cucumber/tag-expressions';
 import type { BrowserProfile, Config } from './types.js';
 
 export const viewportSchema = z
@@ -24,6 +25,64 @@ export const profileSchema = z
     isMobile: z.boolean().optional(),
     hasTouch: z.boolean().optional(),
     colorScheme: z.enum(['light', 'dark', 'no-preference']).optional(),
+  })
+  .strict();
+
+export const documentSchema = z
+  .object({
+    version: z.string().trim().min(1).optional(),
+    productVersion: z.string().trim().min(1).optional(),
+    audience: z.string().trim().min(1).optional(),
+    summary: z.string().optional(),
+  })
+  .strict();
+export const manualSchema = z
+  .object({
+    pageSize: z.enum(['A4', 'Letter']).optional(),
+    orientation: z.enum(['portrait', 'landscape']).optional(),
+    margin: z.number().min(24).max(72).optional(),
+    contents: z.boolean().optional(),
+    showGeneratedAt: z.boolean().optional(),
+  })
+  .strict();
+export const captureDefaultsSchema = z
+  .object({
+    fullPage: z.boolean().optional(),
+    padding: z.number().int().min(0).max(500).optional(),
+    autoLabels: z.enum(['numbers', 'letters']).optional(),
+    color: z
+      .string()
+      .regex(/^#[0-9a-f]{6}$/i)
+      .optional(),
+  })
+  .strict();
+export const selectionSchema = z
+  .object({
+    tagExpression: z
+      .string()
+      .trim()
+      .min(1)
+      .refine((v) => {
+        try {
+          parseTagExpression(v);
+          return true;
+        } catch {
+          return false;
+        }
+      }, 'Invalid Cucumber tag expression')
+      .optional(),
+    scenario: z.string().trim().min(1).optional(),
+  })
+  .strict();
+export const calloutSchema = z
+  .object({ kind: z.enum(['note', 'tip', 'warning']), text: z.string().min(1) })
+  .strict();
+export const skippedSchema = z
+  .object({
+    title: z.string(),
+    feature: z.string(),
+    source: z.string(),
+    reason: z.enum(['fail-fast', 'cancelled']),
   })
   .strict();
 
@@ -56,6 +115,11 @@ export const configSchema = z
       .string()
       .regex(/^@[\w-]+$/)
       .optional(),
+    ...selectionSchema.shape,
+    failFast: z.boolean().optional(),
+    document: documentSchema.optional(),
+    manual: manualSchema.optional(),
+    captureDefaults: captureDefaultsSchema.optional(),
     language: z
       .string()
       .regex(/^[a-z]{2,3}(-[A-Za-z0-9]+)*$/)
@@ -101,7 +165,12 @@ export function resolveConfig(input: unknown, root = process.cwd()): Config {
 }
 export async function loadConfig(
   path = 'hooserguide.config.json',
-  overrides: Partial<Pick<Config, 'profile' | 'output' | 'headed' | 'pdf'>> = {},
+  overrides: Partial<
+    Pick<
+      Config,
+      'profile' | 'output' | 'headed' | 'pdf' | 'tagExpression' | 'scenario' | 'failFast'
+    >
+  > = {},
 ): Promise<Config> {
   const absolute = resolve(path);
   return resolveConfig(

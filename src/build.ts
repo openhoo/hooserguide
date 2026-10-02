@@ -3,22 +3,26 @@ import { join, resolve, relative, isAbsolute, sep, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { z } from 'zod';
-import { brandingSchema } from './config.js';
+import { brandingSchema, documentSchema, manualSchema } from './config.js';
 import { reportSchema } from './report.js';
 import { validateCapture } from './capture.js';
 import { publishReport } from './artifacts.js';
-import type { Branding, RunReport } from './types.js';
+import type { Branding, DocumentMetadata, ManualOptions, RunReport } from './types.js';
 
 export interface BuildOptions {
   output?: string;
   pdf?: boolean;
   branding?: Branding;
+  document?: DocumentMetadata;
+  manual?: ManualOptions;
 }
 const buildOptionsSchema = z
   .object({
     output: z.string().min(1).optional(),
     pdf: z.boolean().optional(),
     branding: brandingSchema.optional(),
+    document: documentSchema.optional(),
+    manual: manualSchema.optional(),
   })
   .strict();
 const sha256 = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
@@ -36,6 +40,7 @@ export async function build(
   if (
     report.status !== 'passed' ||
     report.exportError ||
+    (report.skippedScenarios?.length ?? 0) > 0 ||
     report.chapters.some(
       (c) =>
         c.status !== 'passed' ||
@@ -112,6 +117,8 @@ export async function build(
       }
     report.rebuiltAt = new Date().toISOString();
     report.sourceReportSha256 = sha256(reportBytes);
+    if (options.document) report.document = { ...report.document, ...options.document };
+    if (options.manual) report.manual = { ...report.manual, ...options.manual };
     if (options.branding) report.branding = { ...report.branding, ...options.branding };
     return await publishReport(report, staging, output, options.pdf ?? true, controls.signal);
   } catch (error) {

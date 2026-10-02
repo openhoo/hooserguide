@@ -2,13 +2,22 @@
   "schemaVersion": 1,
   "title": "HooTasks — User guide",
   "language": "en",
-  "generatedAt": "2026-10-02T12:46:45.908Z",
+  "generatedAt": "2026-10-02T14:22:44.280Z",
   "status": "passed",
   "browser": "chromium",
   "viewport": {
     "width": 1280,
     "height": 900
   },
+  "document": {
+    "version": "1.0",
+    "audience": "Workspace members",
+    "summary": "Create, organize and verify tasks in your HooTasks workspace."
+  },
+  "selection": {
+    "tagExpression": "@manual"
+  },
+  "skippedScenarios": [],
   "chapters": [
     {
       "title": "Create your first task",
@@ -16,7 +25,8 @@
       "description": "HooTasks keeps your team's work organized. Create a task, verify the saved\n  result and adjust your workspace preferences with these short walkthroughs.",
       "source": "examples/tasks.feature",
       "tags": [
-        "@manual"
+        "@manual",
+        "@tasks"
       ],
       "status": "passed",
       "instructions": [
@@ -107,8 +117,8 @@
               }
             }
           ],
-          "sha256": "9964614988eb986f78644a86fee10eca6a2603d6f6d010d51008958e48211517",
-          "rawSha256": "9033586700735d312b229350920422830d9abf56bbf3d1e91dfe9182f0be3f82"
+          "sha256": "1de384050618b009c9714aa0ddd0fba457f7986ba7cdcdaa626ce1315f5c2083",
+          "rawSha256": "f6855007275bc39159a145bdc4b3805043a7890caf5fbee6eee89fda724bf218"
         },
         {
           "id": "01-03",
@@ -171,12 +181,22 @@
         {
           "text": "I open \"/\"",
           "status": "passed",
-          "durationMs": 7
+          "durationMs": 11
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
           "status": "passed",
-          "durationMs": 12
+          "durationMs": 20
+        },
+        {
+          "text": "I add a prerequisite \"Open your workspace with permission to create tasks.\"",
+          "status": "passed",
+          "durationMs": 0
+        },
+        {
+          "text": "I add a tip \"Use a short title that describes the next action.\"",
+          "status": "passed",
+          "durationMs": 0
         },
         {
           "text": "I explain \"Enter a clear task title and choose its priority.\"",
@@ -186,27 +206,27 @@
         {
           "text": "I capture \"Fill in the task details\"",
           "status": "passed",
-          "durationMs": 188
+          "durationMs": 220
         },
         {
           "text": "I fill \"label=Task title\" with \"Prepare the launch checklist\"",
           "status": "passed",
-          "durationMs": 7
+          "durationMs": 11
         },
         {
           "text": "I select \"high\" in \"label=Priority\"",
           "status": "passed",
-          "durationMs": 2
+          "durationMs": 3
         },
         {
           "text": "I click \"role=button:Create task\"",
           "status": "passed",
-          "durationMs": 28
+          "durationMs": 36
         },
         {
           "text": "\"role=status:Task result\" has text \"Task created successfully.\"",
           "status": "passed",
-          "durationMs": 1
+          "durationMs": 2
         },
         {
           "text": "\"testid=task-list\" has text \"Prepare the launch checklistHigh priority\"",
@@ -221,12 +241,21 @@
         {
           "text": "I capture \"Check the saved task\"",
           "status": "passed",
-          "durationMs": 155
+          "durationMs": 225
         },
         {
           "text": "I capture \"Task form in detail\"",
           "status": "passed",
-          "durationMs": 156
+          "durationMs": 182
+        }
+      ],
+      "prerequisites": [
+        "Open your workspace with permission to create tasks."
+      ],
+      "callouts": [
+        {
+          "kind": "tip",
+          "text": "Use a short title that describes the next action."
         }
       ]
     },
@@ -236,7 +265,8 @@
       "description": "HooTasks keeps your team's work organized. Create a task, verify the saved\n  result and adjust your workspace preferences with these short walkthroughs.",
       "source": "examples/tasks.feature",
       "tags": [
-        "@manual"
+        "@manual",
+        "@preferences"
       ],
       "status": "passed",
       "instructions": [
@@ -285,17 +315,27 @@
         {
           "text": "I open \"/\"",
           "status": "passed",
-          "durationMs": 4
+          "durationMs": 8
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
           "status": "passed",
-          "durationMs": 12
+          "durationMs": 17
+        },
+        {
+          "text": "I add a note \"Preferences are configured separately from individual tasks.\"",
+          "status": "passed",
+          "durationMs": 0
+        },
+        {
+          "text": "I add a warning \"Enable email notifications only for an account you control.\"",
+          "status": "passed",
+          "durationMs": 0
         },
         {
           "text": "I scroll to \"label=Email notifications\"",
           "status": "passed",
-          "durationMs": 38
+          "durationMs": 31
         },
         {
           "text": "I check \"label=Email notifications\"",
@@ -310,7 +350,7 @@
         {
           "text": "I click \"role=button:Save preferences\"",
           "status": "passed",
-          "durationMs": 32
+          "durationMs": 33
         },
         {
           "text": "\"role=status:Preferences result\" has text \"Preferences saved.\"",
@@ -325,7 +365,17 @@
         {
           "text": "I capture \"Workspace preferences\"",
           "status": "passed",
-          "durationMs": 150
+          "durationMs": 245
+        }
+      ],
+      "callouts": [
+        {
+          "kind": "note",
+          "text": "Preferences are configured separately from individual tasks."
+        },
+        {
+          "kind": "warning",
+          "text": "Enable email notifications only for an account you control."
         }
       ]
     }
