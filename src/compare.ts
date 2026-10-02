@@ -53,7 +53,12 @@ function unique<T>(items: T[], key: (item: T) => string, kind: string) {
 }
 const prose = (c?: Chapter) =>
   c && JSON.stringify([c.description, c.instructions, c.prerequisites ?? [], c.callouts ?? []]);
-function compareCaptures(before: Capture[], after: Capture[], pixels: Map<Capture, string>) {
+function compareCaptures(
+  before: Capture[],
+  after: Capture[],
+  pixels: Map<Capture, string>,
+  annotatedPixels: Map<Capture, string>,
+) {
   const a = unique(before, (c) => c.title, 'capture title'),
     b = unique(after, (c) => c.title, 'capture title');
   return [...new Set([...a.keys(), ...b.keys()])].map((title) => {
@@ -69,7 +74,9 @@ function compareCaptures(before: Capture[], after: Capture[], pixels: Map<Captur
       : undefined;
     const annotationsChanged = JSON.stringify(old.marks) !== JSON.stringify(next.marks);
     const changed =
-      old.sha256 !== next.sha256 ||
+      old.width !== next.width ||
+      old.height !== next.height ||
+      annotatedPixels.get(old) !== annotatedPixels.get(next) ||
       pixelsChanged ||
       annotationsChanged ||
       old.description !== next.description;
@@ -85,11 +92,12 @@ function compareCaptures(before: Capture[], after: Capture[], pixels: Map<Captur
 
 /** Verified evidence comparison; it never opens the target app. */
 export async function compareResults(before: RunResult, after: RunResult) {
-  const pixels = new Map<Capture, string>();
+  const pixels = new Map<Capture, string>(),
+    annotatedPixels = new Map<Capture, string>();
   for (const run of [before, after])
     for (const chapter of run.report.chapters)
       for (const capture of chapter.captures) {
-        await verifiedCapture(run, capture, 'annotated', 64 * 1024 * 1024);
+        const annotated = await verifiedCapture(run, capture, 'annotated', 64 * 1024 * 1024);
         const raw = await verifiedCapture(run, capture, 'raw', 64 * 1024 * 1024);
         if (capture.width * capture.height > 32 * 1024 * 1024)
           throw new GuideError(
@@ -102,6 +110,13 @@ export async function compareResults(before: RunResult, after: RunResult) {
           .raw()
           .toBuffer();
         pixels.set(capture, createHash('sha256').update(decoded).digest('hex'));
+        const annotatedDecoded = await sharp(annotated.bytes, {
+          limitInputPixels: 32 * 1024 * 1024,
+        })
+          .ensureAlpha()
+          .raw()
+          .toBuffer();
+        annotatedPixels.set(capture, createHash('sha256').update(annotatedDecoded).digest('hex'));
       }
   const key = (c: Chapter) => JSON.stringify([c.feature, c.title]);
   const a = unique(before.report.chapters, key, 'chapter feature/title'),
@@ -110,7 +125,12 @@ export async function compareResults(before: RunResult, after: RunResult) {
     const old = a.get(id),
       next = b.get(id),
       chapter = next ?? old!;
-    const captures = compareCaptures(old?.captures ?? [], next?.captures ?? [], pixels);
+    const captures = compareCaptures(
+      old?.captures ?? [],
+      next?.captures ?? [],
+      pixels,
+      annotatedPixels,
+    );
     const instructionsChanged = prose(old) !== prose(next);
     const changed =
       JSON.stringify(old?.captures.map((c) => c.title)) !==
@@ -118,6 +138,9 @@ export async function compareResults(before: RunResult, after: RunResult) {
       instructionsChanged ||
       old?.status !== next?.status ||
       old?.error !== next?.error ||
+      JSON.stringify(old?.steps.map(({ text, status, error }) => ({ text, status, error }))) !==
+        JSON.stringify(next?.steps.map(({ text, status, error }) => ({ text, status, error }))) ||
+      JSON.stringify(old?.tags) !== JSON.stringify(next?.tags) ||
       captures.some((c) => c.change !== 'unchanged');
     const change = !old ? 'added' : !next ? 'removed' : changed ? 'changed' : 'unchanged';
     return {
@@ -132,6 +155,8 @@ export async function compareResults(before: RunResult, after: RunResult) {
     JSON.stringify([
       r.report.title,
       r.report.language,
+      r.report.browser,
+      r.report.status,
       r.report.branding,
       r.report.document,
       r.report.manual,

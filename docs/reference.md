@@ -141,3 +141,13 @@ Original and annotated PNGs are masked before writing. Missing privacy selectors
 The run status is failed if any scenario or exporter fails. Failed scenarios retain available screenshot evidence. No HTML, Markdown or PDF handbook is published for a failed run. An export failure appears in `exportError`. Preflight errors throw before launching the browser. Exported files appear under a unique run directory; previous runs are never reused as current evidence.
 
 Full-page screenshots are split into page-sized images in the PDF to preserve readability. HTML and Markdown use the complete image. `pdf-layout.json` records page count, rendering warnings from the Forme content audit, and each figure's exact pixel slice ranges. Legends appear alongside the slice containing their target. Very tall annotation groups may span slices; inspect the rendered pages. Standard fonts cover common Latin text; custom embedded fonts are needed for other scripts. The default document template uses English structural labels, with authored prose and browser/document language controlled by the config.
+
+## Evidence integrity
+
+Every report reader and renderer validates the strict report schema and execution consistency. A passed report must have passing chapters and steps, at least one step and capture per chapter, no recorded errors (including empty error strings), and no skipped scenarios. Screenshot IDs and paths must be unique across the run; reference labels must be unique within each capture, and annotation bounds must fit the image.
+
+Rebuild, inspection, comparison and bundle share contained artifact reads: reports and layout files are limited to 2 MiB, image/manual files to 64 MiB. Escaping symlinks are rejected, including a symlinked `report.json`. The direct `renderManual` and `renderPdf` APIs also verify both PNG variants before exporting. Legacy reports without raw hashes remain readable, with the limitation explicitly reported during inspection/comparison.
+
+Comparison includes browser engine, scenario tags and executed step text/status/error. Step durations and PNG compression changes are ignored; both annotated and raw pixels are decoded before comparison. An unchanged comparison does not replace visual review or prove that the application is current.
+
+With `--json`, CLI results occupy stdout and trusted plugin console diagnostics go to stderr. Plugins must not write directly to stdout. Exceptional command failures return their JSON diagnostic on stderr with exit code 1; completed failed runs return a failed run summary on stdout with exit code 1.

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { parseArgs } from 'node:util';
+import { parseArgs, format } from 'node:util';
+import { Console } from 'node:console';
 import { realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -37,7 +38,21 @@ Failed workflows exit 1 and do not produce a successful handbook.
 Install browsers once: npx playwright install chromium
 `;
 
+/** Keep trusted plugin diagnostics separate from machine-readable CLI results. */
 export async function main(args = process.argv.slice(2)): Promise<void> {
+  const original = globalThis.console;
+  if (args.includes('--json'))
+    globalThis.console = new Console({ stdout: process.stderr, stderr: process.stderr });
+  try {
+    await execute(args);
+  } finally {
+    if (args.includes('--json')) globalThis.console = original;
+  }
+}
+const output = (...values: unknown[]) => {
+  process.stdout.write(format(...values) + '\n');
+};
+async function execute(args: string[]): Promise<void> {
   const { values, positionals } = parseArgs({
     args,
     allowPositionals: true,
@@ -63,12 +78,12 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     },
   });
   if (values.version) {
-    console.log(VERSION);
+    output(VERSION);
     return;
   }
   const command = positionals[0];
   if (values.help || !command) {
-    console.log(help);
+    output(help);
     return;
   }
   if (
@@ -159,7 +174,7 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
         : command === 'compare'
           ? await compareRuns(positionals[1], positionals[2]!)
           : await bundle(positionals[1], values.output);
-    console.log(JSON.stringify(result, null, values.json ? undefined : 2));
+    output(JSON.stringify(result, null, values.json ? undefined : 2));
     return;
   }
 
@@ -167,7 +182,7 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     const steps = (
       await loadRegistry(values.config ? await loadConfig(configPath) : undefined)
     ).list();
-    console.log(
+    output(
       values.json
         ? JSON.stringify({ steps })
         : steps
@@ -183,7 +198,7 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
   }
   if (command === 'init') {
     const result = await init(positionals[1] ?? '.', values['base-url'], values.skills);
-    console.log(
+    output(
       values.json
         ? JSON.stringify(result)
         : `Created ${result.config}\nEdit ${result.feature}\nThen: hooserguide run --config ${result.config}`,
@@ -197,7 +212,7 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
         ...(values.profile ? { profile: values.profile } : {}),
       }),
     );
-    console.log(
+    output(
       values.json
         ? JSON.stringify(result)
         : `✓ ${result.scenarios.length} scenarios validated; all steps are defined.`,
@@ -248,13 +263,13 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
       error: c.error,
     })),
   };
-  if (values.json) console.log(JSON.stringify(summary));
+  if (values.json) output(JSON.stringify(summary));
   else {
-    console.log(
+    output(
       `\n${result.report.status === 'passed' ? '✓ Guide generated' : '✗ Guide failed'} · ${result.report.chapters.length} chapters`,
     );
     for (const [format, path] of Object.entries(result.artifacts))
-      console.log(`  ${format.padEnd(8)} ${path}`);
+      output(`  ${format.padEnd(8)} ${path}`);
     for (const c of result.report.chapters.filter((c) => c.status === 'failed'))
       console.error(`  Failed: ${c.title}\n  ${c.error}`);
     if (result.report.exportError) console.error(`  Export failed: ${result.report.exportError}`);

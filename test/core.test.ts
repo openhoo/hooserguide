@@ -1,6 +1,8 @@
+import { createHash } from 'node:crypto';
+import sharp from 'sharp';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, rm, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseFeature } from '../src/gherkin.js';
@@ -104,11 +106,34 @@ test('HTML and Markdown escape untrusted prose and failed runs cannot render', a
           tags: [],
           status: 'passed',
           instructions: ['<script>bad()</script>'],
-          captures: [],
-          steps: [],
+          captures: [
+            {
+              id: '01',
+              title: 'Safe figure',
+              image: 'screenshots/01.png',
+              raw: 'screenshots/01.raw.png',
+              width: 400,
+              height: 200,
+              sha256: 'a'.repeat(64),
+              marks: [],
+            },
+          ],
+          steps: [{ text: 'I capture \"Safe figure\"', status: 'passed' }],
         },
       ],
     };
+    await mkdir(join(root, 'screenshots'), { recursive: true });
+    const fixtureImage = await sharp({
+      create: { width: 400, height: 200, channels: 3, background: '#ffffff' },
+    })
+      .png()
+      .toBuffer();
+    const fixtureCapture = report.chapters[0]!.captures[0]!;
+    fixtureCapture.sha256 = fixtureCapture.rawSha256 = createHash('sha256')
+      .update(fixtureImage)
+      .digest('hex');
+    await writeFile(join(root, fixtureCapture.image), fixtureImage);
+    await writeFile(join(root, fixtureCapture.raw), fixtureImage);
     await renderManual(report, root);
     const html = await readFile(join(root, 'index.html'), 'utf8');
     assert.ok(!html.includes('<script>'));

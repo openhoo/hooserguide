@@ -69,8 +69,9 @@ export async function init(directory: string, baseURL = 'http://localhost:3000',
       null,
       2,
     ) + '\n',
+    { flag: 'wx' },
   );
-  await writeFile(join(root, paths[1]!), starterFeature);
+  await writeFile(join(root, paths[1]!), starterFeature, { flag: 'wx' });
   if (skills) {
     const source = fileURLToPath(new URL('../skills/', import.meta.url));
     for (const name of ['hooserguide-author', 'hooserguide-review']) {

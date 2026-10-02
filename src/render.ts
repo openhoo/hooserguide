@@ -1,3 +1,5 @@
+import { verifyReportImages } from './evidence.js';
+import { reportSchema, requireSuccessfulEvidence } from './report.js';
 import { access, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { escapeXml as esc } from './capture.js';
@@ -10,7 +12,9 @@ import { badgeTextColor } from './annotations.js';
 const md = (s: string) =>
   s.replace(/[\\`*_{}\[\]()<>#!|]/g, (c) => `\\${c}`).replace(/\r?\n/g, ' ');
 export async function renderManual(report: RunReport, directory: string): Promise<void> {
-  if (report.status !== 'passed') throw new Error('Cannot render a manual from a failed run');
+  report = reportSchema.parse(report) as RunReport;
+  requireSuccessfulEvidence(report);
+  await verifyReportImages(report, directory);
   const branding = brandingSchema.parse(report.branding ?? {});
   const accent = branding.accentColor ?? '#075e59';
   const brand = branding.name ?? 'hooserguide';

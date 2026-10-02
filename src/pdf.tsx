@@ -1,4 +1,6 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { verifyReportImages, readRunArtifact } from './evidence.js';
+import { reportSchema, requireSuccessfulEvidence } from './report.js';
+import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ReactNode } from 'react';
 import { Document, Page, Fixed, View, Strong } from '@formepdf/react';
@@ -32,7 +34,9 @@ const theme = {
 
 /** pdfcn components are vendored as intended by its registry model. */
 export async function renderPdf(report: RunReport, directory: string): Promise<void> {
-  if (report.status !== 'passed') throw new Error('Cannot export PDF from a failed run');
+  report = reportSchema.parse(report) as RunReport;
+  requireSuccessfulEvidence(report);
+  await verifyReportImages(report, directory);
   const branding = brandingSchema.parse(report.branding ?? {});
   const accent = branding.accentColor ?? '#075e59';
   const documentTheme = { ...theme, colors: { ...theme.colors, primary: accent } };
@@ -141,7 +145,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
       </Page>,
     );
     for (const [j, capture] of chapter.captures.entries()) {
-      const image = await readFile(join(directory, capture.image));
+      const image = await readRunArtifact(directory, capture.image, 64 * 1024 * 1024);
       // Long screenshots are split into readable page-sized images, without shrinking or cropping content away.
       // A modestly taller single figure avoids a nearly empty continuation page.
       const scaledHeight = (capture.height * pageWidth) / capture.width;

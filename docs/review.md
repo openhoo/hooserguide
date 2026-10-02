@@ -37,3 +37,22 @@ Badge placement chooses available space among nearby candidates; a densely marke
 Mobile profiles emulate browser settings. They do not replace physical-device verification. Annotation coordinates on a zoomed viewport describe the final screenshot, while full-page/focus crops use document CSS pixels.
 
 Hashes detect screenshot changes against the supplied report; reports are unsigned. Offline rebuilds preserve the original application evidence and capture timestamp.
+
+## 0.3.1 project-wide review
+
+Reviewed the runner and publication path, capture/annotation geometry, report and config schemas, evidence loading, direct renderers, rebuild/comparison/bundle, CLI, MCP tools/resources, scaffold, packaging and agent instructions.
+
+| Finding                                                                  | Repair                                                                                 | Regression evidence                                                           |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Readers could accept a passed report with failed or incomplete execution | Shared semantic report gate across readers/exporters, including empty error fields     | Invalid reports rejected by inspect, build, bundle and both direct renderers  |
+| Rebuild used separate unbounded file reads                               | Shared size-limited, contained artifact and PNG verification                           | Oversized report/image and escaping report symlink rejected                   |
+| Direct renderers trusted typed reports and screenshot paths              | Strict runtime schema plus hash/format/dimension checks for both PNG variants          | Tampered raw screenshot and external image URL rejected before export         |
+| Comparison missed changed execution steps, tags and browser              | Compare execution text/status/errors, scenario tags and engine metadata                | Changed step/browser detected; timing-only change ignored                     |
+| Recompressed annotated PNG counted as changed content                    | Compare normalized decoded pixels for both image variants                              | Recompression keeps chapter unchanged                                         |
+| Plugin console diagnostics could corrupt CLI JSON stdout                 | Route diagnostics to stderr and emit CLI results explicitly on stdout                  | Noisy plugin subprocess returns parseable JSON; console restored after errors |
+| Scaffold overwrite preflight had a race                                  | Exclusive creation of config and feature files                                         | Two concurrent initializations yield one intact winning config                |
+| ZIP close failures bypassed archive cleanup                              | Close within the guarded write operation; best-effort cleanup preserves original error | Existing archive overwrite/cancellation integration coverage retained         |
+
+Verification: 38 tests, TypeScript check/build, formatting, installed-tarball CLI/MCP/browser/PDF/rebuild/compare/inspect/bundle smoke test and both skill validators passed locally. Fresh English A4 portrait and German Letter landscape demos passed execution/export and their rendered PDF contact sheets were visually inspected, together with full-size annotation and PDF detail images. GitHub CI validates the published commit separately.
+
+The schemas specify JSON shape; the shared semantic gate additionally enforces cross-field and cross-capture consistency. Hashes remain relative to an unsigned local report. Legacy raw files without hashes retain their disclosed verification limit. Chromium is exercised in CI; Firefox/WebKit are selectable but not part of the CI browser matrix.

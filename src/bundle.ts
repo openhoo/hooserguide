@@ -2,6 +2,7 @@ import { zip, type AsyncZippable } from 'fflate';
 import { mkdir, open, rm, realpath } from 'node:fs/promises';
 import { dirname, basename, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
+import { requireSuccessfulEvidence } from './report.js';
 import { loadRunDirectory, readRunArtifact, verifiedCapture } from './evidence.js';
 
 const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
@@ -13,20 +14,7 @@ export async function bundle(
 ) {
   if (controls.signal?.aborted) throw new Error('Bundle cancelled');
   const run = await loadRunDirectory(source);
-  if (
-    run.report.status !== 'passed' ||
-    run.report.exportError ||
-    run.report.skippedScenarios?.length ||
-    run.report.chapters.some(
-      (c) =>
-        c.status !== 'passed' ||
-        c.error ||
-        !c.captures.length ||
-        !c.steps.length ||
-        c.steps.some((s) => s.status !== 'passed' || s.error),
-    )
-  )
-    throw new Error('Cannot bundle unsuccessful execution evidence');
+  requireSuccessfulEvidence(run.report);
   const path = resolve(destination ?? `${run.directory}.zip`);
   if (!path.toLowerCase().endsWith('.zip')) throw new Error('Bundle output must end in .zip');
   const files: AsyncZippable = Object.create(null);
@@ -95,12 +83,12 @@ export async function bundle(
   try {
     await handle.writeFile(bytes);
     if (controls.signal?.aborted) throw new Error('Bundle cancelled');
-  } catch (error) {
     await handle.close();
+  } catch (error) {
+    await handle.close().catch(() => {});
     await rm(path, { force: true });
     throw error;
   }
-  await handle.close();
   return {
     path: await realpath(path),
     bytes: bytes.length,

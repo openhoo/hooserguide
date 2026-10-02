@@ -233,7 +233,7 @@ output/guides/run-<timestamp>-<id>/
     └── 01-01.overlay.svg        Reusable vector annotation layer
 ```
 
-Each run has its own directory. Failed assertions, missing masks, ambiguous targets and undefined steps fail the run. A failed run retains available evidence and **does not export a successful handbook**. The tool never changes the page's content to draw annotations; a temporary stylesheet freezes motion for capture, and the annotations are composited onto the PNG.
+Each run has its own directory. All evidence readers reject contradictory success records, duplicate screenshot references and invalid annotation geometry. Direct renderers verify both PNG variants before exporting. Failed assertions, missing masks, ambiguous targets and undefined steps fail the run. A failed run retains available evidence and **does not export a successful handbook**. The tool never changes the page's content to draw annotations; a temporary stylesheet freezes motion for capture, and the annotations are composited onto the PNG.
 
 ## Agent skills
 

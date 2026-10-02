@@ -281,16 +281,14 @@ test('evidence-only builds preserve capture hashes, reject tampering and keep ea
     const rawPath = join(result.directory, image.raw);
     const originalRaw = await readFile(rawPath);
     await writeFile(rawPath, Buffer.from('tampered raw'));
-    await assert.rejects(
-      build(result.directory, { output: join(root, 'invalid'), pdf: false }),
-      /hash mismatch/,
-    );
+    await assert.rejects(build(result.directory, { output: join(root, 'invalid'), pdf: false }), {
+      code: 'HASH_MISMATCH',
+    });
     await writeFile(rawPath, originalRaw);
     await writeFile(join(result.directory, image.image), Buffer.from('tampered'));
-    await assert.rejects(
-      build(result.directory, { output: join(root, 'invalid'), pdf: false }),
-      /hash mismatch/,
-    );
+    await assert.rejects(build(result.directory, { output: join(root, 'invalid'), pdf: false }), {
+      code: 'HASH_MISMATCH',
+    });
     assert.deepEqual(await readdir(join(root, 'invalid')), []);
     const report = JSON.parse(await readFile(join(result.directory, 'report.json'), 'utf8'));
     report.chapters[0].steps[0].status = 'failed';
@@ -311,10 +309,9 @@ test('rebuild refuses artifacts that resolve outside the evidence directory', as
     await writeFile(external, await readFile(path));
     await rm(path);
     await symlink(external, path);
-    await assert.rejects(
-      build(result.directory, { output: join(root, 'invalid'), pdf: false }),
-      /escapes/,
-    );
+    await assert.rejects(build(result.directory, { output: join(root, 'invalid'), pdf: false }), {
+      code: 'UNSAFE_PATH',
+    });
   } finally {
     await rm(root, { recursive: true, force: true });
   }

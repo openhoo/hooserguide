@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, writeFile, rm, mkdir, readdir, cp } from 'node:fs/promises';
@@ -347,7 +348,7 @@ test('HTML remains usable for long content at narrow widths; old unlabeled capti
           tags: [],
           status: 'passed',
           instructions: [long],
-          steps: [],
+          steps: [{ text: 'I capture "Figure"', status: 'passed' }],
           captures: [
             {
               id: '01',
@@ -369,6 +370,18 @@ test('HTML remains usable for long content at narrow widths; old unlabeled capti
         },
       ],
     };
+    await mkdir(join(root, 'screenshots'), { recursive: true });
+    const fixtureImage = await sharp({
+      create: { width: 400, height: 200, channels: 3, background: '#ffffff' },
+    })
+      .png()
+      .toBuffer();
+    const fixtureCapture = report.chapters[0]!.captures[0]!;
+    fixtureCapture.sha256 = fixtureCapture.rawSha256 = createHash('sha256')
+      .update(fixtureImage)
+      .digest('hex');
+    await writeFile(join(root, fixtureCapture.image), fixtureImage);
+    await writeFile(join(root, fixtureCapture.raw), fixtureImage);
     await renderManual(report, root);
     const page = await browser.newPage({ viewport: { width: 320, height: 700 } });
     await page.goto('file://' + join(root, 'index.html'));

@@ -3,7 +3,7 @@ import { basename, dirname, join, relative, isAbsolute, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { z } from 'zod';
-import { reportSchema } from './report.js';
+import { reportSchema, assertReportIntegrity } from './report.js';
 import type { RunReport, RunResult, Capture } from './types.js';
 
 export const runIdSchema = z
@@ -61,9 +61,7 @@ export async function loadManagedRun(output: string, runId: string): Promise<Run
 /** Load local run evidence with the same artifact containment gates as MCP. */
 export async function loadRunDirectory(path: string): Promise<RunResult> {
   const directory = await realpath(path);
-  const report = reportSchema.parse(
-    JSON.parse((await readRunArtifact(directory, 'report.json')).toString('utf8')),
-  ) as RunReport;
+  const report = await readRunReport(directory);
   const artifacts: RunResult['artifacts'] = { report: join(directory, 'report.json') };
   if (report.status === 'passed' && !report.exportError) {
     for (const [kind, name] of [
@@ -80,6 +78,14 @@ export async function loadRunDirectory(path: string): Promise<RunResult> {
     }
   }
   return { report, directory, artifacts };
+}
+/** Bounded, contained report read; rebuilding need not have the old manual exports. */
+export async function readRunReport(directory: string): Promise<RunReport> {
+  const report = reportSchema.parse(
+    JSON.parse((await readRunArtifact(directory, 'report.json')).toString('utf8')),
+  ) as RunReport;
+  assertReportIntegrity(report);
+  return report;
 }
 export async function managedRunIds(output: string) {
   try {
@@ -161,4 +167,17 @@ export async function inspectRun(directory: string) {
       else legacyRawWithoutHash++;
     }
   return { ...summarizeRun(run), report: run.report, verifiedImages, legacyRawWithoutHash };
+}
+
+/** Verify both variants before a renderer advertises an evidence-backed manual. */
+export async function verifyReportImages(report: RunReport, directory: string): Promise<void> {
+  const result: RunResult = {
+    report,
+    directory,
+    artifacts: { report: join(directory, 'report.json') },
+  };
+  for (const chapter of report.chapters)
+    for (const capture of chapter.captures)
+      for (const variant of ['annotated', 'raw'] as const)
+        await verifiedCapture(result, capture, variant, 64 * 1024 * 1024);
 }

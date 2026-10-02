@@ -8,7 +8,8 @@ import {
   calloutSchema,
   skippedSchema,
 } from './config.js';
-import { captureSchema } from './capture.js';
+import { captureSchema, validateCapture } from './capture.js';
+import type { RunReport } from './types.js';
 
 const rectangle = z
   .object({
@@ -87,3 +88,54 @@ export const reportSchema = z
       .min(1),
   })
   .strict();
+
+/** Semantic checks shared by all readers and exporters, beyond the JSON shape. */
+export function assertReportIntegrity(report: RunReport): void {
+  const ids = new Set<string>(),
+    paths = new Set<string>();
+  for (const chapter of report.chapters) {
+    for (const capture of chapter.captures) {
+      if (
+        ids.has(capture.id) ||
+        paths.has(capture.image) ||
+        paths.has(capture.raw) ||
+        capture.image === capture.raw
+      )
+        throw new Error('Evidence contains duplicate screenshot IDs or paths');
+      ids.add(capture.id);
+      paths.add(capture.image);
+      paths.add(capture.raw);
+      validateCapture({
+        title: capture.title,
+        marks: capture.marks.map(({ bounds: _bounds, ...mark }) => mark),
+      });
+      for (const mark of capture.marks)
+        if (
+          mark.bounds.x + mark.bounds.width > capture.width + 1 ||
+          mark.bounds.y + mark.bounds.height > capture.height + 1 ||
+          (mark.from && (mark.from.x >= capture.width || mark.from.y >= capture.height))
+        )
+          throw new Error('Annotation lies outside the evidence screenshot');
+    }
+  }
+  if (
+    report.status === 'passed' &&
+    (report.exportError !== undefined ||
+      report.skippedScenarios?.length ||
+      report.chapters.some(
+        (c) =>
+          c.status !== 'passed' ||
+          c.error !== undefined ||
+          !c.steps.length ||
+          !c.captures.length ||
+          c.steps.some((s) => s.status !== 'passed' || s.error !== undefined),
+      ))
+  )
+    throw new Error('Report claims success with unsuccessful or incomplete execution evidence');
+}
+
+export function requireSuccessfulEvidence(report: RunReport): void {
+  assertReportIntegrity(report);
+  if (report.status !== 'passed')
+    throw new Error('Cannot export unsuccessful execution evidence from a failed run');
+}

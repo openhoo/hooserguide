@@ -234,7 +234,8 @@ test('selection, callouts, capture defaults, locale, PDF layouts, comparison and
     const report = structuredClone(generated.report);
     report.chapters.push(report.chapters[0]!);
     await writeFile(join(copy, 'report.json'), JSON.stringify(report));
-    await assert.rejects(compareRuns(generated.directory, copy), /Ambiguous chapter/);
+    await assert.rejects(compareRuns(generated.directory, copy), /duplicate screenshot/);
+    await writeFile(join(copy, 'report.json'), JSON.stringify(generated.report));
     await rm(join(copy, shot.image));
     await symlink(join(generated.directory, shot.image), join(copy, shot.image));
     await assert.rejects(bundle(copy, join(root, 'unsafe.zip')), /outside/);
