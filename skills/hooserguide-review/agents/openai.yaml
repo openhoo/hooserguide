@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Hooserguide Review'
+  short_description: 'Review guide evidence, annotations and PDF quality'
+  default_prompt: 'Use $hooserguide-review to verify this generated guide against its execution report, screenshots and rendered PDF pages.'

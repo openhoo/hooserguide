@@ -1,0 +1,9 @@
+node_modules/
+dist/
+output/
+.auth/
+*.log
+*.tgz
+.DS_Store
+.env
+.env.local

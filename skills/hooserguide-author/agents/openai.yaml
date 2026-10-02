@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Hooserguide Author'
+  short_description: 'Generate verified guides with BDD and screenshots'
+  default_prompt: 'Use $hooserguide-author to create a verified user guide for this application with annotated screenshots and a pdfcn PDF.'

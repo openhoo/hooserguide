@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "title": "HooTasks — User guide",
+  "language": "en",
+  "generatedAt": "2026-10-02T11:52:44.982Z",
+  "status": "passed",
+  "browser": "chromium",
+  "chapters": [
+    {
+      "title": "Create your first task",
+      "feature": "Work with HooTasks",
+      "description": "HooTasks keeps your team's work organized. Create a task, verify the saved\n  result and adjust your workspace preferences with these short walkthroughs.",
+      "source": "examples/tasks.feature",
+      "tags": [
+        "@manual"
+      ],
+      "status": "passed",
+      "instructions": [
+        "Enter a clear task title and choose its priority.",
+        "Select Create task. Check that the task appears in the list and that a confirmation is shown."
+      ],
+      "captures": [
+        {
+          "id": "01-01",
+          "title": "Fill in the task details",
+          "description": "A names your task. B controls its priority. Select Create task to save it.",
+          "image": "screenshots/01-01.png",
+          "raw": "screenshots/01-01.raw.png",
+          "width": 1280,
+          "height": 900,
+          "marks": [
+            {
+              "target": "label=Task title",
+              "kind": "box",
+              "label": "A",
+              "caption": "Give the task a descriptive title.",
+              "bounds": {
+                "x": 159,
+                "y": 435.5625,
+                "width": 438,
+                "height": 50
+              }
+            },
+            {
+              "target": "label=Priority",
+              "kind": "both",
+              "label": "B",
+              "caption": "Choose a priority for your team.",
+              "bounds": {
+                "x": 159,
+                "y": 535.5625,
+                "width": 438,
+                "height": 46
+              }
+            },
+            {
+              "target": "role=button:Create task",
+              "kind": "arrow",
+              "label": "1",
+              "caption": "Save the new task.",
+              "bounds": {
+                "x": 159,
+                "y": 605.5625,
+                "width": 117.59375,
+                "height": 43
+              }
+            }
+          ],
+          "sha256": "6ee81c2b8fb1137c725bb4fe2f5097f9a37512fc0df3a77ad53826aa97e71a1e"
+        },
+        {
+          "id": "01-02",
+          "title": "Check the saved task",
+          "description": "The task now appears in your workspace. The confirmation shows that the save completed.",
+          "image": "screenshots/01-02.png",
+          "raw": "screenshots/01-02.raw.png",
+          "width": 1280,
+          "height": 900,
+          "marks": [
+            {
+              "target": "testid=task-list",
+              "kind": "box",
+              "label": "2",
+              "caption": "Your newly created task.",
+              "bounds": {
+                "x": 683,
+                "y": 403.5625,
+                "width": 438,
+                "height": 83.1875
+              }
+            },
+            {
+              "target": "role=status:Task result",
+              "kind": "both",
+              "label": "3",
+              "caption": "Successful save confirmation.",
+              "bounds": {
+                "x": 159,
+                "y": 668.5625,
+                "width": 438,
+                "height": 24
+              }
+            }
+          ],
+          "sha256": "c89bcb7f7acf8ec8c5cb3d7e5de181e17ddd12d0df4659042c49f3a3df1e1d93"
+        }
+      ],
+      "steps": [
+        {
+          "text": "I open \"/\"",
+          "status": "passed"
+        },
+        {
+          "text": "\"role=heading:Your workspace, in focus.\" is visible",
+          "status": "passed"
+        },
+        {
+          "text": "I explain \"Enter a clear task title and choose its priority.\"",
+          "status": "passed"
+        },
+        {
+          "text": "I capture \"Fill in the task details\"",
+          "status": "passed"
+        },
+        {
+          "text": "I fill \"label=Task title\" with \"Prepare the launch checklist\"",
+          "status": "passed"
+        },
+        {
+          "text": "I select \"high\" in \"label=Priority\"",
+          "status": "passed"
+        },
+        {
+          "text": "I click \"role=button:Create task\"",
+          "status": "passed"
+        },
+        {
+          "text": "\"role=status:Task result\" has text \"Task created successfully.\"",
+          "status": "passed"
+        },
+        {
+          "text": "\"testid=task-list\" has text \"Prepare the launch checklistHigh priority\"",
+          "status": "passed"
+        },
+        {
+          "text": "I explain \"Select Create task. Check that the task appears in the list and that a confirmation is shown.\"",
+          "status": "passed"
+        },
+        {
+          "text": "I capture \"Check the saved task\"",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "title": "Customize workspace notifications",
+      "feature": "Work with HooTasks",
+      "description": "HooTasks keeps your team's work organized. Create a task, verify the saved\n  result and adjust your workspace preferences with these short walkthroughs.",
+      "source": "examples/tasks.feature",
+      "tags": [
+        "@manual"
+      ],
+      "status": "passed",
+      "instructions": [
+        "Open Workspace preferences, enable Email notifications and select Save preferences."
+      ],
+      "captures": [
+        {
+          "id": "02-01",
+          "title": "Workspace preferences",
+          "description": "Preferences are near the bottom of the workspace. Long screenshots stay readable across PDF pages.",
+          "image": "screenshots/02-01.png",
+          "raw": "screenshots/02-01.raw.png",
+          "width": 1280,
+          "height": 1486,
+          "marks": [
+            {
+              "target": "label=Email notifications",
+              "kind": "box",
+              "label": "A",
+              "caption": "Turn notifications on or off.",
+              "bounds": {
+                "x": 163,
+                "y": 1178.9375,
+                "width": 19,
+                "height": 19
+              }
+            },
+            {
+              "target": "role=button:Save preferences",
+              "kind": "both",
+              "label": "B",
+              "caption": "Save your preferences.",
+              "bounds": {
+                "x": 159,
+                "y": 1230.9375,
+                "width": 157.234375,
+                "height": 43
+              }
+            }
+          ],
+          "sha256": "b8c19bb802fb9122b9db55f43275de8798514b3d8023f93272053c09692264f7"
+        }
+      ],
+      "steps": [
+        {
+          "text": "I open \"/\"",
+          "status": "passed"
+        },
+        {
+          "text": "\"role=heading:Your workspace, in focus.\" is visible",
+          "status": "passed"
+        },
+        {
+          "text": "I scroll to \"label=Email notifications\"",
+          "status": "passed"
+        },
+        {
+          "text": "I check \"label=Email notifications\"",
+          "status": "passed"
+        },
+        {
+          "text": "I click \"role=button:Save preferences\"",
+          "status": "passed"
+        },
+        {
+          "text": "\"role=status:Preferences result\" has text \"Preferences saved.\"",
+          "status": "passed"
+        },
+        {
+          "text": "I explain \"Open Workspace preferences, enable Email notifications and select Save preferences.\"",
+          "status": "passed"
+        },
+        {
+          "text": "I capture \"Workspace preferences\"",
+          "status": "passed"
+        }
+      ]
+    }
+  ]
+}

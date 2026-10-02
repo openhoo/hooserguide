@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>HooTasks</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f5f7fa;
+        color: #172d40;
+        font:
+          15px/1.6 system-ui,
+          sans-serif;
+      }
+      header {
+        padding: 20px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+        border-bottom: 1px solid #dfe7ed;
+      }
+      .brand {
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -1px;
+      }
+      .brand span {
+        color: #0d9488;
+      }
+      .account {
+        color: #52667a;
+        font-size: 13px;
+      }
+      main {
+        max-width: 1080px;
+        margin: 48px auto;
+        padding: 0 30px;
+      }
+      .kicker {
+        color: #0b766e;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 2px;
+        font-weight: 800;
+      }
+      h1 {
+        font-size: 42px;
+        line-height: 1.2;
+        letter-spacing: -1.4px;
+        margin: 12px 0;
+      }
+      h2 {
+        font-size: 21px;
+        margin: 0 0 8px;
+      }
+      p {
+        color: #627589;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+        margin-top: 36px;
+      }
+      .card {
+        background: white;
+        border: 1px solid #dce5ed;
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 3px 10px #193e5a05;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin: 20px 0 6px;
+      }
+      input[type='text'],
+      select {
+        width: 100%;
+        border: 1px solid #bbcad6;
+        border-radius: 8px;
+        padding: 12px;
+        font: inherit;
+        background: #fff;
+        color: #172d40;
+      }
+      button {
+        background: #0b766e;
+        color: white;
+        font: 600 14px system-ui;
+        border: 0;
+        border-radius: 8px;
+        padding: 13px 20px;
+        margin-top: 24px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #065f58;
+      }
+      :focus-visible {
+        outline: 3px solid #f59e0b;
+        outline-offset: 3px;
+      }
+      .empty {
+        padding: 32px 0;
+        color: #627589;
+      }
+      .task {
+        padding: 18px;
+        background: #edf8f4;
+        border-radius: 10px;
+        margin-top: 18px;
+      }
+      .priority {
+        display: block;
+        font-size: 12px;
+        color: #0b766e;
+        margin-top: 4px;
+        font-weight: 600;
+      }
+      [role='status'] {
+        font-size: 13px;
+        color: #087344;
+        min-height: 24px;
+        margin-top: 20px;
+      }
+      .tips {
+        margin-top: 32px;
+        background: #eaf0f5;
+        border-radius: 12px;
+        padding: 24px;
+        display: flex;
+        gap: 18px;
+      }
+      .tips strong {
+        color: #0b766e;
+      }
+      .spacer {
+        padding: 55px 0;
+      }
+      .preferences {
+        max-width: 680px;
+      }
+      .check {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-weight: 500;
+      }
+      input[type='checkbox'] {
+        width: 19px;
+        height: 19px;
+        accent-color: #0b766e;
+      }
+      footer {
+        margin-top: 60px;
+        padding: 30px;
+        text-align: center;
+        color: #708599;
+        font-size: 12px;
+      }
+      @media (max-width: 700px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        h1 {
+          font-size: 32px;
+        }
+        header {
+          padding: 16px 20px;
+        }
+        main {
+          margin: 30px auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">HooTasks<span>.</span></div>
+      <div class="account" data-testid="account-email">demo@example.test</div>
+    </header>
+    <main>
+      <div class="kicker">Team workspace</div>
+      <h1>Your workspace, in focus.</h1>
+      <p>A clear place for your team's next steps. Start small. Keep moving.</p>
+      <div class="grid">
+        <section class="card">
+          <h2>Create a task</h2>
+          <p>Turn your next idea into an actionable task.</p>
+          <form id="task-form">
+            <label for="task-title">Task title</label
+            ><input
+              id="task-title"
+              type="text"
+              placeholder="What needs to get done?"
+              required
+            /><label for="priority">Priority</label
+            ><select id="priority">
+              <option value="normal">Normal priority</option>
+              <option value="high">High priority</option>
+              <option value="low">Low priority</option></select
+            ><button type="submit">Create task</button>
+          </form>
+          <div role="status" aria-label="Task result" id="task-result"></div>
+        </section>
+        <section class="card">
+          <h2>Upcoming tasks</h2>
+          <p>The work that matters, all in one place.</p>
+          <div data-testid="task-list" id="task-list">
+            <div class="empty">No tasks yet. Create your first one to get started.</div>
+          </div>
+        </section>
+      </div>
+      <div class="tips">
+        <strong>Quick tip</strong
+        ><span
+          >Clear titles make collaboration easier. Use an action verb and a specific outcome.</span
+        >
+      </div>
+      <div class="spacer">
+        <div class="kicker">Make it yours</div>
+        <h2 style="margin-top: 12px">A workspace that fits your day.</h2>
+        <p>Choose how you stay informed. You can change these preferences whenever you like.</p>
+      </div>
+      <section class="card preferences">
+        <h2>Workspace preferences</h2>
+        <p>Keep the right updates close at hand.</p>
+        <form id="preferences-form">
+          <label class="check"
+            ><input type="checkbox" id="notifications" />Email notifications</label
+          ><button type="submit">Save preferences</button>
+        </form>
+        <div role="status" aria-label="Preferences result" id="preferences-result"></div>
+      </section>
+    </main>
+    <footer>HooTasks demo · Built for the hooserguide walkthrough</footer>
+    <script>
+      document.getElementById('task-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const title = document.getElementById('task-title').value;
+        const priority = document.getElementById('priority');
+        const task = document.createElement('div');
+        task.className = 'task';
+        task.append(document.createTextNode(title));
+        const badge = document.createElement('span');
+        badge.className = 'priority';
+        badge.textContent = priority.selectedOptions[0].textContent;
+        task.append(badge);
+        document.getElementById('task-list').replaceChildren(task);
+        sessionStorage.setItem('task', JSON.stringify({ title, priority: priority.value }));
+        document.getElementById('task-result').textContent = 'Task created successfully.';
+      });
+      document.getElementById('preferences-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        sessionStorage.setItem(
+          'notifications',
+          String(document.getElementById('notifications').checked),
+        );
+        document.getElementById('preferences-result').textContent = 'Preferences saved.';
+      });
+    </script>
+  </body>
+</html>

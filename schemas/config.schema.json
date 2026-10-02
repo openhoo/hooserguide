@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "baseURL": {
+      "type": "string",
+      "format": "uri"
+    },
+    "features": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "output": {
+      "default": "output",
+      "type": "string",
+      "minLength": 1
+    },
+    "viewport": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 320,
+          "maximum": 9007199254740991
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 240,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ],
+      "additionalProperties": false
+    },
+    "deviceScaleFactor": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 4
+    },
+    "browser": {
+      "type": "string",
+      "enum": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ]
+    },
+    "headed": {
+      "type": "boolean"
+    },
+    "storageState": {
+      "type": "string"
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 120000
+    },
+    "plugins": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "masks": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "object",
+            "properties": {
+              "css": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "css"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "role",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "label"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "testId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "testId"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "tag": {
+      "type": "string",
+      "pattern": "^@[\\w-]+$"
+    },
+    "language": {
+      "default": "en",
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]+)*$"
+    },
+    "pdf": {
+      "default": true,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "title",
+    "baseURL",
+    "features",
+    "output",
+    "language",
+    "pdf"
+  ],
+  "additionalProperties": false
+}

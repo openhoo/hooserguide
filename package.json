@@ -1,0 +1,76 @@
+{
+  "name": "@openhoo/hooserguide",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Evidence-backed user manuals from Gherkin, Playwright and annotated screenshots",
+  "bin": {
+    "hooserguide": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc && node scripts/build-assets.mjs",
+    "check": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "prepare": "npm run build",
+    "demo": "node dist/cli.js demo",
+    "demo:docs": "npm run build && node scripts/demo-docs.mjs",
+    "test:package": "node scripts/smoke-package.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@cucumber/gherkin": "42.0.1",
+    "@cucumber/messages": "34.2.1",
+    "@formepdf/core": "^0.26.0",
+    "@formepdf/react": "^0.26.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
+    "@playwright/test": "1.63.0",
+    "react": "^19.3.0",
+    "sharp": "0.35.5",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.3.0",
+    "pdfjs-dist": "^6.3.289",
+    "prettier": "^3.9.9",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openhoo/hooserguide.git"
+  },
+  "homepage": "https://github.com/openhoo/hooserguide#readme",
+  "bugs": {
+    "url": "https://github.com/openhoo/hooserguide/issues"
+  },
+  "keywords": [
+    "playwright",
+    "bdd",
+    "gherkin",
+    "user-guide",
+    "screenshots",
+    "pdfcn",
+    "mcp",
+    "agent-skills"
+  ],
+  "files": [
+    "dist",
+    "examples",
+    "skills",
+    "schemas",
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md"
+  ]
+}

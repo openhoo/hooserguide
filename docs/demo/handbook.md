@@ -1,0 +1,44 @@
+# HooTasks — User guide
+
+Generated: 2026-10-02T11:52:44.982Z
+
+## 1. Create your first task
+
+HooTasks keeps your team's work organized. Create a task, verify the saved   result and adjust your workspace preferences with these short walkthroughs.
+
+1. Enter a clear task title and choose its priority.
+2. Select Create task. Check that the task appears in the list and that a confirmation is shown.
+
+### Fill in the task details
+
+A names your task. B controls its priority. Select Create task to save it.
+
+![Fill in the task details](screenshots/01-01.png)
+
+- **A**: Give the task a descriptive title.
+- **B**: Choose a priority for your team.
+- **1**: Save the new task.
+
+### Check the saved task
+
+The task now appears in your workspace. The confirmation shows that the save completed.
+
+![Check the saved task](screenshots/01-02.png)
+
+- **2**: Your newly created task.
+- **3**: Successful save confirmation.
+
+## 2. Customize workspace notifications
+
+HooTasks keeps your team's work organized. Create a task, verify the saved   result and adjust your workspace preferences with these short walkthroughs.
+
+1. Open Workspace preferences, enable Email notifications and select Save preferences.
+
+### Workspace preferences
+
+Preferences are near the bottom of the workspace. Long screenshots stay readable across PDF pages.
+
+![Workspace preferences](screenshots/02-01.png)
+
+- **A**: Turn notifications on or off.
+- **B**: Save your preferences.

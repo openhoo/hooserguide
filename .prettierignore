@@ -1,0 +1,8 @@
+node_modules
+dist
+output
+src/pdfcn
+docs/demo
+docs/media
+schemas
+package-lock.json
