@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { chromium } from '@playwright/test';
 import sharp from 'sharp';
-import { captureScreenshot, assignLabels } from '../src/capture.js';
+import { captureScreenshot, assignLabels, overlay } from '../src/capture.js';
 import { layoutAnnotations, badgeTextColor } from '../src/annotations.js';
 import { planImageSlices } from '../src/pdf-slices.js';
 import { build } from '../src/build.js';
@@ -178,6 +178,37 @@ test('caption references are painted and skip explicit numeric labels', () => {
     marks.map((m) => m.label),
     ['1', '2', '3'],
   );
+});
+
+test('four wide characters retain padding inside the painted reference badge', async () => {
+  const marks = [
+    {
+      target: 'a',
+      label: 'WWWW',
+      color: '#ffffbb',
+      bounds: { x: 100, y: 80, width: 100, height: 30 },
+    },
+  ];
+  const badge = layoutAnnotations(400, 200, marks)[0]!.badge!;
+  const { data, info } = await sharp({
+    create: { width: 400, height: 200, channels: 3, background: '#ffffff' },
+  })
+    .composite([{ input: Buffer.from(overlay(400, 200, marks)) }])
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  let pixels = 0;
+  for (let y = Math.floor(badge.y); y < badge.y + badge.height; y++)
+    for (let x = 0; x < info.width; x++) {
+      const at = (y * info.width + x) * info.channels;
+      if (data[at]! < 100 && data[at + 1]! < 100 && data[at + 2]! < 100) {
+        pixels++;
+        assert.ok(
+          x >= badge.x + 4 && x < badge.x + badge.width - 4,
+          'Reference text touches badge border',
+        );
+      }
+    }
+  assert.ok(pixels > 0, 'Reference text is missing');
 });
 
 test('mobile zoom and paused Web Animations align annotations with real raster pixels', async () => {

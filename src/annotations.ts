@@ -63,7 +63,7 @@ export function layoutAnnotations(
       width: Math.max(0, Math.min(width - 1.5, b.x + b.width + right) - x),
       height: Math.max(0, Math.min(height - 1.5, b.y + b.height + below) - y),
     };
-    const badgeWidth = Math.max(34, (mark.label?.length ?? 1) * 11 + 14),
+    const badgeWidth = Math.max(34, (mark.label?.length ?? 1) * 16 + 16),
       badgeHeight = 34;
     if (mark.label && (width < badgeWidth + 4 || height < badgeHeight + 4))
       throw new Error('Screenshot is too small for a reference label; increase focus padding');
