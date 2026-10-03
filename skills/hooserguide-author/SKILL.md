@@ -36,6 +36,8 @@ Use offline HTML search and image switching to review the result. When a portabl
 
 Deliver exact PDF/HTML/Markdown and optional ZIP paths, executed task/profile coverage and material limitations. A failed run has evidence but no successful handbook. Do not claim unexecuted workflows.
 
+Choose `manual.theme` from `professional`, `ocean`, `forest`, `sand`, `midnight` or `graphite` for matching HTML/PDF palettes. The last two are dark. HTML readers can change themes; browser print stays light and the PDF keeps the configured theme. Review contrast after custom `branding.accentColor` overrides.
+
 For branding or export fixes, use `hooserguide build <run-directory> --output <output> --config <config> --json`, or `hooserguide_rebuild` with the pinned `runId`. Rebuild checks original evidence and creates a new output; it does not revisit the app. Preserve and report original `generatedAt`, `rebuiltAt` and `sourceReportSha256`.
 
 ## CI integration

@@ -8,6 +8,18 @@ const sections = [...document.querySelectorAll('main > section')];
 const links = [...document.querySelectorAll('nav li')];
 const index = sections.map(section => section.textContent.toLocaleLowerCase());
 toolbar.hidden = false;
+const themeSelect = document.querySelector('#guide-theme');
+const themeKey = 'hooserguide:theme:' + location.pathname;
+const applyTheme = value => {
+  if (![...themeSelect.options].some(option => option.value === value)) return;
+  document.documentElement.dataset.theme = value;
+  themeSelect.value = value;
+};
+try { applyTheme(localStorage.getItem(themeKey)); } catch {}
+themeSelect.addEventListener('change', () => {
+  applyTheme(themeSelect.value);
+  try { localStorage.setItem(themeKey, themeSelect.value); } catch {}
+});
 search.addEventListener('input', () => {
   const terms = search.value.trim().toLocaleLowerCase().split(/\\s+/).filter(Boolean);
   let count = 0;

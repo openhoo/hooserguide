@@ -18,7 +18,7 @@ spec:
       regex: '^[A-Za-z0-9_-][A-Za-z0-9_./-]*$'
       description: Fresh relative directory to publish; existing content is never deleted.
     package:
-      default: github:openhoo/hooserguide#0.6.0
+      default: github:openhoo/hooserguide#0.7.0
       description: Pinned package source installed in an isolated runtime.
     image:
       default: node:22-bookworm

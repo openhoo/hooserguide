@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { z } from 'zod';
+import { manualThemeNames } from './themes.js';
 import parseTagExpression from '@cucumber/tag-expressions';
 import type { BrowserProfile, Config } from './types.js';
 
@@ -70,6 +71,7 @@ export const documentSchema = z
   .strict();
 export const manualSchema = z
   .object({
+    theme: z.enum(manualThemeNames).optional(),
     pageSize: z.enum(['A4', 'Letter']).optional(),
     orientation: z.enum(['portrait', 'landscape']).optional(),
     margin: z.number().min(24).max(72).optional(),

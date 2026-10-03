@@ -62,6 +62,7 @@ export interface DocumentMetadata {
   summary?: string;
 }
 export interface ManualOptions {
+  theme?: import('./themes.js').ManualThemeName;
   pageSize?: 'A4' | 'Letter';
   orientation?: 'portrait' | 'landscape';
   margin?: number;

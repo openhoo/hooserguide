@@ -23,21 +23,8 @@ import {
   comparisonImage,
   sameGuidance,
 } from './responsive.js';
+import { resolveManualTheme } from './themes.js';
 import { badgeTextColor } from './annotations.js';
-
-const theme = {
-  ...professionalTheme,
-  colors: {
-    ...professionalTheme.colors,
-    foreground: '#142636',
-    primary: '#075e59',
-    mutedForeground: '#52667a',
-  },
-  typography: {
-    ...professionalTheme.typography,
-    heading: { ...professionalTheme.typography.heading, fontFamily: 'Helvetica' },
-  },
-};
 
 /** pdfcn components are vendored as intended by its registry model. */
 export async function renderPdf(report: RunReport, directory: string): Promise<void> {
@@ -45,8 +32,38 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
   requireSuccessfulEvidence(report);
   await verifyReportImages(report, directory);
   const branding = brandingSchema.parse(report.branding ?? {});
-  const accent = branding.accentColor ?? '#075e59';
-  const documentTheme = { ...theme, colors: { ...theme.colors, primary: accent } };
+  const theme = resolveManualTheme(report.manual?.theme, branding);
+  const colors = theme.colors;
+  const accent = colors.primary;
+  const documentTheme = {
+    ...professionalTheme,
+    name: theme.name,
+    colors: {
+      ...professionalTheme.colors,
+      foreground: colors.foreground,
+      background: colors.surface,
+      muted: colors.muted,
+      mutedForeground: colors.mutedForeground,
+      primary: accent,
+      primaryForeground: badgeTextColor(accent),
+      border: colors.border,
+      warning: colors.warning,
+    },
+    typography: {
+      ...professionalTheme.typography,
+      heading: { ...professionalTheme.typography.heading, fontFamily: 'Helvetica' },
+    },
+  };
+  const pageStyle = { backgroundColor: colors.surface, color: colors.foreground };
+  // Page styles cover the content area. A solid background image also paints margins
+  // and is inherited by native overflow pages.
+  const pageBackground = `data:image/png;base64,${(
+    await sharp({
+      create: { width: 1, height: 1, channels: 3, background: colors.surface },
+    })
+      .png()
+      .toBuffer()
+  ).toString('base64')}`;
   const l = manualLabels(report.language);
   const geometry = pageGeometry(report.manual);
   const pageWidth = geometry.contentWidth;
@@ -68,7 +85,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
   // Register Fixed before flowing content so native overflow pages inherit the footer.
   const footer = (
     <Fixed position="footer">
-      <View style={{ borderTopWidth: 1, borderColor: '#dce5e9', paddingTop: 10 }}>
+      <View style={{ borderTopWidth: 1, borderColor: colors.border, paddingTop: 10 }}>
         <Text variant="xs" color="mutedForeground" noMargin>
           {branding.name ?? 'hooserguide'} · {report.title}
         </Text>
@@ -77,7 +94,14 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
     </Fixed>
   );
   pages.push(
-    <Page key="cover" size={geometry.size} margin={geometry.margin}>
+    <Page
+      key="cover"
+      size={geometry.size}
+      margin={geometry.margin}
+      style={pageStyle}
+      backgroundImage={pageBackground}
+      backgroundSize="fill"
+    >
       {footer}
       <View style={{ paddingTop: geometry.size.width > geometry.size.height ? 28 : 88 }}>
         <Text variant="sm" weight="bold" color="primary" transform="uppercase">
@@ -110,7 +134,14 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
   );
   for (const [i, chapter] of presented.entries()) {
     pages.push(
-      <Page key={`chapter-${i}`} size={geometry.size} margin={geometry.margin}>
+      <Page
+        key={`chapter-${i}`}
+        size={geometry.size}
+        margin={geometry.margin}
+        style={pageStyle}
+        backgroundImage={pageBackground}
+        backgroundSize="fill"
+      >
         {footer}
         <Text variant="sm" weight="bold" color="primary">
           {l.chapter.toUpperCase()} {String(i + 1).padStart(2, '0')}
@@ -138,8 +169,13 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
               padding: 14,
               marginBottom: 12,
               borderLeftWidth: 3,
-              borderColor: callout.kind === 'warning' ? '#b45309' : accent,
-              backgroundColor: callout.kind === 'warning' ? '#fffbeb' : '#f1f5f9',
+              borderColor: callout.kind === 'warning' ? colors.warning : accent,
+              backgroundColor:
+                callout.kind === 'warning'
+                  ? colors.warningBackground
+                  : callout.kind === 'tip'
+                    ? colors.tipBackground
+                    : colors.muted,
             }}
           >
             <Text variant="sm" noMargin>
@@ -163,7 +199,14 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
           (overview.height * pageWidth) / overview.width,
         );
         pages.push(
-          <Page key={`comparison-${i}-${j}`} size={geometry.size} margin={geometry.margin}>
+          <Page
+            key={`comparison-${i}-${j}`}
+            size={geometry.size}
+            margin={geometry.margin}
+            style={pageStyle}
+            backgroundImage={pageBackground}
+            backgroundSize="fill"
+          >
             {footer}
             <Text variant="xs" color="primary" weight="bold">
               {l.figure} {i + 1}.{j + 1} · {l.screens}
@@ -193,6 +236,9 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
             key={`guidance-${i}-${variant.variant!.profile}`}
             size={geometry.size}
             margin={geometry.margin}
+            style={pageStyle}
+            backgroundImage={pageBackground}
+            backgroundSize="fill"
           >
             {footer}
             <Heading level={3}>{screenLabel(variant.variant!)}</Heading>
@@ -236,6 +282,9 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
               key={`figure-${i}-${variant.variant?.profile ?? 'default'}-${j}-${slice}`}
               size={geometry.size}
               margin={geometry.margin}
+              style={pageStyle}
+              backgroundImage={pageBackground}
+              backgroundSize="fill"
             >
               {footer}
               <Text variant="xs" weight="bold" color="primary">
@@ -270,10 +319,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
                     {m.label ? (
                       <Strong
                         style={{
-                          color:
-                            badgeTextColor(m.color ?? '#e11d48') === '#ffffff'
-                              ? (m.color ?? '#e11d48')
-                              : '#142636',
+                          color: colors.foreground,
                         }}
                       >
                         {m.label} ·{' '}

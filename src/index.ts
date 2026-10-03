@@ -12,3 +12,6 @@ export { bundle } from './bundle.js';
 export { inspectRun } from './evidence.js';
 
 export { preparePages, type PagesOptions } from './pages.js';
+
+export { manualThemes, manualThemeNames, resolveManualTheme } from './themes.js';
+export type { ManualTheme, ManualThemeName } from './themes.js';

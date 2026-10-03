@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.0 — 2026-10-03
+
+- Offer six shared HTML/PDF manual themes, including Midnight and Graphite dark themes, through `manual.theme` and `run/build --theme`.
+- Add an accessible offline HTML theme selector with per-handbook storage and a light print palette.
+
 ## 0.3.0 — 2026-10-02
 
 - Select workflows with official Cucumber tag expressions and case-insensitive scenario-name filters; retain actual selection in reports.

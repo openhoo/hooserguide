@@ -34,6 +34,7 @@ Usage:
 Responsive: run/validate accept --profiles desktop,tablet,mobile; run/build accept --screen-layout side-by-side|stacked.
 Selection: run/validate accept --tags "@manual and not @destructive" and --scenario "Settings".
 Run: --fail-fast stops after the first failed scenario.
+Themes: run/build accept --theme professional|ocean|forest|sand|midnight|graphite.
 PDF layout: run/build accept --page-size A4|Letter, --orientation portrait|landscape (or --landscape) and --margin 24..72 (points).
 
 Run exports PDF, HTML, Markdown, screenshots and a JSON execution report.
@@ -69,6 +70,7 @@ async function execute(args: string[]): Promise<void> {
       profile: { type: 'string' },
       profiles: { type: 'string' },
       'screen-layout': { type: 'string' },
+      theme: { type: 'string' },
       skills: { type: 'boolean' },
       tags: { type: 'string' },
       scenario: { type: 'string' },
@@ -125,6 +127,7 @@ async function execute(args: string[]): Promise<void> {
       'profile',
       'profiles',
       'screen-layout',
+      'theme',
       'output',
       'headed',
       'no-pdf',
@@ -140,6 +143,7 @@ async function execute(args: string[]): Promise<void> {
     ],
     build: [
       'screen-layout',
+      'theme',
       'config',
       'output',
       'no-pdf',
@@ -173,6 +177,7 @@ async function execute(args: string[]): Promise<void> {
   if (values.orientation && values.landscape)
     throw new Error('Use --orientation or --landscape, not both');
   const layout = manualSchema.parse({
+    ...(values.theme !== undefined ? { theme: values.theme } : {}),
     ...(values['screen-layout'] !== undefined ? { screenLayout: values['screen-layout'] } : {}),
     ...(values['page-size'] !== undefined ? { pageSize: values['page-size'] } : {}),
     ...(values.orientation !== undefined

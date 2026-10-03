@@ -309,7 +309,7 @@ test('long callouts paginate in landscape without losing content', async () => {
     await writeFile(join(source, 'report.json'), JSON.stringify(report));
     const result = await build(source, {
       output: join(root, 'out'),
-      manual: { pageSize: 'Letter', orientation: 'landscape', margin: 36 },
+      manual: { pageSize: 'Letter', orientation: 'landscape', margin: 36, theme: 'midnight' },
     });
     assert.equal(result.report.status, 'passed', result.report.exportError);
     const loading = getDocument({
@@ -320,7 +320,21 @@ test('long callouts paginate in landscape without losing content', async () => {
       const pdf = await loading.promise;
       let content = '';
       for (let i = 1; i <= pdf.numPages; i++) {
-        const pageText = (await (await pdf.getPage(i)).getTextContent()).items
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 0.2 });
+        const canvas = pdf.canvasFactory.create(
+          Math.ceil(viewport.width),
+          Math.ceil(viewport.height),
+        );
+        await page.render({ canvasContext: canvas.context, canvas: canvas.canvas, viewport })
+          .promise;
+        assert.deepEqual(
+          [...canvas.context.getImageData(2, 2, 1, 1).data].slice(0, 3),
+          [21, 34, 56],
+          `Missing dark background on overflow page ${i}`,
+        );
+        pdf.canvasFactory.destroy(canvas);
+        const pageText = (await page.getTextContent()).items
           .map((item) => ('str' in item ? item.str : ''))
           .join(' ');
         assert.ok(

@@ -4,29 +4,29 @@
 
 JSON config is validated strictly: unknown fields are errors. Optional `$schema` supports editor completion with `schemas/config.schema.json`.
 
-| Field               | Default       | Meaning                                                      |
-| ------------------- | ------------- | ------------------------------------------------------------ |
-| `title`             | required      | Handbook title                                               |
-| `baseURL`           | required      | HTTP(S) application URL for relative navigation              |
-| `features`          | required      | Nonempty array of feature paths or glob patterns             |
-| `output`            | `output`      | Parent directory for isolated runs                           |
-| `tag`               | all scenarios | One tag such as `@manual`                                    |
-| `tagExpression`     | none          | Cucumber tag expression; overrides `tag`                     |
-| `scenario`          | none          | Case-insensitive scenario-name substring                     |
-| `failFast`          | false         | Stop after first failed scenario and record skipped coverage |
-| `document`          | none          | Guide/product version, audience and summary                  |
-| `manual`            | A4 portrait   | Page size, orientation, margin, contents and date visibility |
-| `captureDefaults`   | none          | Default auto-labels, mark color, focus padding and fullPage  |
-| `language`          | `en`          | Browser locale and document language tag                     |
-| `viewport`          | 1280 × 800    | Browser CSS viewport width/height                            |
-| `deviceScaleFactor` | 1             | Browser scale factor; screenshots still use CSS pixels       |
-| `browser`           | `chromium`    | Chromium, Firefox or WebKit                                  |
-| `headed`            | false         | Open a visible browser for debugging                         |
-| `timeoutMs`         | 10000         | Browser action/assertion timeout, 100–120000 milliseconds    |
-| `storageState`      | none          | Local Playwright authentication state file                   |
-| `masks`             | none          | Privacy selectors applied to every capture                   |
-| `plugins`           | none          | Trusted local ESM step modules                               |
-| `pdf`               | true          | Enable pdfcn / Forme PDF export                              |
+| Field               | Default       | Meaning                                                             |
+| ------------------- | ------------- | ------------------------------------------------------------------- |
+| `title`             | required      | Handbook title                                                      |
+| `baseURL`           | required      | HTTP(S) application URL for relative navigation                     |
+| `features`          | required      | Nonempty array of feature paths or glob patterns                    |
+| `output`            | `output`      | Parent directory for isolated runs                                  |
+| `tag`               | all scenarios | One tag such as `@manual`                                           |
+| `tagExpression`     | none          | Cucumber tag expression; overrides `tag`                            |
+| `scenario`          | none          | Case-insensitive scenario-name substring                            |
+| `failFast`          | false         | Stop after first failed scenario and record skipped coverage        |
+| `document`          | none          | Guide/product version, audience and summary                         |
+| `manual`            | A4 portrait   | Theme, page size, orientation, margin, contents and date visibility |
+| `captureDefaults`   | none          | Default auto-labels, mark color, focus padding and fullPage         |
+| `language`          | `en`          | Browser locale and document language tag                            |
+| `viewport`          | 1280 × 800    | Browser CSS viewport width/height                                   |
+| `deviceScaleFactor` | 1             | Browser scale factor; screenshots still use CSS pixels              |
+| `browser`           | `chromium`    | Chromium, Firefox or WebKit                                         |
+| `headed`            | false         | Open a visible browser for debugging                                |
+| `timeoutMs`         | 10000         | Browser action/assertion timeout, 100–120000 milliseconds           |
+| `storageState`      | none          | Local Playwright authentication state file                          |
+| `masks`             | none          | Privacy selectors applied to every capture                          |
+| `plugins`           | none          | Trusted local ESM step modules                                      |
+| `pdf`               | true          | Enable pdfcn / Forme PDF export                                     |
 
 `features`, `output`, `plugins` and `storageState` are relative to the config file. API config passed directly to `run()` is relative to the process working directory. Each feature pattern must match a file. Feature files are sorted and duplicate paths are deduplicated. Scenarios run sequentially in fresh browser contexts, with the configured authentication state loaded for each one.
 
@@ -151,3 +151,11 @@ Rebuild, inspection, comparison and bundle share contained artifact reads: repor
 Comparison includes browser engine, scenario tags and executed step text/status/error. Step durations and PNG compression changes are ignored; both annotated and raw pixels are decoded before comparison. An unchanged comparison does not replace visual review or prove that the application is current.
 
 With `--json`, CLI results occupy stdout and trusted plugin console diagnostics go to stderr. Plugins must not write directly to stdout. Exceptional command failures return their JSON diagnostic on stderr with exit code 1; completed failed runs return a failed run summary on stdout with exit code 1.
+
+### Theme selection
+
+`manual.theme` accepts `professional` (default), `ocean`, `forest`, `sand`,
+`midnight` and `graphite`. The last two presets are dark. `run` and `build`
+accept `--theme <name>` to override the configuration. Rebuilds preserve the
+selected theme in `report.json`; MCP configuration uses the same `manual.theme`
+field. See [manual themes](../README.md#manual-themes) for appearance and viewer behavior.

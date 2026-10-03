@@ -195,6 +195,17 @@
     "manual": {
       "type": "object",
       "properties": {
+        "theme": {
+          "type": "string",
+          "enum": [
+            "professional",
+            "ocean",
+            "forest",
+            "sand",
+            "midnight",
+            "graphite"
+          ]
+        },
         "pageSize": {
           "type": "string",
           "enum": [

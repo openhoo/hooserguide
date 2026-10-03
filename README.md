@@ -252,7 +252,7 @@ Every screen has its own BDD assertions, privacy masks and annotation coordinate
 **GitLab:** add the Pages component after your generating job:
 
 ```yaml
-- remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.6.0/templates/pages/template.yml
+- remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.7.0/templates/pages/template.yml
   inputs:
     generate-job: user-guide
     source: output/user-guide
@@ -263,12 +263,12 @@ Include `deploy` in your pipeline stages. This job uses GitLab 17.10+ and publis
 **GitHub:** use the generation action and hand its exact output to the Pages action:
 
 ```yaml
-- uses: openhoo/hooserguide/actions/generate@0.6.0
+- uses: openhoo/hooserguide/actions/generate@0.7.0
   id: guide
   with:
     config: docs/user-guide/hooserguide.config.json
     profiles: desktop,tablet,mobile
-- uses: openhoo/hooserguide/actions/pages@0.6.0
+- uses: openhoo/hooserguide/actions/pages@0.7.0
   with:
     run-directory: ${{ steps.guide.outputs.directory }}
 ```
@@ -281,7 +281,7 @@ Include the pinned template directly from GitHub:
 
 ```yaml
 include:
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.6.0/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.7.0/templates/generate/template.yml
     inputs:
       config: docs/user-guide/hooserguide.config.json
       browser: chromium
@@ -310,6 +310,43 @@ The job exports PDF, HTML, Markdown, verified screenshots, a status summary and 
 ```
 
 Paths are relative to the configuration file. Feature files are sorted and deduplicated. `storageState` accepts an existing local Playwright authentication state. `browser` supports `chromium`, `firefox` and `webkit`; install your selected browser first. See [configuration and step reference](docs/reference.md), [config schema](schemas/config.schema.json) [capture schema](schemas/capture.schema.json) and [report schema](schemas/report.schema.json).
+
+## Manual themes
+
+Choose a preset for both HTML and PDF with `manual.theme`:
+
+```json
+{
+  "manual": { "theme": "midnight" },
+  "branding": { "name": "Acme" }
+}
+```
+
+| Theme                    | Appearance                   |
+| ------------------------ | ---------------------------- |
+| `professional` (default) | Light, slate and teal        |
+| `ocean`                  | Light, blue                  |
+| `forest`                 | Light, green                 |
+| `sand`                   | Light, warm paper and bronze |
+| `midnight`               | Dark, navy and sky blue      |
+| `graphite`               | Dark, charcoal and lavender  |
+
+```sh
+hooserguide run --config hooserguide.config.json --theme forest
+hooserguide build output/guides/<run> --output output/midnight --theme midnight
+```
+
+HTML readers can switch themes in the toolbar. Their choice is saved for that
+handbook path when browser storage is available. The configured theme also works
+without JavaScript. Browser printing uses a light palette; the downloadable PDF
+retains the configured theme. Switching the HTML theme does not regenerate the PDF.
+Screenshots and their annotations retain their evidence colors in every theme.
+Markdown has no theme styling.
+
+`branding.accentColor` overrides the accent in all presets; choose a color that
+remains readable on the backgrounds you offer. The built-in palettes use text
+contrasts of at least 4.5:1. Library users can import `manualThemeNames`,
+`manualThemes` and `resolveManualTheme` to discover the presets.
 
 ## What you get
 
