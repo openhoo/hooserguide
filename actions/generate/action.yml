@@ -1,0 +1,108 @@
+name: Generate hooserguide
+description: Generate verified responsive user manuals with isolated package installation.
+inputs:
+  config:
+    description: Path to the trusted local config.
+    default: 'hooserguide.config.json'
+  package:
+    description: Pinned package source, installed separately from app dependencies.
+    default: 'github:openhoo/hooserguide#0.6.0'
+  output:
+    description: Fresh relative artifact root.
+    default: 'output/hooserguide-github'
+  browser:
+    description: 'Browser engine: chromium, firefox or webkit.'
+    default: 'chromium'
+  profile:
+    description: Single profile; use instead of profiles.
+    default: ''
+  profiles:
+    description: Comma-separated responsive profiles.
+    default: ''
+  screen-layout:
+    description: config, side-by-side or stacked.
+    default: 'config'
+  base-url:
+    description: Optional app URL override.
+    default: ''
+  tags:
+    description: Cucumber tag expression.
+    default: ''
+  scenario:
+    description: Scenario-name filter.
+    default: ''
+  pdf:
+    description: Generate PDF.
+    default: 'true'
+  bundle:
+    description: Generate portable ZIP.
+    default: 'true'
+  fail-fast:
+    description: Stop after first failed scenario.
+    default: 'false'
+  page-size:
+    description: config, A4 or Letter.
+    default: 'config'
+  orientation:
+    description: config, portrait or landscape.
+    default: 'config'
+  margin:
+    description: PDF margin in points; zero keeps config.
+    default: '0'
+  wait-url:
+    description: Optional readiness endpoint.
+    default: ''
+  wait-timeout:
+    description: Readiness timeout in seconds.
+    default: '60'
+  install-browsers:
+    description: Install matching Playwright engine and system dependencies.
+    default: 'true'
+outputs:
+  directory:
+    description: Exact successful execution directory, suitable for the Pages action.
+    value: ${{ steps.generate.outputs.directory }}
+  summary:
+    description: JSON generation summary, including artifacts and profile coverage.
+    value: ${{ steps.generate.outputs.summary }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - id: generate
+      shell: bash
+      env:
+        HOOSERGUIDE_ACTION_MODE: generate
+        HOOSERGUIDE_CI_CONFIG: ${{ inputs.config }}
+        HOOSERGUIDE_CI_PACKAGE: ${{ inputs.package }}
+        HOOSERGUIDE_CI_OUTPUT: ${{ inputs.output }}
+        HOOSERGUIDE_CI_BROWSER: ${{ inputs.browser }}
+        HOOSERGUIDE_CI_PROFILE: ${{ inputs.profile }}
+        HOOSERGUIDE_CI_PROFILES: ${{ inputs.profiles }}
+        HOOSERGUIDE_CI_SCREEN_LAYOUT: ${{ inputs.screen-layout }}
+        HOOSERGUIDE_CI_BASE_URL: ${{ inputs.base-url }}
+        HOOSERGUIDE_CI_TAGS: ${{ inputs.tags }}
+        HOOSERGUIDE_CI_SCENARIO: ${{ inputs.scenario }}
+        HOOSERGUIDE_CI_PDF: ${{ inputs.pdf }}
+        HOOSERGUIDE_CI_BUNDLE: ${{ inputs.bundle }}
+        HOOSERGUIDE_CI_FAIL_FAST: ${{ inputs.fail-fast }}
+        HOOSERGUIDE_CI_PAGE_SIZE: ${{ inputs.page-size }}
+        HOOSERGUIDE_CI_ORIENTATION: ${{ inputs.orientation }}
+        HOOSERGUIDE_CI_MARGIN: ${{ inputs.margin }}
+        HOOSERGUIDE_CI_WAIT_URL: ${{ inputs.wait-url }}
+        HOOSERGUIDE_CI_WAIT_TIMEOUT: ${{ inputs.wait-timeout }}
+        HOOSERGUIDE_CI_INSTALL_BROWSERS: ${{ inputs.install-browsers }}
+      run: |
+        set -eu
+        HOOSERGUIDE_RUNTIME="$(mktemp -d)"
+        trap 'rm -rf "$HOOSERGUIDE_RUNTIME"' EXIT
+        HOOSERGUIDE_INSTALL_SOURCE="$(node -e 'const p=process.env.HOOSERGUIDE_CI_PACKAGE; if (!p) process.exit(1); console.log(p.startsWith("file:") ? "file:"+require("node:path").resolve(process.env.CI_PROJECT_DIR || process.env.GITHUB_WORKSPACE || process.cwd(),p.slice(5)) : p)')"
+        npm install --prefix "$HOOSERGUIDE_RUNTIME" --no-audit --no-fund --no-package-lock -- "$HOOSERGUIDE_INSTALL_SOURCE" >&2
+        case "$HOOSERGUIDE_CI_INSTALL_BROWSERS" in true|false) ;; *) echo 'install-browsers must be true or false' >&2; exit 1;; esac
+        case "$HOOSERGUIDE_CI_BROWSER" in chromium|firefox|webkit) ;; *) echo 'Unsupported browser' >&2; exit 1;; esac
+        if [ "$HOOSERGUIDE_CI_INSTALL_BROWSERS" = "true" ]; then
+          "$HOOSERGUIDE_RUNTIME/node_modules/.bin/playwright" install --with-deps "$HOOSERGUIDE_CI_BROWSER" >&2
+        fi
+        node "$HOOSERGUIDE_RUNTIME/node_modules/@openhoo/hooserguide/dist/pages-ci.js"

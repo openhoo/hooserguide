@@ -4,6 +4,7 @@ import { Console } from 'node:console';
 import { realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { preparePages } from './pages.js';
 import { compareRuns } from './compare.js';
 import { bundle } from './bundle.js';
 import { inspectRun } from './evidence.js';
@@ -26,6 +27,7 @@ Usage:
   hooserguide inspect <run-directory> [--json]
   hooserguide compare <before-run> <after-run> [--json]
   hooserguide bundle <run-directory> [--output handbook.zip] [--json]
+  hooserguide pages <run-directory> [--output public] [--json]
   hooserguide demo [--output output/demo] [--json]
   hooserguide mcp [--config hooserguide.config.json]
 
@@ -101,12 +103,17 @@ async function execute(args: string[]): Promise<void> {
       'compare',
       'bundle',
       'inspect',
+      'pages',
     ].includes(command)
   )
     throw new Error(`Unknown command ${command}. Use --help.`);
   if (
     positionals.length >
-    (command === 'compare' ? 3 : ['init', 'build', 'bundle', 'inspect'].includes(command) ? 2 : 1)
+    (command === 'compare'
+      ? 3
+      : ['init', 'build', 'bundle', 'inspect', 'pages'].includes(command)
+        ? 2
+        : 1)
   )
     throw new Error('Unexpected positional argument. Use --help.');
   const allowed: Record<string, string[]> = {
@@ -142,6 +149,7 @@ async function execute(args: string[]): Promise<void> {
       'orientation',
       'margin',
     ],
+    pages: ['output', 'json'],
     inspect: ['json'],
     compare: ['json'],
     bundle: ['output', 'json'],
@@ -174,6 +182,17 @@ async function execute(args: string[]): Promise<void> {
         : {}),
     ...(values.margin !== undefined ? { margin: Number(values.margin) } : {}),
   });
+  if (command === 'pages') {
+    if (!positionals[1]) throw new Error('pages requires a run directory');
+    output(
+      JSON.stringify(
+        await preparePages(positionals[1], { output: values.output }),
+        null,
+        values.json ? undefined : 2,
+      ),
+    );
+    return;
+  }
   if (['inspect', 'compare', 'bundle'].includes(command)) {
     if (!positionals[1] || (command === 'compare' && !positionals[2]))
       throw new Error(

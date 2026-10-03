@@ -13,3 +13,5 @@ This is a TypeScript CLI/library for evidence-backed user manuals. The agent aut
 - `src/pdfcn/` is pinned MIT-licensed third-party source. Preserve the license and notices.
 - Do not commit `output/`, credentials, storage state, local absolute paths or private app content.
 - See `skills/hooserguide-author` and `skills/hooserguide-review` for application-documentation tasks.
+
+- Pages publication must regenerate from successful verified evidence, include only intended artifacts, preserve source hashes and sanitize local source paths. Verify actual deployment URLs before claiming a live site.

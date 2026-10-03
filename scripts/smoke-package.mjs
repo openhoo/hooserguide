@@ -1,4 +1,4 @@
-import { parseAllDocuments } from 'yaml';
+import { parse, parseAllDocuments } from 'yaml';
 import { once } from 'node:events';
 import { execFileSync, spawn } from 'node:child_process';
 import { mkdtemp, writeFile, rm, access, readFile, mkdir, copyFile } from 'node:fs/promises';
@@ -205,13 +205,131 @@ try {
       throw new Error('Component output is not job scoped');
     if (summary.status !== 'passed' || summary.browser !== 'chromium')
       throw new Error('Component summary is invalid');
+    const pagesDocuments = parseAllDocuments(
+      await readFile(
+        join(root, 'node_modules/@openhoo/hooserguide/templates/pages/template.yml'),
+        'utf8',
+      ),
+    );
+    const pagesInputs = pagesDocuments[0].toJS().spec.inputs;
+    const pagesJob = pagesDocuments[1].toJS()['$[[ inputs.job-name ]]'];
+    const pagesEnv = Object.fromEntries(
+      Object.entries(pagesJob.variables).map(([name, variable]) => [
+        name,
+        variable.value.replace(/\$\[\[ inputs\.([\w-]+) \]\]/g, (_match, key) =>
+          String(pagesInputs[key].default),
+        ),
+      ]),
+    );
+    const staticSite = JSON.parse(
+      execFileSync('/bin/sh', ['-c', pagesJob.script[0]], {
+        cwd: root,
+        encoding: 'utf8',
+        timeout: 120000,
+        env: {
+          ...process.env,
+          ...pagesEnv,
+          CI_PROJECT_DIR: root,
+          HOOSERGUIDE_CI_PACKAGE: 'file:.ci-package/fixture.tgz',
+          HOOSERGUIDE_PAGES_SOURCE: 'component-out',
+          HOOSERGUIDE_PAGES_OUTPUT: 'gitlab-public',
+        },
+        stdio: ['ignore', 'pipe', 'inherit'],
+      }),
+    );
+    await access(join(staticSite.directory, 'index.html'));
+    await access(join(staticSite.directory, 'handbook.zip'));
+    const siteReport = await readFile(join(staticSite.directory, 'report.json'), 'utf8');
+    if (siteReport.includes(root)) throw new Error('Pages exposes local source paths');
+    const githubOutputs = join(root, 'github-output.txt');
+    await writeFile(githubOutputs, '');
+    const githubGenerate = parse(
+      await readFile(
+        join(root, 'node_modules/@openhoo/hooserguide/actions/generate/action.yml'),
+        'utf8',
+      ),
+    );
+    const generationStep = githubGenerate.runs.steps.find((step) => step.id === 'generate');
+    const githubEnv = Object.fromEntries(
+      Object.entries(generationStep.env).map(([name, value]) => [
+        name,
+        value.replace(
+          /\$\{\{ inputs\.([\w-]+) \}\}/g,
+          (_match, key) => githubGenerate.inputs[key].default,
+        ),
+      ]),
+    );
+    const githubRun = JSON.parse(
+      execFileSync('/bin/bash', ['-c', generationStep.run], {
+        cwd: root,
+        encoding: 'utf8',
+        timeout: 120000,
+        env: {
+          ...process.env,
+          ...githubEnv,
+          GITHUB_WORKSPACE: root,
+          GITHUB_OUTPUT: githubOutputs,
+          HOOSERGUIDE_CI_PACKAGE: 'file:.ci-package/fixture.tgz',
+          HOOSERGUIDE_CI_CONFIG: 'docs/guide/hooserguide.config.json',
+          HOOSERGUIDE_CI_BASE_URL: baseURL,
+          HOOSERGUIDE_CI_WAIT_URL: baseURL,
+          HOOSERGUIDE_CI_INSTALL_BROWSERS: 'false',
+          HOOSERGUIDE_CI_PROFILES: 'desktop,mobile',
+        },
+        stdio: ['ignore', 'pipe', 'inherit'],
+      }),
+    );
+    if (githubRun.status !== 'passed') throw new Error('GitHub generation shell failed');
+    const outputs = Object.fromEntries(
+      (await readFile(githubOutputs, 'utf8'))
+        .trim()
+        .split('\n')
+        .map((line) => {
+          const n = line.indexOf('=');
+          return [line.slice(0, n), line.slice(n + 1)];
+        }),
+    );
+    await access(outputs.summary);
+    const githubPages = parse(
+      await readFile(
+        join(root, 'node_modules/@openhoo/hooserguide/actions/pages/action.yml'),
+        'utf8',
+      ),
+    );
+    const prepareStep = githubPages.runs.steps.find((step) => step.id === 'prepare');
+    const prepared = JSON.parse(
+      execFileSync('/bin/bash', ['-c', prepareStep.run], {
+        cwd: root,
+        encoding: 'utf8',
+        timeout: 120000,
+        env: {
+          ...process.env,
+          HOOSERGUIDE_ACTION_MODE: 'pages',
+          GITHUB_WORKSPACE: root,
+          GITHUB_OUTPUT: githubOutputs,
+          HOOSERGUIDE_CI_PACKAGE: 'file:.ci-package/fixture.tgz',
+          HOOSERGUIDE_PAGES_RUN: outputs.directory,
+          HOOSERGUIDE_PAGES_OUTPUT: 'github-public',
+        },
+        stdio: ['ignore', 'pipe', 'inherit'],
+      }),
+    );
+    if (prepared.status !== 'passed') throw new Error('GitHub Pages preparation failed');
+    await access(join(prepared.directory, '.nojekyll'));
+    await access(join(prepared.directory, 'handbook.pdf'));
+    await access(join(root, 'node_modules/@openhoo/hooserguide/docs/pages.md'));
+    if (
+      !(await readFile(join(root, 'package.json'))).equals(manifestBefore) ||
+      !(await readFile(join(root, 'package-lock.json'))).equals(lockBefore)
+    )
+      throw new Error('Pages integration modified consumer dependencies');
   } finally {
     const exited = once(app, 'exit');
     app.kill();
     await exited;
   }
   console.log(
-    '✓ Installed tarball: bin, init, skills with references, MCP stdio, step discovery, validation, browser capture, rebuild, pdfcn PDF and real GitLab component shell verified',
+    '✓ Installed tarball: bin, init, skills with references, MCP stdio, step discovery, validation, browser capture, rebuild, pdfcn PDF, real GitLab generation/Pages shells and GitHub generation/Pages action shells verified',
   );
 } finally {
   await rm(root, { recursive: true, force: true });

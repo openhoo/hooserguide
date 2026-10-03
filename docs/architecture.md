@@ -62,3 +62,7 @@ The adapter validates configuration before browser execution, confines output to
 ## Responsive execution and presentation
 
 The runner expands each selected Gherkin scenario across two to four named profiles, opening a fresh context for each pair and recording `Chapter.variant`. Browsers are reused by engine and closed together on cancellation. Reports remain separate execution evidence; `responsive.ts` groups them only for presentation. Integrity checks require complete and unique scenario/profile groups with identical capture sequences before export. HTML/Markdown show comparison columns or stacked figures; PDF adds non-cropped comparison images plus annotation-aware detail pages. Rebuild, inspect, compare, bundle, MCP and GitLab preserve profile identity and all original screenshot hashes.
+
+## Static Pages publication
+
+`pages.ts` verifies successful source evidence, reserves a fresh contained output directory and stages regenerated HTML/PDF with only masked screenshots and intended exports. It sanitizes report source paths and records re-export provenance. `pages-ci.ts` adapts exact GitLab job summaries or GitHub action outputs; ambiguous, failed or escaping sources are rejected. GitLab and GitHub templates transport inputs as literal environment values and install the runtime separately from app dependencies. The GitHub Pages deployment job uses an official artifact/OIDC flow after a successful build; the GitLab named Pages job publishes only successful artifacts.

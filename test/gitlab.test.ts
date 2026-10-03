@@ -280,11 +280,15 @@ test('native GitLab self-test includes distinct jobs for all engines against its
   const pipeline = document!.toJS();
   const version = JSON.parse(await readFile('package.json', 'utf8')).version;
   assert.deepEqual(
-    pipeline.include.map((include: { inputs: { browser: string } }) => include.inputs.browser),
+    pipeline.include
+      .filter((include: { inputs: { browser?: string } }) => include.inputs.browser)
+      .map((include: { inputs: { browser: string } }) => include.inputs.browser),
     ['chromium', 'firefox', 'webkit'],
   );
   const names = new Set<string>();
-  for (const include of pipeline.include) {
+  for (const include of pipeline.include.filter(
+    (include: { inputs: { browser?: string } }) => include.inputs.browser,
+  )) {
     assert.equal(include.local, '/templates/generate/template.yml');
     assert.equal(names.has(include.inputs['job-name']), false);
     names.add(include.inputs['job-name']);

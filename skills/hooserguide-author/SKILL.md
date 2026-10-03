@@ -45,3 +45,7 @@ Read [ci-integration.md](references/ci-integration.md) for GitLab component inpu
 ## Responsive presentations
 
 Read [responsive.md](references/responsive.md) when presenting or reviewing a feature across mobile, tablet and desktop, with screenshots next to each other or stacked.
+
+## Pages publication
+
+Read [pages.md](references/pages.md) for automated GitLab/GitHub Pages publishing, static export checks and live-site verification.

@@ -10,3 +10,5 @@ export type * from './types.js';
 export { compareRuns } from './compare.js';
 export { bundle } from './bundle.js';
 export { inspectRun } from './evidence.js';
+
+export { preparePages, type PagesOptions } from './pages.js';

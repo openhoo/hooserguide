@@ -187,3 +187,7 @@ Install browsers in CI, start the target app and run the CLI. Upload the isolate
 ## Responsive presentations
 
 CLI `--profiles desktop,tablet,mobile`, MCP `responsive` and GitLab `profiles` select the same screen matrix. Keep validation and execution selections identical. `manual.screenLayout` controls comparison columns or stacked views and can be changed by evidence-only rebuilds. Execution chapter indices remain distinct from grouped manual chapters. See [responsive.md](responsive.md).
+
+## Pages publication
+
+The `preparePages` library function and `pages` CLI command regenerate an allowlisted static website from successful existing evidence. GitLab uses a separate Pages component depending on the generator artifacts. GitHub uses composite generate/Pages-upload actions plus a dependent official Pages deployment. See [pages.md](pages.md) for workflow examples and live verification.

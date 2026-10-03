@@ -1,5 +1,5 @@
 # Also serves as the component's self-test when this repository is mirrored to GitLab.
-stages: [verify, test]
+stages: [verify, test, deploy]
 
 include:
   - local: /templates/generate/template.yml
@@ -8,7 +8,7 @@ include:
       browser: chromium
       config: examples/gitlab.config.json
       output: output/gitlab-chromium
-      package: file:.ci-package/openhoo-hooserguide-0.5.0.tgz
+      package: file:.ci-package/openhoo-hooserguide-0.6.0.tgz
       wait-url: http://127.0.0.1:31415/
       needs:
         - job: verify
@@ -21,7 +21,7 @@ include:
       browser: firefox
       config: examples/gitlab.config.json
       output: output/gitlab-firefox
-      package: file:.ci-package/openhoo-hooserguide-0.5.0.tgz
+      package: file:.ci-package/openhoo-hooserguide-0.6.0.tgz
       wait-url: http://127.0.0.1:31415/
       needs:
         - job: verify
@@ -34,13 +34,30 @@ include:
       browser: webkit
       config: examples/gitlab.config.json
       output: output/gitlab-webkit
-      package: file:.ci-package/openhoo-hooserguide-0.5.0.tgz
+      package: file:.ci-package/openhoo-hooserguide-0.6.0.tgz
       wait-url: http://127.0.0.1:31415/
       needs:
         - job: verify
           artifacts: true
       before-script:
         - node scripts/gitlab-test-app.mjs &
+
+  - local: /templates/pages/template.yml
+    inputs:
+      generate-job: guide-chromium
+      source: output/gitlab-chromium
+      package: file:.ci-package/openhoo-hooserguide-0.6.0.tgz
+      # Also obtain the local package built by verify.
+      rules:
+        - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+# The packaged runtime is a separate artifact needed by the local component self-test.
+hooserguide-pages:
+  needs:
+    - job: guide-chromium
+      artifacts: true
+    - job: verify
+      artifacts: true
 
 verify:
   image: mcr.microsoft.com/playwright:v1.63.0-noble

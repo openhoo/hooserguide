@@ -1,0 +1,71 @@
+spec:
+  inputs:
+    job-name:
+      default: hooserguide-pages
+      regex: '^[A-Za-z][A-Za-z0-9_.:-]*$'
+      description: Unique Pages job name.
+    stage:
+      default: deploy
+      description: A stage present in the consuming pipeline.
+    generate-job:
+      default: hooserguide
+      description: Successful generating job whose artifacts this deployment needs.
+    source:
+      default: output/hooserguide
+      description: Artifact root used by the generating component; must contain exactly one job summary.
+    output:
+      default: public
+      regex: '^[A-Za-z0-9_-][A-Za-z0-9_./-]*$'
+      description: Fresh relative directory to publish; existing content is never deleted.
+    package:
+      default: github:openhoo/hooserguide#0.6.0
+      description: Pinned package source installed in an isolated runtime.
+    image:
+      default: node:22-bookworm
+      description: Node.js 22+ image; no browser is required for static publishing.
+    rules:
+      type: array
+      default:
+        - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      description: Deployment rules; defaults to the default branch only.
+    runner-tags:
+      type: array
+      default: []
+    artifacts-expire-in:
+      default: 1 week
+---
+'$[[ inputs.job-name ]]':
+  stage: $[[ inputs.stage ]]
+  image: $[[ inputs.image ]]
+  needs:
+    - job: $[[ inputs.generate-job ]]
+      artifacts: true
+  rules: $[[ inputs.rules ]]
+  tags: $[[ inputs.runner-tags ]]
+  resource_group: hooserguide-pages
+  variables:
+    HOOSERGUIDE_CI_PACKAGE:
+      value: $[[ inputs.package ]]
+      expand: false
+    HOOSERGUIDE_PAGES_SOURCE:
+      value: $[[ inputs.source ]]
+      expand: false
+    HOOSERGUIDE_PAGES_OUTPUT:
+      value: $[[ inputs.output ]]
+      expand: false
+  script:
+    - |
+      set -eu
+      HOOSERGUIDE_RUNTIME="$(mktemp -d)"
+      trap 'rm -rf "$HOOSERGUIDE_RUNTIME"' EXIT
+      HOOSERGUIDE_INSTALL_SOURCE="$(node -e 'const p=process.env.HOOSERGUIDE_CI_PACKAGE; if (!p) process.exit(1); console.log(p.startsWith("file:") ? "file:"+require("node:path").resolve(process.env.CI_PROJECT_DIR || process.env.GITHUB_WORKSPACE || process.cwd(),p.slice(5)) : p)')"
+      npm install --prefix "$HOOSERGUIDE_RUNTIME" --no-audit --no-fund --no-package-lock -- "$HOOSERGUIDE_INSTALL_SOURCE" >&2
+      node "$HOOSERGUIDE_RUNTIME/node_modules/@openhoo/hooserguide/dist/pages-ci.js"
+  pages:
+    publish: $[[ inputs.output ]]
+    expire_in: never
+  artifacts:
+    when: on_success
+    expire_in: $[[ inputs.artifacts-expire-in ]]
+    paths:
+      - $[[ inputs.output ]]

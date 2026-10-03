@@ -10,7 +10,7 @@ GitLab 17.0+ can include the template with inputs from a pinned remote URL. This
 stages: [test]
 
 include:
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.5.0/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.6.0/templates/generate/template.yml
     inputs:
       config: docs/user-guide/hooserguide.config.json
       base-url: http://127.0.0.1:3000
@@ -22,7 +22,7 @@ include:
 
 Adapt the start command and readiness endpoint to your application. The component uses a matching Playwright container with Node.js and all three browser engines. The consuming application is responsible for its own dependencies and startup. For a deployed test application, omit `before-script` and provide its URL. GitLab service containers can be supplied through `services`; use the service alias in `base-url` and `wait-url`.
 
-The default package source is `github:openhoo/hooserguide#0.5.0`. Installation happens in a temporary directory, leaving the application's package manifest and lockfile intact. A matching browser image is pinned separately. Override both when changing the Playwright version, or set `install-browsers: true` with a custom Node.js 22+ Linux image. Installing system dependencies requires the appropriate container permissions.
+The default package source is `github:openhoo/hooserguide#0.6.0`. Installation happens in a temporary directory, leaving the application's package manifest and lockfile intact. A matching browser image is pinned separately. Override both when changing the Playwright version, or set `install-browsers: true` with a custom Node.js 22+ Linux image. Installing system dependencies requires the appropriate container permissions.
 
 ## Use as a GitLab component
 
@@ -30,7 +30,7 @@ GitLab component references must point to a project on the **same GitLab instanc
 
 ```yaml
 include:
-  - component: $CI_SERVER_FQDN/your-namespace/hooserguide/generate@0.5.0
+  - component: $CI_SERVER_FQDN/your-namespace/hooserguide/generate@0.6.0
     inputs:
       config: docs/user-guide/hooserguide.config.json
       browser: firefox
@@ -56,7 +56,7 @@ Hosting the repository on GitHub does not register it in the GitLab CI/CD Catalo
 | `job-name`            | `hooserguide`                                | Unique job name; change for multiple includes.                                                                                |
 | `stage`               | `test`                                       | Must exist in the consuming pipeline.                                                                                         |
 | `image`               | `mcr.microsoft.com/playwright:v1.63.0-noble` | Matching Playwright browsers and Node.js 22+.                                                                                 |
-| `package`             | `github:openhoo/hooserguide#0.5.0`           | Pinned package source. `file:` paths resolve against the project checkout.                                                    |
+| `package`             | `github:openhoo/hooserguide#0.6.0`           | Pinned package source. `file:` paths resolve against the project checkout.                                                    |
 | `config`              | `hooserguide.config.json`                    | Config path inside the checkout; feature/plugin/auth paths remain config-relative.                                            |
 | `output`              | `output/hooserguide`                         | Relative artifact root; each job creates a fresh `job-$CI_JOB_ID` folder. Escaping paths/symlinks and collisions are refused. |
 | `browser`             | `chromium`                                   | `chromium`, `firefox` or `webkit`; overrides the selected profile's engine.                                                   |
@@ -88,7 +88,7 @@ Give each include a distinct `job-name` and `output`. For example:
 
 ```yaml
 include:
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.5.0/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.6.0/templates/generate/template.yml
     inputs:
       job-name: guide-desktop
       output: output/guide-desktop
@@ -100,7 +100,7 @@ include:
       page-size: Letter
       orientation: landscape
       margin: 36
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.5.0/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.6.0/templates/generate/template.yml
     inputs:
       job-name: guide-mobile
       output: output/guide-mobile
@@ -133,7 +133,7 @@ output/hooserguide/job-<CI_JOB_ID>/
 
 The component never clears an existing job directory. Job IDs distinguish retries and pipelines even when a runner preserves the artifact root. A collision is an error; use the GitLab-provided job ID and reserve these directories for generated artifacts.
 
-Open the extracted `index.html` with its `screenshots/` directory, or download the PDF/ZIP. Re-exporting does not revisit the application. Publishing to GitLab Pages is a separate pipeline action and should use a reviewed successful run.
+Open the extracted `index.html` with its `screenshots/` directory, or download the PDF/ZIP. Re-exporting does not revisit the application. Use the [Pages component](pages.md) to automatically publish successful evidence on the default branch.
 
 ## Qualification and self-tests
 
@@ -148,3 +148,7 @@ GitLab's own CI Lint and runner execution remain the final check on the target G
 ## Responsive features
 
 Use `profiles: desktop,tablet,mobile` and `screen-layout: side-by-side` (or `stacked`) to override screen presentation. Define those profiles in config. `browser` overrides every selected profile engine; Firefox requires viewport-only mobile profiles. Use `profile` for a single screen or `profiles` for a comparison. See [responsive presentations](responsive.md) for complete examples, repeated app actions and evidence review.
+
+## Automatic Pages deployment
+
+Include `templates/pages/template.yml` after generation with `generate-job` and matching `source`. GitLab 17.10+ is required for the new component. It downloads the generating job artifacts, regenerates verified static output and publishes only on success. See [Pages workflows](pages.md) for complete GitLab and GitHub examples.

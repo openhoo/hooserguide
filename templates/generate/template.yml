@@ -11,7 +11,7 @@ spec:
       default: mcr.microsoft.com/playwright:v1.63.0-noble
       description: Node.js 22+ image with matching Playwright browsers, or enable install-browsers.
     package:
-      default: github:openhoo/hooserguide#0.5.0
+      default: github:openhoo/hooserguide#0.6.0
       description: Pinned hooserguide package source; installed into an isolated temporary directory.
     config:
       default: hooserguide.config.json
@@ -177,7 +177,7 @@ spec:
       trap 'rm -rf "$HOOSERGUIDE_RUNTIME"' EXIT
       HOOSERGUIDE_INSTALL_SOURCE="$(node -e 'const p=process.env.HOOSERGUIDE_CI_PACKAGE; if (!p) process.exit(1); console.log(p.startsWith("file:") ? "file:"+require("node:path").resolve(process.env.CI_PROJECT_DIR || process.cwd(),p.slice(5)) : p)')"
       npm install --prefix "$HOOSERGUIDE_RUNTIME" --no-audit --no-fund --no-package-lock -- "$HOOSERGUIDE_INSTALL_SOURCE" >&2
-      if [ "$HOOSERGUIDE_CI_INSTALL_BROWSERS" = "true" ]; then
+      if [ "${HOOSERGUIDE_CI_INSTALL_BROWSERS#boolean:}" = "true" ]; then
         "$HOOSERGUIDE_RUNTIME/node_modules/.bin/playwright" install --with-deps "$HOOSERGUIDE_CI_BROWSER" >&2
       fi
       node "$HOOSERGUIDE_RUNTIME/node_modules/@openhoo/hooserguide/dist/gitlab.js"

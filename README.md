@@ -53,6 +53,12 @@ These are real browser regression captures comparing the pinned 0.2.0 implementa
 
 See the [review evidence and remaining limits](docs/review.md). Maintainers can reproduce this comparison with `npm run review:gallery`.
 
+## New in 0.6
+
+- **Automatic Pages publishing:** reusable GitLab Pages component and GitHub generation/Pages-upload actions.
+- Verified static export with responsive HTML, PDF/ZIP downloads, sanitized evidence and success-only deployments.
+- Full pipeline examples, packaged actions and agent guidance for live-site verification.
+
 ## New in 0.5
 
 - **Responsive feature presentations:** execute the same BDD scenarios on Desktop, Tablet and Mobile, with annotated screenshots next to each other or stacked.
@@ -241,13 +247,41 @@ hooserguide run --config hooserguide.config.json --profiles desktop,tablet,mobil
 
 Every screen has its own BDD assertions, privacy masks and annotation coordinates. HTML comparison columns stack on narrow reader screens; Markdown exports a table; PDF adds a comparison overview and readable detail pages. Use `--screen-layout stacked` for individual views or change the presentation later with `build`. MCP and GitLab expose the same selection. See the [responsive guide](docs/responsive.md) for configuration, evidence review and repeated workflow behavior.
 
+## Automatically publish to Pages
+
+**GitLab:** add the Pages component after your generating job:
+
+```yaml
+- remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.6.0/templates/pages/template.yml
+  inputs:
+    generate-job: user-guide
+    source: output/user-guide
+```
+
+Include `deploy` in your pipeline stages. This job uses GitLab 17.10+ and publishes on the default branch after successful generation.
+
+**GitHub:** use the generation action and hand its exact output to the Pages action:
+
+```yaml
+- uses: openhoo/hooserguide/actions/generate@0.6.0
+  id: guide
+  with:
+    config: docs/user-guide/hooserguide.config.json
+    profiles: desktop,tablet,mobile
+- uses: openhoo/hooserguide/actions/pages@0.6.0
+  with:
+    run-directory: ${{ steps.guide.outputs.directory }}
+```
+
+A dependent deployment job uses `actions/deploy-pages@v4` with Pages/OIDC permissions. Select GitHub Actions as the repository's Pages source. Both platforms publish only successful, verified output with masked screenshots and PDF/ZIP downloads. See [complete Pages workflows](docs/pages.md) for setup, inputs, app startup and exact live-site checks.
+
 ## GitLab CI/CD component
 
 Include the pinned template directly from GitHub:
 
 ```yaml
 include:
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.5.0/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.6.0/templates/generate/template.yml
     inputs:
       config: docs/user-guide/hooserguide.config.json
       browser: chromium

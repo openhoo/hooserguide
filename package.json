@@ -1,6 +1,6 @@
 {
   "name": "@openhoo/hooserguide",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "description": "Evidence-backed user manuals from Gherkin, Playwright and annotated screenshots",
   "bin": {
@@ -80,6 +80,8 @@
     "THIRD_PARTY_NOTICES.md",
     "templates",
     "docs/gitlab.md",
-    "docs/responsive.md"
+    "docs/responsive.md",
+    "docs/pages.md",
+    "actions"
   ]
 }

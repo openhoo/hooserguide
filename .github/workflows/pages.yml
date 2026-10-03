@@ -1,0 +1,67 @@
+name: Publish guide to GitHub Pages
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hooserguide-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start synthetic demo application
+        run: node scripts/gitlab-test-app.mjs > /tmp/hooserguide-app.log 2>&1 &
+      - uses: ./actions/generate
+        id: guide
+        with:
+          package: file:${{ github.workspace }}
+          config: examples/pages.config.json
+          install-browsers: 'false'
+          wait-url: http://127.0.0.1:31415/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: guide-execution
+          path: output/hooserguide-github/
+          retention-days: 7
+      - uses: actions/configure-pages@v5
+      - uses: ./actions/pages
+        with:
+          package: file:${{ github.workspace }}
+          run-directory: ${{ steps.guide.outputs.directory }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

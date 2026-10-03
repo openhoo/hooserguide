@@ -1,0 +1,43 @@
+name: Prepare and upload hooserguide Pages
+description: Verify a successful guide, prepare allowlisted static output and upload a GitHub Pages artifact.
+inputs:
+  run-directory:
+    description: Exact successful directory returned by the generate action.
+    required: true
+  output:
+    description: Fresh relative directory for static Pages content.
+    default: _hooserguide-pages
+  package:
+    description: Pinned package source installed in an isolated runtime.
+    default: github:openhoo/hooserguide#0.6.0
+  artifact-name:
+    description: Name passed to upload-pages-artifact and deploy-pages.
+    default: github-pages
+outputs:
+  directory:
+    description: Verified static output directory.
+    value: ${{ steps.prepare.outputs.directory }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - id: prepare
+      shell: bash
+      env:
+        HOOSERGUIDE_ACTION_MODE: pages
+        HOOSERGUIDE_PAGES_RUN: ${{ inputs.run-directory }}
+        HOOSERGUIDE_PAGES_OUTPUT: ${{ inputs.output }}
+        HOOSERGUIDE_CI_PACKAGE: ${{ inputs.package }}
+      run: |
+        set -eu
+        HOOSERGUIDE_RUNTIME="$(mktemp -d)"
+        trap 'rm -rf "$HOOSERGUIDE_RUNTIME"' EXIT
+        HOOSERGUIDE_INSTALL_SOURCE="$(node -e 'const p=process.env.HOOSERGUIDE_CI_PACKAGE; if (!p) process.exit(1); console.log(p.startsWith("file:") ? "file:"+require("node:path").resolve(process.env.CI_PROJECT_DIR || process.env.GITHUB_WORKSPACE || process.cwd(),p.slice(5)) : p)')"
+        npm install --prefix "$HOOSERGUIDE_RUNTIME" --no-audit --no-fund --no-package-lock -- "$HOOSERGUIDE_INSTALL_SOURCE" >&2
+        node "$HOOSERGUIDE_RUNTIME/node_modules/@openhoo/hooserguide/dist/pages-ci.js"
+    - uses: actions/upload-pages-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ steps.prepare.outputs.directory }}
