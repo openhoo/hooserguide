@@ -37,3 +37,7 @@ Use offline HTML search and image switching to review the result. When a portabl
 Deliver exact PDF/HTML/Markdown and optional ZIP paths, executed task/profile coverage and material limitations. A failed run has evidence but no successful handbook. Do not claim unexecuted workflows.
 
 For branding or export fixes, use `hooserguide build <run-directory> --output <output> --config <config> --json`, or `hooserguide_rebuild` with the pinned `runId`. Rebuild checks original evidence and creates a new output; it does not revisit the app. Preserve and report original `generatedAt`, `rebuiltAt` and `sourceReportSha256`.
+
+## CI integration
+
+Read [ci-integration.md](references/ci-integration.md) for GitLab component inputs, browser qualification and exact artifact/summary review. Preserve the session's authorization for app workflows and external delivery.

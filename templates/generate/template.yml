@@ -1,0 +1,177 @@
+spec:
+  inputs:
+    job-name:
+      default: hooserguide
+      description: Unique job name; change it when including the component more than once.
+      regex: '^[A-Za-z][A-Za-z0-9_.:-]*$'
+    stage:
+      default: test
+      description: A stage present in the consuming pipeline.
+    image:
+      default: mcr.microsoft.com/playwright:v1.63.0-noble
+      description: Node.js 22+ image with matching Playwright browsers, or enable install-browsers.
+    package:
+      default: github:openhoo/hooserguide#0.4.0
+      description: Pinned hooserguide package source; installed into an isolated temporary directory.
+    config:
+      default: hooserguide.config.json
+      description: Config path relative to the project checkout.
+    output:
+      default: output/hooserguide
+      description: Relative artifact root; each job gets a fresh job-ID subdirectory.
+      regex: '^[A-Za-z0-9_-][A-Za-z0-9_./-]*$'
+    browser:
+      default: chromium
+      options: [chromium, firefox, webkit]
+      description: Browser engine; overrides the selected config profile's engine.
+    profile:
+      default: ''
+      description: Config profile; empty keeps the configured default.
+    base-url:
+      default: ''
+      description: Optional HTTP(S) application URL override.
+    tags:
+      default: ''
+      description: Optional Cucumber tag expression; empty keeps configured selection.
+    scenario:
+      default: ''
+      description: Optional scenario name filter; empty keeps configured selection.
+    pdf:
+      type: boolean
+      default: true
+      description: Export a pdfcn PDF alongside HTML and Markdown.
+    bundle:
+      type: boolean
+      default: true
+      description: Package successful evidence as a portable ZIP.
+    fail-fast:
+      type: boolean
+      default: false
+      description: Stop after the first failing scenario.
+    page-size:
+      default: config
+      options: [config, A4, Letter]
+      description: Keep config geometry or override the PDF paper size.
+    orientation:
+      default: config
+      options: [config, portrait, landscape]
+      description: Keep config geometry or override PDF orientation.
+    margin:
+      type: number
+      default: 0
+      description: PDF margin in points, 24..72; zero keeps the config value.
+    wait-url:
+      default: ''
+      description: Optional readiness endpoint; HTTP 2xx/3xx means ready.
+    wait-timeout:
+      type: number
+      default: 60
+      description: Readiness timeout in seconds, 1..300.
+    install-browsers:
+      type: boolean
+      default: false
+      description: Install the selected browser and Linux dependencies for a custom image.
+    before-script:
+      type: array
+      default: []
+      description: Trusted setup commands, such as npm ci and starting the target app.
+    services:
+      type: array
+      default: []
+      description: Optional GitLab service definitions for the target application.
+    needs:
+      type: array
+      default: []
+      description: Job dependencies; empty lets the job start without waiting for other stages.
+    rules:
+      type: array
+      default:
+        - when: on_success
+      description: GitLab rules controlling when to run the job.
+    runner-tags:
+      type: array
+      default: []
+      description: Optional runner selection tags.
+    artifacts-expire-in:
+      default: 1 week
+      description: Retention for manuals, screenshots and failed-run evidence.
+---
+'$[[ inputs.job-name ]]':
+  stage: $[[ inputs.stage ]]
+  image: $[[ inputs.image ]]
+  needs: $[[ inputs.needs ]]
+  rules: $[[ inputs.rules ]]
+  services: $[[ inputs.services ]]
+  tags: $[[ inputs.runner-tags ]]
+  before_script: $[[ inputs.before-script ]]
+  # Prefix typed scalar inputs so interpolation preserves string-valued CI variables.
+  variables:
+    HOOSERGUIDE_CI_PACKAGE:
+      value: $[[ inputs.package ]]
+      expand: false
+    HOOSERGUIDE_CI_CONFIG:
+      value: $[[ inputs.config ]]
+      expand: false
+    HOOSERGUIDE_CI_OUTPUT:
+      value: $[[ inputs.output ]]
+      expand: false
+    HOOSERGUIDE_CI_BROWSER:
+      value: $[[ inputs.browser ]]
+      expand: false
+    HOOSERGUIDE_CI_PROFILE:
+      value: $[[ inputs.profile ]]
+      expand: false
+    HOOSERGUIDE_CI_BASE_URL:
+      value: $[[ inputs.base-url ]]
+      expand: false
+    HOOSERGUIDE_CI_TAGS:
+      value: $[[ inputs.tags ]]
+      expand: false
+    HOOSERGUIDE_CI_SCENARIO:
+      value: $[[ inputs.scenario ]]
+      expand: false
+    HOOSERGUIDE_CI_PDF:
+      value: 'boolean:$[[ inputs.pdf ]]'
+      expand: false
+    HOOSERGUIDE_CI_BUNDLE:
+      value: 'boolean:$[[ inputs.bundle ]]'
+      expand: false
+    HOOSERGUIDE_CI_FAIL_FAST:
+      value: 'boolean:$[[ inputs.fail-fast ]]'
+      expand: false
+    HOOSERGUIDE_CI_PAGE_SIZE:
+      value: $[[ inputs.page-size ]]
+      expand: false
+    HOOSERGUIDE_CI_ORIENTATION:
+      value: $[[ inputs.orientation ]]
+      expand: false
+    HOOSERGUIDE_CI_MARGIN:
+      value: 'number:$[[ inputs.margin ]]'
+      expand: false
+    HOOSERGUIDE_CI_WAIT_URL:
+      value: $[[ inputs.wait-url ]]
+      expand: false
+    HOOSERGUIDE_CI_WAIT_TIMEOUT:
+      value: 'number:$[[ inputs.wait-timeout ]]'
+      expand: false
+    HOOSERGUIDE_CI_INSTALL_BROWSERS:
+      value: 'boolean:$[[ inputs.install-browsers ]]'
+      expand: false
+  script:
+    - |
+      set -eu
+      HOOSERGUIDE_RUNTIME="$(mktemp -d)"
+      trap 'rm -rf "$HOOSERGUIDE_RUNTIME"' EXIT
+      HOOSERGUIDE_INSTALL_SOURCE="$(node -e 'const p=process.env.HOOSERGUIDE_CI_PACKAGE; if (!p) process.exit(1); console.log(p.startsWith("file:") ? "file:"+require("node:path").resolve(process.env.CI_PROJECT_DIR || process.cwd(),p.slice(5)) : p)')"
+      npm install --prefix "$HOOSERGUIDE_RUNTIME" --no-audit --no-fund --no-package-lock -- "$HOOSERGUIDE_INSTALL_SOURCE" >&2
+      if [ "$HOOSERGUIDE_CI_INSTALL_BROWSERS" = "true" ]; then
+        "$HOOSERGUIDE_RUNTIME/node_modules/.bin/playwright" install --with-deps "$HOOSERGUIDE_CI_BROWSER" >&2
+      fi
+      node "$HOOSERGUIDE_RUNTIME/node_modules/@openhoo/hooserguide/dist/gitlab.js"
+  artifacts:
+    when: always
+    access: developer
+    name: '$[[ inputs.job-name ]]-$CI_COMMIT_REF_SLUG-$CI_JOB_ID'
+    expire_in: $[[ inputs.artifacts-expire-in ]]
+    paths:
+      - '$[[ inputs.output ]]/job-$CI_JOB_ID/'

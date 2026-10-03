@@ -53,6 +53,15 @@ These are real browser regression captures comparing the pinned 0.2.0 implementa
 
 See the [review evidence and remaining limits](docs/review.md). Maintainers can reproduce this comparison with `npm run review:gallery`.
 
+## New in 0.4
+
+- A reusable [GitLab CI/CD component](docs/gitlab.md) with typed inputs, readiness checks, browser/profile selection, PDF customization, portable ZIPs and failed-run artifacts.
+- Dedicated Linux qualification jobs for Chromium, Firefox and WebKit, covering real workflows, saved-state assertions, high-DPI/masked captures, HTML controls, PDF export and cancellation.
+
+The same high-DPI crop, privacy mask and reference arrow across the three engines:
+
+![Chromium, Firefox and WebKit annotation qualification](docs/media/browser-qualification.png)
+
 ## New in 0.3
 
 - **Choose the workflows:** Cucumber tag expressions, scenario-name filters and fail-fast with explicit skipped coverage.
@@ -201,6 +210,25 @@ console.log(result.artifacts.pdf);
 
 See [integration recipes](docs/integration.md) for Codex configuration, custom steps, existing Playwright tests and CI.
 
+## GitLab CI/CD component
+
+Include the pinned template directly from GitHub:
+
+```yaml
+include:
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.4.0/templates/generate/template.yml
+    inputs:
+      config: docs/user-guide/hooserguide.config.json
+      browser: chromium
+      base-url: http://127.0.0.1:3000
+      wait-url: http://127.0.0.1:3000/health
+      before-script:
+        - npm ci
+        - npm run start > /tmp/hooserguide-app.log 2>&1 &
+```
+
+The job exports PDF, HTML, Markdown, verified screenshots, a status summary and an optional portable ZIP. Failed workflows fail the job and preserve available evidence. Package installation is isolated from the app's dependencies, and uploads are scoped to the current job ID. Configure profiles, filters, page geometry, services, rules and dependencies through inputs. The [GitLab guide](docs/gitlab.md) covers native component includes after importing the repository into your GitLab instance, all inputs and artifact review. Hosting on GitHub does not register the component in GitLab's catalog.
+
 ## Configuration
 
 ```json
@@ -246,10 +274,12 @@ Install with `init --skills`, or copy these folders into your agent's skill dire
 
 ```sh
 npm ci
-npx playwright install chromium
+npx playwright install chromium firefox webkit
 npm run check
 npm test
+npm run test:browsers
 npm run build
+npm run test:package
 ```
 
 Tests exercise real browser coordinates and image pixels, privacy masks, scrolled pages, failing saved-state assertions, PDF rendering/text, Gherkin outlines, escaping, initialization and MCP. See [CONTRIBUTING](CONTRIBUTING.md) and the [architecture notes](docs/architecture.md).

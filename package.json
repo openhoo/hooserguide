@@ -1,6 +1,6 @@
 {
   "name": "@openhoo/hooserguide",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "type": "module",
   "description": "Evidence-backed user manuals from Gherkin, Playwright and annotated screenshots",
   "bin": {
@@ -13,7 +13,7 @@
     }
   },
   "scripts": {
-    "build": "tsc && node scripts/build-assets.mjs",
+    "build": "node scripts/clean-build.mjs && tsc && node scripts/build-assets.mjs",
     "check": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts",
     "prepare": "npm run build",
@@ -22,7 +22,8 @@
     "demo:docs": "npm run build && node scripts/demo-docs.mjs",
     "test:package": "node scripts/smoke-package.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:browsers": "tsx --test test/browsers/*.test.ts"
   },
   "engines": {
     "node": ">=22"
@@ -46,7 +47,8 @@
     "pdfjs-dist": "^6.3.289",
     "prettier": "^3.9.9",
     "tsx": "^4.20.0",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "yaml": "^2.9.1"
   },
   "license": "Apache-2.0",
   "repository": {
@@ -74,6 +76,8 @@
     "schemas",
     "LICENSE",
     "NOTICE",
-    "THIRD_PARTY_NOTICES.md"
+    "THIRD_PARTY_NOTICES.md",
+    "templates",
+    "docs/gitlab.md"
   ]
 }

@@ -35,3 +35,30 @@ jobs:
           name: demo-handbook
           path: output/demo
           retention-days: 7
+
+  browsers:
+    name: Qualify ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    env:
+      HOOSERGUIDE_TEST_BROWSER: ${{ matrix.browser }}
+      HOOSERGUIDE_BROWSER_ARTIFACTS: output/browser-qualification
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npm run test:browsers
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-${{ matrix.browser }}
+          path: output/browser-qualification
+          retention-days: 7

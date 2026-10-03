@@ -161,6 +161,10 @@ export function register(registry) {
 
 Add `"plugins": ["steps.mjs"]` to the config. Handlers receive the original Pickle step (including docstrings/data tables), `page`, `target`, `capture`, `instruction`, `chapter` and `config`. TypeScript plugins can be compiled to ESM or loaded by running the CLI with `node --import tsx`; plain `.mjs` works without a loader. Undefined or ambiguous steps fail preflight.
 
+## GitLab
+
+Use the [generate component](gitlab.md) through a pinned remote include from GitHub, a local include, or a native component include after importing the repository into the same GitLab instance. Typed inputs control browsers/profiles, selection, PDF layout, readiness, setup/services and artifact retention. The component installs its package separately, uploads only a fresh job-ID directory, writes `summary.json` with project-relative artifact paths and preserves failed execution evidence.
+
 ## CI
 
 Install browsers in CI, start the target app and run the CLI. Upload the isolated output directories even on failure for diagnosis:

@@ -1,0 +1,9 @@
+{
+  "title": "HooTasks — GitLab component guide",
+  "baseURL": "http://127.0.0.1:31415",
+  "features": ["tasks.feature"],
+  "output": "../output/gitlab-demo",
+  "viewport": { "width": 1280, "height": 900 },
+  "masks": ["testid=account-email"],
+  "tag": "@manual"
+}

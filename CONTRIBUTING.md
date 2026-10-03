@@ -1,6 +1,6 @@
 # Contributing
 
-Use Node.js 22 or newer. Install dependencies with `npm ci` and the test browser with `npx playwright install chromium`. `npm run check`, `npm test` and `npm run build` must pass before submitting a change.
+Use Node.js 22 or newer. Install dependencies with `npm ci` and the test browsers with `npx playwright install chromium firefox webkit`. `npm run check`, `npm test` and `npm run build` must pass before submitting a change. Browser-related changes also require `npm run test:browsers`; packaging/GitLab component changes require `npm run test:package`.
 
 For bug reports, include the tool version, browser, viewport, minimal feature/config and the failing step. Remove credentials, cookies, authentication state and private screenshot content. Do not include production account data.
 

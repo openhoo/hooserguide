@@ -30,3 +30,7 @@ Repair concrete issues within the authorized task and inspect the new output. Fo
 A rebuild preserves old app evidence. Check `generatedAt`, `rebuiltAt` and `sourceReportSha256`; review current branding and exports without describing them as a fresh app check. Step timing is execution metadata, not a performance benchmark.
 
 State the exact run reviewed, tasks/profiles/formats verified, issues repaired and remaining limitations. Deliver exact artifact paths. Publish externally only when already authorized.
+
+## CI integration
+
+Read [ci-integration.md](references/ci-integration.md) for GitLab component inputs, browser qualification and exact artifact/summary review. Preserve the session's authorization for app workflows and external delivery.

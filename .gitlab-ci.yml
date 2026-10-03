@@ -1,0 +1,60 @@
+# Also serves as the component's self-test when this repository is mirrored to GitLab.
+stages: [verify, test]
+
+include:
+  - local: /templates/generate/template.yml
+    inputs:
+      job-name: guide-chromium
+      browser: chromium
+      config: examples/gitlab.config.json
+      output: output/gitlab-chromium
+      package: file:.ci-package/openhoo-hooserguide-0.4.0.tgz
+      wait-url: http://127.0.0.1:31415/
+      needs:
+        - job: verify
+          artifacts: true
+      before-script:
+        - node scripts/gitlab-test-app.mjs &
+  - local: /templates/generate/template.yml
+    inputs:
+      job-name: guide-firefox
+      browser: firefox
+      config: examples/gitlab.config.json
+      output: output/gitlab-firefox
+      package: file:.ci-package/openhoo-hooserguide-0.4.0.tgz
+      wait-url: http://127.0.0.1:31415/
+      needs:
+        - job: verify
+          artifacts: true
+      before-script:
+        - node scripts/gitlab-test-app.mjs &
+  - local: /templates/generate/template.yml
+    inputs:
+      job-name: guide-webkit
+      browser: webkit
+      config: examples/gitlab.config.json
+      output: output/gitlab-webkit
+      package: file:.ci-package/openhoo-hooserguide-0.4.0.tgz
+      wait-url: http://127.0.0.1:31415/
+      needs:
+        - job: verify
+          artifacts: true
+      before-script:
+        - node scripts/gitlab-test-app.mjs &
+
+verify:
+  image: mcr.microsoft.com/playwright:v1.63.0-noble
+  stage: verify
+  script:
+    - npm ci
+    - npm run check
+    - npm run format:check
+    - npm test
+    - npm run test:browsers
+    - npm run test:package
+    - mkdir -p .ci-package
+    - npm pack --pack-destination .ci-package
+  artifacts:
+    paths:
+      - .ci-package/*.tgz
+    expire_in: 1 day
