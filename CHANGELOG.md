@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.1 — 2026-10-04
+
+- Place the HTML theme selector above the handbook title so readers can change the theme immediately.
+- Add a prominent PDF download button next to the theme selector, with localized labels and a real file download. Keep PDF downloads available without JavaScript and omit them when no PDF was generated.
+- Verify persisted theme changes and actual PDF download bytes across Chromium, Firefox and WebKit.
+
 ## 0.7.0 — 2026-10-03
 
 - Offer six shared HTML/PDF manual themes, including Midnight and Graphite dark themes, through `manual.theme` and `run/build --theme`.

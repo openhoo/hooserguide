@@ -11,7 +11,7 @@ spec:
       default: mcr.microsoft.com/playwright:v1.63.0-noble
       description: Node.js 22+ image with matching Playwright browsers, or enable install-browsers.
     package:
-      default: github:openhoo/hooserguide#0.7.0
+      default: github:openhoo/hooserguide#0.7.1
       description: Pinned hooserguide package source; installed into an isolated temporary directory.
     config:
       default: hooserguide.config.json

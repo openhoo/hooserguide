@@ -100,7 +100,28 @@ for (const engine of selected) {
 
   test(`${engine}: saved-state BDD, PDF, failure evidence, mobile viewport and cancellation qualify`, async () => {
     const root = await mkdtemp(join(tmpdir(), `hooserguide-${engine}-workflow-`));
-    const server = createServer((_req, res) => {
+    let guideDirectory: string | undefined;
+    const server = createServer(async (req, res) => {
+      const artifact = req.url?.match(
+        /^\/guide\/(index\.html|handbook\.pdf|screenshots\/[a-z0-9.-]+)$/i,
+      )?.[1];
+      if (guideDirectory && artifact) {
+        res.setHeader(
+          'Content-Type',
+          artifact.endsWith('.pdf')
+            ? 'application/pdf'
+            : artifact.endsWith('.html')
+              ? 'text/html'
+              : 'image/png',
+        );
+        try {
+          res.end(await readFile(join(guideDirectory, artifact)));
+        } catch {
+          res.statusCode = 404;
+          res.end();
+        }
+        return;
+      }
       res.setHeader('Content-Type', 'text/html');
       res.end(
         '<meta name="viewport" content="width=device-width"><style>body{font:16px sans-serif}input,button{margin:12px}</style><h1>Settings</h1><p id=secret>private@example.test</p><label>Name<input id=name></label><button onclick="localStorage.setItem(\'name\',document.getElementById(\'name\').value)">Save</button><script>document.getElementById("name").value=localStorage.getItem("name")||""</script>',
@@ -137,6 +158,7 @@ for (const engine of selected) {
         'passed',
         passed.report.exportError ?? passed.report.chapters[0]?.error,
       );
+      guideDirectory = passed.directory;
       assert.equal(passed.report.browser, engine);
       assert.equal(passed.report.chapters[0]!.captures[0]!.width, 390);
       assert.equal((await inspectRun(passed.directory)).verifiedImages, 2);
@@ -180,8 +202,22 @@ for (const engine of selected) {
       const viewer = await engines[engine].launch();
       try {
         const page = await viewer.newPage({ viewport: { width: 390, height: 844 } });
-        await page.goto(`file://${passed.artifacts.html!}`);
+        await page.goto(`${config.baseURL}/guide/index.html`);
         await page.locator('.toolbar').waitFor({ state: 'visible' });
+        assert.equal(await page.locator('.reader-actions').isVisible(), true);
+        await page.locator('#guide-theme').selectOption('midnight');
+        assert.equal(await page.locator('html').getAttribute('data-theme'), 'midnight');
+        await page.reload();
+        assert.equal(await page.locator('#guide-theme').inputValue(), 'midnight');
+        const downloadEvent = page.waitForEvent('download');
+        await page.getByRole('link', { name: 'Download PDF', exact: true }).click();
+        const download = await downloadEvent;
+        assert.equal(download.suggestedFilename(), 'handbook.pdf');
+        assert.equal(await download.failure(), null);
+        assert.deepEqual(
+          await readFile((await download.path())!),
+          await readFile(passed.artifacts.pdf!),
+        );
         await page.locator('#guide-search').fill('no-match');
         assert.equal(await page.locator('#no-results').isVisible(), true);
         await page.locator('#guide-search').fill('');

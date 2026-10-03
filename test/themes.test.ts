@@ -71,6 +71,13 @@ test('all themes rebuild verified evidence into readable HTML and PDF; viewer pe
       await page.locator('.toolbar').waitFor({ state: 'visible' });
       assert.equal(await page.locator('html').getAttribute('data-theme'), name);
       assert.equal(await page.locator('#guide-theme').inputValue(), name);
+      assert.equal(await page.locator('.reader-actions #guide-theme').isVisible(), true);
+      assert.equal(await page.locator('.reader-actions .pdf-download').isVisible(), true);
+      assert.equal(await page.locator('.pdf-download').getAttribute('download'), 'handbook.pdf');
+      assert.ok(
+        (await page.locator('.reader-actions').boundingBox())!.y <
+          (await page.locator('.hero').boundingBox())!.y,
+      );
       assert.equal(await page.locator('#guide-theme option').count(), manualThemeNames.length);
       assert.equal(
         await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme),
@@ -121,6 +128,7 @@ test('all themes rebuild verified evidence into readable HTML and PDF; viewer pe
       'light',
     );
     assert.equal(await page.locator('.toolbar').isVisible(), false);
+    assert.equal(await page.locator('.reader-actions').isVisible(), false);
     await page.emulateMedia({ media: 'screen' });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.locator('#guide-search').fill('');
@@ -134,6 +142,8 @@ test('all themes rebuild verified evidence into readable HTML and PDF; viewer pe
     await staticPage.goto(pathToFileURL(htmlPaths.get('midnight')!).href);
     assert.equal(await staticPage.locator('html').getAttribute('data-theme'), 'midnight');
     assert.equal(await staticPage.locator('main > section:visible').count(), 2);
+    assert.equal(await staticPage.locator('.pdf-download').isVisible(), true);
+    assert.equal(await staticPage.locator('.theme-picker').isVisible(), false);
     await staticContext.close();
     const blocked = await browser.newContext();
     await blocked.addInitScript(() =>

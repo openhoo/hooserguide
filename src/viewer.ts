@@ -9,6 +9,7 @@ const links = [...document.querySelectorAll('nav li')];
 const index = sections.map(section => section.textContent.toLocaleLowerCase());
 toolbar.hidden = false;
 const themeSelect = document.querySelector('#guide-theme');
+document.querySelector('.theme-picker').hidden = false;
 const themeKey = 'hooserguide:theme:' + location.pathname;
 const applyTheme = value => {
   if (![...themeSelect.options].some(option => option.value === value)) return;
