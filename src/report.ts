@@ -7,6 +7,8 @@ import {
   selectionSchema,
   calloutSchema,
   skippedSchema,
+  responsiveSchema,
+  screenVariantSchema,
 } from './config.js';
 import { captureSchema, validateCapture } from './capture.js';
 import type { RunReport } from './types.js';
@@ -24,6 +26,7 @@ const screenshot = z.string().regex(/^screenshots\/[A-Za-z0-9_-]+(?:\.raw)?\.png
 export const reportSchema = z
   .object({
     schemaVersion: z.literal(1),
+    responsive: responsiveSchema.optional(),
     title: z.string().min(1),
     generatedAt: z.iso.datetime(),
     language: z.string(),
@@ -43,6 +46,7 @@ export const reportSchema = z
       .array(
         z
           .object({
+            variant: screenVariantSchema.optional(),
             title: z.string(),
             feature: z.string(),
             source: z.string(),
@@ -91,6 +95,56 @@ export const reportSchema = z
 
 /** Semantic checks shared by all readers and exporters, beyond the JSON shape. */
 export function assertReportIntegrity(report: RunReport): void {
+  if (report.responsive) {
+    responsiveSchema.parse(report.responsive);
+    if (report.profile) throw new Error('Responsive evidence cannot also claim a single profile');
+    const screens = new Map<string, string>();
+    const groups = new Map<number, Map<string, (typeof report.chapters)[number]>>();
+    for (const chapter of report.chapters) {
+      const v = chapter.variant;
+      if (!v || !report.responsive.profiles.includes(v.profile))
+        throw new Error('Missing or unselected responsive variant');
+      const metadata = JSON.stringify([v.label, v.browser, v.viewport, v.deviceScaleFactor]);
+      if (screens.has(v.profile) && screens.get(v.profile) !== metadata)
+        throw new Error('Inconsistent responsive profile metadata');
+      if (
+        report.responsive.labels &&
+        Object.hasOwn(report.responsive.labels, v.profile) &&
+        report.responsive.labels[v.profile] !== v.label
+      )
+        throw new Error('Responsive label differs from selected metadata');
+      screens.set(v.profile, metadata);
+      const group = groups.get(v.scenario) ?? new Map();
+      if (group.has(v.profile)) throw new Error('Duplicate responsive scenario/profile evidence');
+      const first = group.values().next().value;
+      if (
+        first &&
+        (first.title !== chapter.title ||
+          first.source !== chapter.source ||
+          first.feature !== chapter.feature)
+      )
+        throw new Error('Responsive variants do not describe the same scenario');
+      group.set(v.profile, chapter);
+      groups.set(v.scenario, group);
+    }
+    if (report.status === 'passed') {
+      for (const group of groups.values()) {
+        if (group.size !== report.responsive.profiles.length)
+          throw new Error('Incomplete responsive profile evidence');
+        const first = group.values().next().value!;
+        for (const chapter of group.values())
+          if (
+            chapter.captures.length !== first.captures.length ||
+            chapter.captures.some((c, i) => c.title !== first.captures[i]?.title)
+          )
+            throw new Error('Responsive capture sequence differs between profiles');
+      }
+      const indices = [...groups.keys()].sort((a, b) => a - b);
+      if (indices.some((n, i) => n !== i))
+        throw new Error('Incomplete responsive scenario sequence');
+    }
+  } else if (report.chapters.some((c) => c.variant))
+    throw new Error('Responsive variants require responsive report metadata');
   const ids = new Set<string>(),
     paths = new Set<string>();
   for (const chapter of report.chapters) {

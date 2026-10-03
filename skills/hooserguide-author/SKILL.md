@@ -41,3 +41,7 @@ For branding or export fixes, use `hooserguide build <run-directory> --output <o
 ## CI integration
 
 Read [ci-integration.md](references/ci-integration.md) for GitLab component inputs, browser qualification and exact artifact/summary review. Preserve the session's authorization for app workflows and external delivery.
+
+## Responsive presentations
+
+Read [responsive.md](references/responsive.md) when presenting or reviewing a feature across mobile, tablet and desktop, with screenshots next to each other or stacked.

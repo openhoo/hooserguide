@@ -28,6 +28,38 @@ export const profileSchema = z
   })
   .strict();
 
+export const responsiveSchema = z
+  .object({
+    profiles: z
+      .array(
+        z
+          .string()
+          .max(80)
+          .regex(/^[A-Za-z0-9_-]+$/),
+      )
+      .min(2)
+      .max(4)
+      .refine(
+        (names) => new Set(names).size === names.length,
+        'Responsive profiles must be unique',
+      ),
+    layout: z.enum(['side-by-side', 'stacked']).optional(),
+    labels: z
+      .record(z.string().regex(/^[A-Za-z0-9_-]+$/), z.string().trim().min(1).max(80))
+      .optional(),
+  })
+  .strict();
+export const screenVariantSchema = z
+  .object({
+    scenario: z.number().int().nonnegative(),
+    profile: z.string().regex(/^[A-Za-z0-9_-]+$/),
+    label: z.string().trim().min(1).max(80),
+    browser: z.enum(['chromium', 'firefox', 'webkit']),
+    viewport: viewportSchema,
+    deviceScaleFactor: z.number().min(1).max(4),
+  })
+  .strict();
+
 export const documentSchema = z
   .object({
     version: z.string().trim().min(1).optional(),
@@ -43,6 +75,7 @@ export const manualSchema = z
     margin: z.number().min(24).max(72).optional(),
     contents: z.boolean().optional(),
     showGeneratedAt: z.boolean().optional(),
+    screenLayout: z.enum(['side-by-side', 'stacked']).optional(),
   })
   .strict();
 export const captureDefaultsSchema = z
@@ -79,6 +112,7 @@ export const calloutSchema = z
   .strict();
 export const skippedSchema = z
   .object({
+    profile: z.string().optional(),
     title: z.string(),
     feature: z.string(),
     source: z.string(),
@@ -125,6 +159,7 @@ export const configSchema = z
       .regex(/^[a-z]{2,3}(-[A-Za-z0-9]+)*$/)
       .default('en'),
     pdf: z.boolean().default(true),
+    responsive: responsiveSchema.optional(),
     profiles: z.record(z.string().regex(/^[A-Za-z0-9_-]+$/), profileSchema).optional(),
     profile: z.string().min(1).optional(),
     branding: brandingSchema.optional(),
@@ -155,6 +190,13 @@ export function selectProfile(config: Config): BrowserProfile {
 export function resolveConfig(input: unknown, root = process.cwd()): Config {
   const c = configSchema.parse(input) as Config;
   selectProfile(c);
+  if (c.responsive) {
+    if (c.profile) throw new Error('Use profile or responsive profiles, not both');
+    for (const name of c.responsive.profiles) selectProfile({ ...c, profile: name });
+    for (const name of Object.keys(c.responsive.labels ?? {}))
+      if (!c.responsive.profiles.includes(name))
+        throw new Error(`Label for unselected responsive profile: ${name}`);
+  }
   return {
     ...c,
     features: c.features.map((p) => resolve(root, p)),
@@ -168,13 +210,41 @@ export async function loadConfig(
   overrides: Partial<
     Pick<
       Config,
-      'profile' | 'output' | 'headed' | 'pdf' | 'tagExpression' | 'scenario' | 'failFast'
+      | 'profile'
+      | 'responsive'
+      | 'output'
+      | 'headed'
+      | 'pdf'
+      | 'tagExpression'
+      | 'scenario'
+      | 'failFast'
     >
   > = {},
 ): Promise<Config> {
   const absolute = resolve(path);
+  const input = JSON.parse(await readFile(absolute, 'utf8'));
+  const responsive = overrides.responsive
+    ? {
+        ...input.responsive,
+        ...overrides.responsive,
+        labels: {
+          ...Object.fromEntries(
+            Object.entries(input.responsive?.labels ?? {}).filter(([name]) =>
+              overrides.responsive!.profiles.includes(name),
+            ),
+          ),
+          ...overrides.responsive.labels,
+        },
+      }
+    : input.responsive;
   return resolveConfig(
-    { ...JSON.parse(await readFile(absolute, 'utf8')), ...overrides },
+    {
+      ...input,
+      ...(overrides.profile ? { responsive: undefined } : { responsive }),
+      ...(overrides.responsive ? { profile: undefined } : {}),
+      ...overrides,
+      ...(overrides.responsive ? { responsive } : {}),
+    },
     dirname(absolute),
   );
 }

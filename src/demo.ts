@@ -8,7 +8,17 @@ import { run } from './runner.js';
 export async function demo(
   output: string,
   overrides: Partial<
-    Pick<Config, 'title' | 'language' | 'document' | 'manual' | 'branding' | 'captureDefaults'>
+    Pick<
+      Config,
+      | 'title'
+      | 'language'
+      | 'document'
+      | 'manual'
+      | 'branding'
+      | 'captureDefaults'
+      | 'profiles'
+      | 'responsive'
+    >
   > = {},
 ) {
   const html = await readFile(new URL('../examples/app.html', import.meta.url));

@@ -16,6 +16,13 @@ import type { RunReport } from './types.js';
 import { brandingSchema } from './config.js';
 import { planImageSlices } from './pdf-slices.js';
 import { manualLabels, pageGeometry } from './manual.js';
+import {
+  presentationChapters,
+  screenLabel,
+  screenLayout,
+  comparisonImage,
+  sameGuidance,
+} from './responsive.js';
 import { badgeTextColor } from './annotations.js';
 
 const theme = {
@@ -55,6 +62,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
       ? [`${l.rebuilt}: ${report.rebuiltAt.slice(0, 10)}`]
       : []),
   ];
+  const presented = presentationChapters(report);
   const pages: ReactNode[] = [];
   const figures: { id: string; slices: { top: number; height: number }[] }[] = [];
   // Register Fixed before flowing content so native overflow pages inherit the footer.
@@ -81,7 +89,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
         <Text color="mutedForeground">{branding.subtitle ?? l.subtitle}</Text>
         <View style={{ borderTopWidth: 3, borderColor: accent, marginTop: 28, paddingTop: 18 }}>
           <Text variant="sm">
-            {report.chapters.length} {l.chapters}
+            {presented.length} {l.chapters}
           </Text>
           {metadata.map((text, i) => (
             <Text key={i} variant="sm">
@@ -92,7 +100,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
         </View>
         {report.manual?.contents !== false ? <Heading level={3}>{l.contents}</Heading> : null}
         {report.manual?.contents !== false &&
-          report.chapters.map((c, i) => (
+          presented.map((c, i) => (
             <Text key={i} variant="sm">
               {i + 1}. {c.title}
             </Text>
@@ -100,7 +108,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
       </View>
     </Page>,
   );
-  for (const [i, chapter] of report.chapters.entries()) {
+  for (const [i, chapter] of presented.entries()) {
     pages.push(
       <Page key={`chapter-${i}`} size={geometry.size} margin={geometry.margin}>
         {footer}
@@ -109,6 +117,9 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
         </Text>
         <Heading level={1}>{chapter.title}</Heading>
         <Text color="mutedForeground">{chapter.description}</Text>
+        {chapter.variants.some((v) => !sameGuidance(chapter, v)) ? (
+          <Heading level={3}>{screenLabel(chapter.variant!)}</Heading>
+        ) : null}
         {chapter.prerequisites?.length ? (
           <>
             <Heading level={3}>{l.prerequisites}</Heading>
@@ -144,70 +155,136 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
         ))}
       </Page>,
     );
-    for (const [j, capture] of chapter.captures.entries()) {
-      const image = await readRunArtifact(directory, capture.image, 64 * 1024 * 1024);
-      // Long screenshots are split into readable page-sized images, without shrinking or cropping content away.
-      // A modestly taller single figure avoids a nearly empty continuation page.
-      const scaledHeight = (capture.height * pageWidth) / capture.width;
-      const maximum = Math.min(460, Math.max(140, geometry.contentHeight - 240));
-      const imageBudget = scaledHeight <= maximum ? maximum : Math.max(100, maximum - 60);
-      const maxSliceHeight = Math.max(1, Math.floor((imageBudget * capture.width) / pageWidth));
-      const slices = planImageSlices(capture, maxSliceHeight);
-      const total = slices.length;
-      figures.push({ id: capture.id, slices });
-      for (const [slice, { top, height }] of slices.entries()) {
-        const data = await sharp(image)
-          .extract({ left: 0, top, width: capture.width, height })
-          .png()
-          .toBuffer();
+    if (chapter.variants.length > 1 && screenLayout(report) === 'side-by-side') {
+      for (const [j, capture] of chapter.captures.entries()) {
+        const overview = await comparisonImage(chapter.variants, j, directory);
+        const height = Math.min(
+          geometry.contentHeight - 210,
+          (overview.height * pageWidth) / overview.width,
+        );
         pages.push(
-          <Page key={`figure-${i}-${j}-${slice}`} size={geometry.size} margin={geometry.margin}>
+          <Page key={`comparison-${i}-${j}`} size={geometry.size} margin={geometry.margin}>
             {footer}
-            <Text variant="xs" weight="bold" color="primary">
-              {l.figure.toUpperCase()} {i + 1}.{j + 1}
-              {total > 1 ? ` · ${l.part.toUpperCase()} ${slice + 1}/${total}` : ''}
+            <Text variant="xs" color="primary" weight="bold">
+              {l.figure} {i + 1}.{j + 1} · {l.screens}
             </Text>
-            <Heading level={3} style={{ marginTop: 12 }}>
-              {capture.title}
-            </Heading>
-            {slice === 0 && capture.description ? (
-              <Text variant="sm" color="mutedForeground">
-                {capture.description}
-              </Text>
-            ) : null}
+            <Heading level={3}>{capture.title}</Heading>
+            <Text variant="sm">
+              {chapter.variants.map((v) => screenLabel(v.variant!)).join('  |  ')}
+            </Text>
             <PdfImage
-              src={`data:image/png;base64,${data.toString('base64')}`}
+              src={`data:image/png;base64,${overview.bytes.toString('base64')}`}
               variant="bordered"
               width={pageWidth}
-              height={(height * pageWidth) / capture.width}
+              height={height}
               fit="contain"
             />
-            {capture.marks
-              .filter(
-                (m) =>
-                  (m.label || m.caption) &&
-                  m.bounds.y < top + height &&
-                  m.bounds.y + m.bounds.height > top,
-              )
-              .map((m, n) => (
-                <Text key={n} variant="sm" style={{ marginTop: n === 0 ? 16 : 0 }}>
-                  {m.label ? (
-                    <Strong
-                      style={{
-                        color:
-                          badgeTextColor(m.color ?? '#e11d48') === '#ffffff'
-                            ? (m.color ?? '#e11d48')
-                            : '#142636',
-                      }}
-                    >
-                      {m.label} ·{' '}
-                    </Strong>
-                  ) : null}
-                  {m.caption ?? ''}
-                </Text>
-              ))}
+            <Text variant="sm" color="mutedForeground">
+              {l.screenDetails}
+            </Text>
           </Page>,
         );
+      }
+    }
+    for (const variant of chapter.variants) {
+      if (!sameGuidance(chapter, variant))
+        pages.push(
+          <Page
+            key={`guidance-${i}-${variant.variant!.profile}`}
+            size={geometry.size}
+            margin={geometry.margin}
+          >
+            {footer}
+            <Heading level={3}>{screenLabel(variant.variant!)}</Heading>
+            <Text>{variant.description}</Text>
+            {(variant.prerequisites ?? []).map((text, n) => (
+              <Text key={`pre-${n}`} variant="sm">
+                {l.prerequisites}: {text}
+              </Text>
+            ))}
+            {variant.instructions.map((text, n) => (
+              <Text key={n}>
+                {n + 1}. {text}
+              </Text>
+            ))}
+            {(variant.callouts ?? []).map((callout, n) => (
+              <Text key={`callout-${n}`} variant="sm">
+                {l[callout.kind]}: {callout.text}
+              </Text>
+            ))}
+          </Page>,
+        );
+      for (const [j, capture] of variant.captures.entries()) {
+        const image = await readRunArtifact(directory, capture.image, 64 * 1024 * 1024);
+        // Long screenshots are split into readable page-sized images, without shrinking or cropping content away.
+        // A modestly taller single figure avoids a nearly empty continuation page.
+        const imageWidth = variant.variant ? Math.min(pageWidth, capture.width * 0.75) : pageWidth;
+        const scaledHeight = (capture.height * imageWidth) / capture.width;
+        const maximum = Math.min(460, Math.max(140, geometry.contentHeight - 240));
+        const imageBudget = scaledHeight <= maximum ? maximum : Math.max(100, maximum - 60);
+        const maxSliceHeight = Math.max(1, Math.floor((imageBudget * capture.width) / imageWidth));
+        const slices = planImageSlices(capture, maxSliceHeight);
+        const total = slices.length;
+        figures.push({ id: capture.id, slices });
+        for (const [slice, { top, height }] of slices.entries()) {
+          const data = await sharp(image)
+            .extract({ left: 0, top, width: capture.width, height })
+            .png()
+            .toBuffer();
+          pages.push(
+            <Page
+              key={`figure-${i}-${variant.variant?.profile ?? 'default'}-${j}-${slice}`}
+              size={geometry.size}
+              margin={geometry.margin}
+            >
+              {footer}
+              <Text variant="xs" weight="bold" color="primary">
+                {l.figure.toUpperCase()} {i + 1}.{j + 1}
+                {variant.variant ? ` · ${screenLabel(variant.variant)}` : ''}
+                {total > 1 ? ` · ${l.part.toUpperCase()} ${slice + 1}/${total}` : ''}
+              </Text>
+              <Heading level={3} style={{ marginTop: 12 }}>
+                {capture.title}
+              </Heading>
+              {slice === 0 && capture.description ? (
+                <Text variant="sm" color="mutedForeground">
+                  {capture.description}
+                </Text>
+              ) : null}
+              <PdfImage
+                src={`data:image/png;base64,${data.toString('base64')}`}
+                variant="bordered"
+                width={imageWidth}
+                height={(height * imageWidth) / capture.width}
+                fit="contain"
+              />
+              {capture.marks
+                .filter(
+                  (m) =>
+                    (m.label || m.caption) &&
+                    m.bounds.y < top + height &&
+                    m.bounds.y + m.bounds.height > top,
+                )
+                .map((m, n) => (
+                  <Text key={n} variant="sm" style={{ marginTop: n === 0 ? 16 : 0 }}>
+                    {m.label ? (
+                      <Strong
+                        style={{
+                          color:
+                            badgeTextColor(m.color ?? '#e11d48') === '#ffffff'
+                              ? (m.color ?? '#e11d48')
+                              : '#142636',
+                        }}
+                      >
+                        {m.label} ·{' '}
+                      </Strong>
+                    ) : null}
+                    {m.caption ?? ''}
+                  </Text>
+                ))}
+            </Page>,
+          );
+        }
       }
     }
   }

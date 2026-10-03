@@ -6,6 +6,44 @@
       "type": "number",
       "const": 1
     },
+    "responsive": {
+      "type": "object",
+      "properties": {
+        "profiles": {
+          "minItems": 2,
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^[A-Za-z0-9_-]+$"
+          }
+        },
+        "layout": {
+          "type": "string",
+          "enum": [
+            "side-by-side",
+            "stacked"
+          ]
+        },
+        "labels": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        }
+      },
+      "required": [
+        "profiles"
+      ],
+      "additionalProperties": false
+    },
     "title": {
       "type": "string",
       "minLength": 1
@@ -133,6 +171,13 @@
         },
         "showGeneratedAt": {
           "type": "boolean"
+        },
+        "screenLayout": {
+          "type": "string",
+          "enum": [
+            "side-by-side",
+            "stacked"
+          ]
         }
       },
       "additionalProperties": false
@@ -156,6 +201,9 @@
       "items": {
         "type": "object",
         "properties": {
+          "profile": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -188,6 +236,67 @@
       "items": {
         "type": "object",
         "properties": {
+          "variant": {
+            "type": "object",
+            "properties": {
+              "scenario": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "profile": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "browser": {
+                "type": "string",
+                "enum": [
+                  "chromium",
+                  "firefox",
+                  "webkit"
+                ]
+              },
+              "viewport": {
+                "type": "object",
+                "properties": {
+                  "width": {
+                    "type": "integer",
+                    "minimum": 320,
+                    "maximum": 9007199254740991
+                  },
+                  "height": {
+                    "type": "integer",
+                    "minimum": 240,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": false
+              },
+              "deviceScaleFactor": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 4
+              }
+            },
+            "required": [
+              "scenario",
+              "profile",
+              "label",
+              "browser",
+              "viewport",
+              "deviceScaleFactor"
+            ],
+            "additionalProperties": false
+          },
           "title": {
             "type": "string"
           },

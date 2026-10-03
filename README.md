@@ -53,6 +53,12 @@ These are real browser regression captures comparing the pinned 0.2.0 implementa
 
 See the [review evidence and remaining limits](docs/review.md). Maintainers can reproduce this comparison with `npm run review:gallery`.
 
+## New in 0.5
+
+- **Responsive feature presentations:** execute the same BDD scenarios on Desktop, Tablet and Mobile, with annotated screenshots next to each other or stacked.
+- Shared CLI, MCP and GitLab selection, profile labels, responsive HTML, Markdown tables and PDF comparison overviews with readable device details.
+- Evidence, failure handling, rebuilds, comparisons and bundles retain each screen's independent execution.
+
 ## New in 0.4
 
 - A reusable [GitLab CI/CD component](docs/gitlab.md) with typed inputs, readiness checks, browser/profile selection, PDF customization, portable ZIPs and failed-run artifacts.
@@ -210,13 +216,38 @@ console.log(result.artifacts.pdf);
 
 See [integration recipes](docs/integration.md) for Codex configuration, custom steps, existing Playwright tests and CI.
 
+## Show a feature on Desktop, Tablet and Mobile
+
+Execute the same scenario in multiple screen profiles and show the annotated results next to each other or stacked:
+
+```sh
+hooserguide validate --config hooserguide.config.json --profiles desktop,tablet,mobile --scenario "Create task"
+hooserguide run --config hooserguide.config.json --profiles desktop,tablet,mobile --scenario "Create task" --screen-layout side-by-side
+```
+
+`init` supplies all three profiles. Try the self-contained example with `npm run demo:responsive`. Alternatively enable `responsive` in config:
+
+```json
+{
+  "responsive": {
+    "profiles": ["desktop", "tablet", "mobile"],
+    "layout": "side-by-side",
+    "labels": { "desktop": "Desktop", "tablet": "Tablet", "mobile": "Mobile" }
+  }
+}
+```
+
+![Annotated Desktop, Tablet and Mobile comparison](docs/media/responsive-comparison.png)
+
+Every screen has its own BDD assertions, privacy masks and annotation coordinates. HTML comparison columns stack on narrow reader screens; Markdown exports a table; PDF adds a comparison overview and readable detail pages. Use `--screen-layout stacked` for individual views or change the presentation later with `build`. MCP and GitLab expose the same selection. See the [responsive guide](docs/responsive.md) for configuration, evidence review and repeated workflow behavior.
+
 ## GitLab CI/CD component
 
 Include the pinned template directly from GitHub:
 
 ```yaml
 include:
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.4.0/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.5.0/templates/generate/template.yml
     inputs:
       config: docs/user-guide/hooserguide.config.json
       browser: chromium

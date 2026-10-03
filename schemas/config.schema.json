@@ -219,6 +219,13 @@
         },
         "showGeneratedAt": {
           "type": "boolean"
+        },
+        "screenLayout": {
+          "type": "string",
+          "enum": [
+            "side-by-side",
+            "stacked"
+          ]
         }
       },
       "additionalProperties": false
@@ -256,6 +263,44 @@
     "pdf": {
       "default": true,
       "type": "boolean"
+    },
+    "responsive": {
+      "type": "object",
+      "properties": {
+        "profiles": {
+          "minItems": 2,
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^[A-Za-z0-9_-]+$"
+          }
+        },
+        "layout": {
+          "type": "string",
+          "enum": [
+            "side-by-side",
+            "stacked"
+          ]
+        },
+        "labels": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        }
+      },
+      "required": [
+        "profiles"
+      ],
+      "additionalProperties": false
     },
     "profiles": {
       "type": "object",

@@ -29,6 +29,7 @@ Usage:
   hooserguide demo [--output output/demo] [--json]
   hooserguide mcp [--config hooserguide.config.json]
 
+Responsive: run/validate accept --profiles desktop,tablet,mobile; run/build accept --screen-layout side-by-side|stacked.
 Selection: run/validate accept --tags "@manual and not @destructive" and --scenario "Settings".
 Run: --fail-fast stops after the first failed scenario.
 PDF layout: run/build accept --page-size A4|Letter, --orientation portrait|landscape (or --landscape) and --margin 24..72 (points).
@@ -64,6 +65,8 @@ async function execute(args: string[]): Promise<void> {
       'base-url': { type: 'string' },
       output: { type: 'string' },
       profile: { type: 'string' },
+      profiles: { type: 'string' },
+      'screen-layout': { type: 'string' },
       skills: { type: 'boolean' },
       tags: { type: 'string' },
       scenario: { type: 'string' },
@@ -108,11 +111,13 @@ async function execute(args: string[]): Promise<void> {
     throw new Error('Unexpected positional argument. Use --help.');
   const allowed: Record<string, string[]> = {
     init: ['base-url', 'skills', 'json'],
-    validate: ['config', 'profile', 'tags', 'scenario', 'json'],
+    validate: ['config', 'profile', 'profiles', 'tags', 'scenario', 'json'],
     steps: ['config', 'json'],
     run: [
       'config',
       'profile',
+      'profiles',
+      'screen-layout',
       'output',
       'headed',
       'no-pdf',
@@ -127,6 +132,7 @@ async function execute(args: string[]): Promise<void> {
       'margin',
     ],
     build: [
+      'screen-layout',
       'config',
       'output',
       'no-pdf',
@@ -152,9 +158,14 @@ async function execute(args: string[]): Promise<void> {
   };
   if (values['fail-fast'] && values['no-fail-fast'])
     throw new Error('Use --fail-fast or --no-fail-fast, not both');
+  if (values.profile && values.profiles) throw new Error('Use --profile or --profiles, not both');
+  const responsiveSelection = values.profiles
+    ? { responsive: { profiles: values.profiles.split(',').map((p) => p.trim()) } }
+    : {};
   if (values.orientation && values.landscape)
     throw new Error('Use --orientation or --landscape, not both');
   const layout = manualSchema.parse({
+    ...(values['screen-layout'] !== undefined ? { screenLayout: values['screen-layout'] } : {}),
     ...(values['page-size'] !== undefined ? { pageSize: values['page-size'] } : {}),
     ...(values.orientation !== undefined
       ? { orientation: values.orientation }
@@ -209,6 +220,7 @@ async function execute(args: string[]): Promise<void> {
     const result = await validate(
       await loadConfig(configPath, {
         ...selection,
+        ...responsiveSelection,
         ...(values.profile ? { profile: values.profile } : {}),
       }),
     );
@@ -225,6 +237,7 @@ async function execute(args: string[]): Promise<void> {
     command === 'run'
       ? await loadConfig(configPath, {
           ...selection,
+          ...responsiveSelection,
           ...(values.headed ? { headed: true } : {}),
           ...(values['no-pdf'] ? { pdf: false } : {}),
           ...(values.profile ? { profile: values.profile } : {}),
@@ -251,6 +264,7 @@ async function execute(args: string[]): Promise<void> {
   const summary = {
     status: result.report.status,
     profile: result.report.profile,
+    responsive: result.report.responsive,
     exportError: result.report.exportError,
     selection: result.report.selection,
     skippedScenarios: result.report.skippedScenarios,
@@ -258,6 +272,7 @@ async function execute(args: string[]): Promise<void> {
     artifacts: result.artifacts,
     chapters: result.report.chapters.map((c) => ({
       title: c.title,
+      variant: c.variant,
       status: c.status,
       captures: c.captures.length,
       error: c.error,
@@ -271,7 +286,9 @@ async function execute(args: string[]): Promise<void> {
     for (const [format, path] of Object.entries(result.artifacts))
       output(`  ${format.padEnd(8)} ${path}`);
     for (const c of result.report.chapters.filter((c) => c.status === 'failed'))
-      console.error(`  Failed: ${c.title}\n  ${c.error}`);
+      console.error(
+        `  Failed: ${c.title}${c.variant ? ` (${c.variant.label})` : ''}\n  ${c.error}`,
+      );
     if (result.report.exportError) console.error(`  Export failed: ${result.report.exportError}`);
   }
   if (result.report.status !== 'passed') process.exitCode = 1;

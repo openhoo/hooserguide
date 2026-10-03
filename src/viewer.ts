@@ -24,7 +24,7 @@ document.querySelector('#annotations').addEventListener('click', event => {
   const button = event.currentTarget;
   const enabled = button.getAttribute('aria-pressed') !== 'true';
   button.setAttribute('aria-pressed', String(enabled));
-  document.querySelectorAll('figure img').forEach(image => { image.src = enabled ? image.dataset.annotated : image.dataset.raw; });
+  document.querySelectorAll('figure img').forEach(image => { image.src = enabled ? image.dataset.annotated : image.dataset.raw; if (image.parentElement.matches('.screen-image')) image.parentElement.href = image.src; });
   document.querySelectorAll('.legend').forEach(legend => { legend.hidden = !enabled; });
 });
 document.querySelector('#print-guide').addEventListener('click', async event => {

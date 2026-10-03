@@ -5,10 +5,10 @@ import { resolve, dirname, join, relative, isAbsolute, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { z } from 'zod';
-import { loadConfig, selectProfile, manualSchema } from './config.js';
+import { loadConfig, selectProfile, manualSchema, responsiveSchema } from './config.js';
 import { validate, run } from './runner.js';
 import { bundle } from './bundle.js';
-import type { Config } from './types.js';
+import type { Config, ScreenVariant, ResponsiveOptions } from './types.js';
 
 const httpURL = z
   .url()
@@ -20,6 +20,7 @@ const gitlabOptionsSchema = z
     output: z.string().min(1).default('output/hooserguide'),
     browser: z.enum(['chromium', 'firefox', 'webkit']).default('chromium'),
     profile: z.string().min(1).optional(),
+    responsive: responsiveSchema.optional(),
     baseURL: httpURL.optional(),
     tagExpression: z.string().min(1).optional(),
     scenario: z.string().min(1).optional(),
@@ -36,9 +37,16 @@ export interface GitlabSummary {
   status: 'passed' | 'failed';
   browser?: string;
   profile?: string;
+  responsive?: ResponsiveOptions;
   directory?: string;
   artifacts?: Record<string, string>;
-  chapters?: { title: string; status: 'passed' | 'failed'; captures: number; error?: string }[];
+  chapters?: {
+    title: string;
+    status: 'passed' | 'failed';
+    captures: number;
+    variant?: ScreenVariant;
+    error?: string;
+  }[];
   error?: string;
 }
 const contained = (root: string, path: string) => {
@@ -75,6 +83,8 @@ export async function generateGitlabGuide(
   try {
     controls.signal?.throwIfAborted();
     const options = gitlabOptionsSchema.parse(input);
+    if (options.profile && options.responsive)
+      throw new Error('Use profile or responsive, not both');
     const project = await realpath(resolve(options.project));
     const candidate = resolve(project, options.output);
     if (isAbsolute(options.output) || candidate === project || !contained(project, candidate))
@@ -110,6 +120,7 @@ export async function generateGitlabGuide(
       pdf: options.pdf,
       failFast: options.failFast,
       ...(options.profile ? { profile: options.profile } : {}),
+      ...(options.responsive ? { responsive: options.responsive } : {}),
       ...(options.tagExpression ? { tagExpression: options.tagExpression } : {}),
       ...(options.scenario ? { scenario: options.scenario } : {}),
     });
@@ -118,6 +129,16 @@ export async function generateGitlabGuide(
       ...config,
       ...(options.baseURL ? { baseURL: options.baseURL } : {}),
       browser: options.browser,
+      ...(config.responsive
+        ? {
+            profiles: Object.fromEntries(
+              Object.entries(config.profiles ?? {}).map(([name, settings]) => [
+                name,
+                { ...settings, browser: options.browser },
+              ]),
+            ),
+          }
+        : {}),
       ...(config.profile
         ? {
             profiles: {
@@ -141,11 +162,13 @@ export async function generateGitlabGuide(
     summary = {
       status: result.report.status,
       browser: result.report.browser,
+      ...(result.report.responsive ? { responsive: result.report.responsive } : {}),
       ...(result.report.profile ? { profile: result.report.profile } : {}),
       directory: relative(project, result.directory).split(sep).join('/'),
       artifacts,
       chapters: result.report.chapters.map((chapter) => ({
         title: chapter.title,
+        ...(chapter.variant ? { variant: chapter.variant } : {}),
         status: chapter.status,
         captures: chapter.captures.length,
         ...(chapter.error !== undefined ? { error: chapter.error } : {}),
@@ -199,6 +222,15 @@ export function gitlabOptionsFromEnvironment(env: NodeJS.ProcessEnv = process.en
     output: jobId ? `${output}/job-${jobId}` : output,
     browser: text('BROWSER') as Config['browser'],
     profile: text('PROFILE'),
+    ...(text('PROFILES')
+      ? {
+          responsive: {
+            profiles: text('PROFILES')!
+              .split(',')
+              .map((p) => p.trim()),
+          },
+        }
+      : {}),
     baseURL: text('BASE_URL'),
     tagExpression: text('TAGS'),
     scenario: text('SCENARIO'),
@@ -208,6 +240,9 @@ export function gitlabOptionsFromEnvironment(env: NodeJS.ProcessEnv = process.en
     waitURL: text('WAIT_URL'),
     waitTimeoutSeconds: number('WAIT_TIMEOUT') ? Number(number('WAIT_TIMEOUT')) : undefined,
     manual: {
+      ...(text('SCREEN_LAYOUT') && text('SCREEN_LAYOUT') !== 'config'
+        ? { screenLayout: text('SCREEN_LAYOUT') as 'side-by-side' | 'stacked' }
+        : {}),
       ...(text('PAGE_SIZE') && text('PAGE_SIZE') !== 'config'
         ? { pageSize: text('PAGE_SIZE') as 'A4' | 'Letter' }
         : {}),

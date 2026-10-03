@@ -140,6 +140,27 @@ for (const engine of selected) {
       assert.equal(passed.report.browser, engine);
       assert.equal(passed.report.chapters[0]!.captures[0]!.width, 390);
       assert.equal((await inspectRun(passed.directory)).verifiedImages, 2);
+      const matrix = await run({
+        ...config,
+        profile: undefined,
+        pdf: false,
+        profiles: {
+          desktop: { browser: engine, viewport: { width: 1280, height: 800 } },
+          mobile: config.profiles!.responsive!,
+        },
+        responsive: { profiles: ['desktop', 'mobile'], layout: 'side-by-side' },
+      });
+      assert.equal(matrix.report.status, 'passed', matrix.report.exportError);
+      assert.deepEqual(
+        matrix.report.chapters.map((c) => c.variant?.browser),
+        [engine, engine],
+      );
+      assert.deepEqual(
+        matrix.report.chapters.map((c) => c.captures[0]!.width),
+        [1280, 390],
+      );
+      assert.equal((await inspectRun(matrix.directory)).verifiedImages, 4);
+
       const loading = getDocument({
         data: new Uint8Array(await readFile(passed.artifacts.pdf!)),
         useSystemFonts: true,

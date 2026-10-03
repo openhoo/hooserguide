@@ -15,6 +15,8 @@ import {
   manualSchema,
   captureDefaultsSchema,
   skippedSchema,
+  responsiveSchema,
+  screenVariantSchema,
 } from './config.js';
 import { run, validate, loadRegistry } from './runner.js';
 import { build } from './build.js';
@@ -51,6 +53,7 @@ const summarySchema = z
     generatedAt: z.string().optional(),
     rebuiltAt: z.string().optional(),
     sourceReportSha256: z.string().optional(),
+    responsive: responsiveSchema.optional(),
     profile: z.string().optional(),
     viewport: viewportSchema.optional(),
     exportError: z.string().optional(),
@@ -63,6 +66,7 @@ const summarySchema = z
         z
           .object({
             chapter: z.number().int(),
+            variant: screenVariantSchema.optional(),
             title: z.string(),
             status: z.enum(['passed', 'failed']),
             captures: z.number().int(),
@@ -180,6 +184,7 @@ export function createMcpServer(configPath: string) {
               output: z.string(),
               profiles: z.array(z.string()),
               selectedProfile: z.string().optional(),
+              responsive: responsiveSchema.optional(),
               browser: z.string(),
               viewport: viewportSchema.optional(),
               pdf: z.boolean(),
@@ -226,6 +231,7 @@ export function createMcpServer(configPath: string) {
             output: c.output,
             profiles: Object.keys(c.profiles ?? {}),
             selectedProfile: c.profile,
+            responsive: c.responsive,
             browser: p.browser,
             viewport: p.viewport,
             pdf: c.pdf ?? true,
@@ -292,11 +298,14 @@ export function createMcpServer(configPath: string) {
       title: 'Validate guide specifications',
       description:
         'Parse Gherkin and verify step bindings and capture definitions without opening the app. Loads trusted local plugins. Use the same profile for generation.',
-      inputSchema: z.object({ profile, ...selectionSchema.shape }).strict(),
+      inputSchema: z
+        .object({ profile, responsive: responsiveSchema.optional(), ...selectionSchema.shape })
+        .strict(),
       outputSchema: z
         .object({
           ...common,
           valid: z.boolean().optional(),
+          responsive: responsiveSchema.optional(),
           profile: z.string().optional(),
           scenarios: z
             .array(
@@ -316,11 +325,13 @@ export function createMcpServer(configPath: string) {
         .strict(),
       annotations: { ...readOnly, readOnlyHint: false },
     },
-    async ({ profile, tagExpression, scenario }) => {
+    async ({ profile, responsive, tagExpression, scenario }) => {
       try {
         if (active) throw busy();
+        if (profile && responsive) throw new Error('Use profile or responsive, not both');
         const c = await config({
           ...(profile ? { profile } : {}),
+          ...(responsive ? { responsive } : {}),
           ...(tagExpression !== undefined ? { tagExpression } : {}),
           ...(scenario !== undefined ? { scenario } : {}),
         });
@@ -343,6 +354,7 @@ export function createMcpServer(configPath: string) {
       inputSchema: z
         .object({
           profile,
+          responsive: responsiveSchema.optional(),
           ...selectionSchema.shape,
           failFast: z.boolean().optional(),
           pdf: z
@@ -359,12 +371,14 @@ export function createMcpServer(configPath: string) {
         openWorldHint: true,
       },
     },
-    async ({ profile, pdf, tagExpression, scenario, failFast }, extra) => {
+    async ({ profile, responsive, pdf, tagExpression, scenario, failFast }, extra) => {
       if (active) return failure(busy(), 'BUSY', 'Wait for the current operation.');
       active = { operation: 'generate', startedAt: new Date().toISOString() };
       try {
+        if (profile && responsive) throw new Error('Use profile or responsive, not both');
         const c = await config({
           ...(profile ? { profile } : {}),
+          ...(responsive ? { responsive } : {}),
           ...(tagExpression !== undefined ? { tagExpression } : {}),
           ...(scenario !== undefined ? { scenario } : {}),
           ...(failFast !== undefined ? { failFast } : {}),
@@ -686,6 +700,7 @@ export function createMcpServer(configPath: string) {
                 output: c.output,
                 profiles: Object.keys(c.profiles ?? {}),
                 selectedProfile: c.profile,
+                responsive: c.responsive,
                 viewport: p.viewport,
                 document: c.document,
                 manual: c.manual,

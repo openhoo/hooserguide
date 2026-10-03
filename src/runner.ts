@@ -73,6 +73,7 @@ export async function validate(input: Config) {
   const config = resolveConfig(input);
   const { scenarios } = await prepare(config);
   return {
+    responsive: config.responsive,
     valid: true,
     scenarios: scenarios.map((s) => ({
       name: s.pickle.name,
@@ -98,7 +99,14 @@ export interface RunOptions {
 export async function run(input: Config, options: RunOptions = {}): Promise<RunResult> {
   if (options.signal?.aborted) throw new Error('Run cancelled');
   const config = resolveConfig(input);
-  const { registry, scenarios } = await prepare(config);
+  const { registry, scenarios: selectedScenarios } = await prepare(config);
+  const screens = (config.responsive?.profiles ?? [config.profile]).map((name) => ({
+    name,
+    settings: selectProfile({ ...config, profile: name }),
+  }));
+  const scenarios = selectedScenarios.flatMap((s, scenario) =>
+    screens.map((screen) => ({ ...s, screen, scenario })),
+  );
   if (options.signal?.aborted) throw new Error('Run cancelled');
   const total = scenarios.reduce((n, s) => n + s.pickle.steps.length, 0) + 1;
   let completed = 0;
@@ -111,11 +119,12 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
   };
   await progress('executing');
   if (options.signal?.aborted) throw new Error('Run cancelled');
-  const profile = selectProfile(config);
+  const profile = screens[0]!.settings;
   await mkdir(config.output, { recursive: true });
   const staging = await mkdtemp(join(config.output, '.run-'));
   const report: RunReport = {
     schemaVersion: 1,
+    responsive: config.responsive,
     title: config.title,
     language: config.language ?? 'en',
     generatedAt: new Date().toISOString(),
@@ -130,20 +139,48 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
     skippedScenarios: [],
     chapters: [],
   };
-  const browserType = { chromium, firefox, webkit }[profile.browser ?? 'chromium'];
-  // Launch errors have no successful handbook to expose.
-  const browser = await browserType.launch({ headless: !config.headed }).catch(async (error) => {
+  const browsers = new Map<string, Awaited<ReturnType<typeof chromium.launch>>>();
+  try {
+    for (const screen of screens) {
+      const engine = screen.settings.browser ?? 'chromium';
+      if (!browsers.has(engine))
+        browsers.set(
+          engine,
+          await { chromium, firefox, webkit }[engine].launch({ headless: !config.headed }),
+        );
+      if (options.signal?.aborted) throw new Error('Run cancelled');
+    }
+  } catch (error) {
+    await Promise.all([...browsers.values()].map((b) => b.close().catch(() => {})));
     await rm(staging, { recursive: true, force: true });
     throw error;
-  });
+  }
   const cancel = () => {
-    void browser.close().catch(() => {});
+    for (const browser of browsers.values()) void browser.close().catch(() => {});
   };
   options.signal?.addEventListener('abort', cancel, { once: true });
   if (options.signal?.aborted) cancel();
   try {
     for (const [scenarioIndex, s] of scenarios.entries()) {
+      const profile = s.screen.settings;
+      const browser = browsers.get(profile.browser ?? 'chromium')!;
       const chapter: Chapter = {
+        ...(config.responsive
+          ? {
+              variant: {
+                scenario: s.scenario,
+                profile: s.screen.name!,
+                label:
+                  config.responsive.labels &&
+                  Object.hasOwn(config.responsive.labels, s.screen.name!)
+                    ? config.responsive.labels[s.screen.name!]!
+                    : s.screen.name!,
+                browser: profile.browser ?? 'chromium',
+                viewport: profile.viewport!,
+                deviceScaleFactor: profile.deviceScaleFactor ?? 1,
+              },
+            }
+          : {}),
         title: s.pickle.name,
         feature: s.feature,
         description: s.description,
@@ -180,7 +217,7 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
               page,
               step,
               chapter,
-              config,
+              config: { ...config, profile: s.screen.name, responsive: undefined },
               target: (v) => target(page, v),
               instruction: (text) => chapter.instructions.push(text),
               capture: async (spec) => {
@@ -237,6 +274,7 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
       }
       if (options.signal?.aborted || (config.failFast && chapter.status === 'failed')) {
         report.skippedScenarios = scenarios.slice(scenarioIndex + 1).map((s) => ({
+          ...(config.responsive ? { profile: s.screen.name } : {}),
           title: s.pickle.name,
           feature: s.feature,
           source: s.source,
@@ -250,7 +288,7 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
     throw error;
   } finally {
     options.signal?.removeEventListener('abort', cancel);
-    await browser.close().catch(async (error) => {
+    await Promise.all([...browsers.values()].map((b) => b.close())).catch(async (error) => {
       await rm(staging, { recursive: true, force: true });
       throw error;
     });

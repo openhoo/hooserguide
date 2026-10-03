@@ -183,3 +183,7 @@ Install browsers in CI, start the target app and run the CLI. Upload the isolate
 ## Skills
 
 `hooserguide init --skills` copies both skills into the project's `.agents/skills/`. To install them globally, copy the complete directories `skills/hooserguide-author` and `skills/hooserguide-review` (including `references/` and `agents/`) from this repository into your agent's skill directory, for example `~/.codex/skills/`. Other clients can read the same `SKILL.md` instructions. See [author skill](../skills/hooserguide-author/SKILL.md) and [review skill](../skills/hooserguide-review/SKILL.md).
+
+## Responsive presentations
+
+CLI `--profiles desktop,tablet,mobile`, MCP `responsive` and GitLab `profiles` select the same screen matrix. Keep validation and execution selections identical. `manual.screenLayout` controls comparison columns or stacked views and can be changed by evidence-only rebuilds. Execution chapter indices remain distinct from grouped manual chapters. See [responsive.md](responsive.md).

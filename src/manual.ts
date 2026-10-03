@@ -54,6 +54,8 @@ const en = {
   evidence: 'Execution evidence',
   pageNumber: 'Page {page} of {total}',
   created: 'Created with hooserguide',
+  screens: 'Screen sizes',
+  screenDetails: 'Overview. Full-size views with reference legends follow on the next pages.',
   rebuilt: 'Re-exported',
 };
 const de: typeof en = {
@@ -83,6 +85,9 @@ const de: typeof en = {
   evidence: 'Ausführungsnachweis',
   pageNumber: 'Seite {page} von {total}',
   created: 'Erstellt mit hooserguide',
+  screens: 'Bildschirmgrößen',
+  screenDetails:
+    'Übersicht. Große Einzelansichten mit Referenzlegenden folgen auf den nächsten Seiten.',
   rebuilt: 'Neu exportiert',
 };
 export function manualLabels(language: string) {

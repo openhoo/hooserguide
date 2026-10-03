@@ -11,7 +11,7 @@ spec:
       default: mcr.microsoft.com/playwright:v1.63.0-noble
       description: Node.js 22+ image with matching Playwright browsers, or enable install-browsers.
     package:
-      default: github:openhoo/hooserguide#0.4.0
+      default: github:openhoo/hooserguide#0.5.0
       description: Pinned hooserguide package source; installed into an isolated temporary directory.
     config:
       default: hooserguide.config.json
@@ -27,6 +27,13 @@ spec:
     profile:
       default: ''
       description: Config profile; empty keeps the configured default.
+    profiles:
+      default: ''
+      description: Comma-separated responsive config profiles; overrides the configured screen selection. Use instead of profile.
+    screen-layout:
+      default: config
+      options: [config, side-by-side, stacked]
+      description: Screenshot comparison layout for HTML, Markdown and PDF.
     base-url:
       default: ''
       description: Optional HTTP(S) application URL override.
@@ -120,6 +127,12 @@ spec:
       expand: false
     HOOSERGUIDE_CI_PROFILE:
       value: $[[ inputs.profile ]]
+      expand: false
+    HOOSERGUIDE_CI_PROFILES:
+      value: $[[ inputs.profiles ]]
+      expand: false
+    HOOSERGUIDE_CI_SCREEN_LAYOUT:
+      value: $[[ inputs.screen-layout ]]
       expand: false
     HOOSERGUIDE_CI_BASE_URL:
       value: $[[ inputs.base-url ]]

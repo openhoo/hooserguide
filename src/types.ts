@@ -36,6 +36,20 @@ export interface BrowserProfile {
   hasTouch?: boolean;
   colorScheme?: 'light' | 'dark' | 'no-preference';
 }
+export interface ResponsiveOptions {
+  /** Execute the same scenarios independently in these named profiles, in this order. */
+  profiles: string[];
+  layout?: 'side-by-side' | 'stacked';
+  labels?: Record<string, string>;
+}
+export interface ScreenVariant {
+  scenario: number;
+  profile: string;
+  label: string;
+  browser: 'chromium' | 'firefox' | 'webkit';
+  viewport: { width: number; height: number };
+  deviceScaleFactor: number;
+}
 export interface Branding {
   name?: string;
   subtitle?: string;
@@ -53,6 +67,7 @@ export interface ManualOptions {
   margin?: number;
   contents?: boolean;
   showGeneratedAt?: boolean;
+  screenLayout?: 'side-by-side' | 'stacked';
 }
 export interface CaptureDefaults {
   fullPage?: boolean;
@@ -69,6 +84,7 @@ export interface RunSelection {
   scenario?: string;
 }
 export interface SkippedScenario {
+  profile?: string;
   title: string;
   feature: string;
   source: string;
@@ -99,6 +115,7 @@ export interface Config {
   captureDefaults?: CaptureDefaults;
   language?: string;
   pdf?: boolean;
+  responsive?: ResponsiveOptions;
   profiles?: Record<string, BrowserProfile>;
   profile?: string;
   branding?: Branding;
@@ -120,6 +137,7 @@ export interface Capture {
   crop?: { x: number; y: number; width: number; height: number };
 }
 export interface Chapter {
+  variant?: ScreenVariant;
   title: string;
   feature: string;
   source: string;
@@ -135,6 +153,7 @@ export interface Chapter {
 }
 export interface RunReport {
   schemaVersion: 1;
+  responsive?: ResponsiveOptions;
   title: string;
   generatedAt: string;
   language: string;

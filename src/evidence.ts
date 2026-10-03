@@ -109,6 +109,7 @@ export function summarizeRun(result: RunResult) {
     rebuiltAt: r.rebuiltAt,
     sourceReportSha256: r.sourceReportSha256,
     profile: r.profile,
+    responsive: r.responsive,
     viewport: r.viewport,
     exportError: r.exportError,
     document: r.document,
@@ -117,6 +118,7 @@ export function summarizeRun(result: RunResult) {
     skippedScenarios: r.skippedScenarios,
     chapters: r.chapters.map((c, i) => ({
       chapter: i + 1,
+      variant: c.variant,
       title: c.title,
       status: c.status,
       captures: c.captures.length,

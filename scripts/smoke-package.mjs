@@ -128,6 +128,7 @@ try {
   await access(
     join(root, 'docs/guide/.agents/skills/hooserguide-review/references/ci-integration.md'),
   );
+  await access(join(root, 'docs/guide/.agents/skills/hooserguide-author/references/responsive.md'));
   await mkdir(join(root, '.ci-package'));
   await copyFile(tarball, join(root, '.ci-package/fixture.tgz'));
   const componentDocuments = parseAllDocuments(
@@ -173,6 +174,8 @@ try {
           CI_JOB_ID: '91001',
           HOOSERGUIDE_CI_PACKAGE: 'file:.ci-package/fixture.tgz',
           HOOSERGUIDE_CI_CONFIG: 'docs/guide/hooserguide.config.json',
+          HOOSERGUIDE_CI_PROFILES: 'desktop,mobile',
+          HOOSERGUIDE_CI_SCREEN_LAYOUT: 'side-by-side',
           HOOSERGUIDE_CI_OUTPUT: 'component-out',
           HOOSERGUIDE_CI_BASE_URL: baseURL,
           HOOSERGUIDE_CI_WAIT_URL: baseURL,
@@ -182,6 +185,8 @@ try {
     );
     if (generated.status !== 'passed' || !generated.artifacts.pdf || !generated.artifacts.bundle)
       throw new Error(`Installed component failed: ${generated.error}`);
+    if (generated.chapters.length !== 2 || generated.chapters[1].variant.profile !== 'mobile')
+      throw new Error('Packaged responsive execution is missing');
     for (const path of Object.values(generated.artifacts)) await access(join(root, path));
     if (
       !(await readFile(join(root, 'package.json'))).equals(manifestBefore) ||

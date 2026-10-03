@@ -15,6 +15,7 @@ export const comparisonSchema = z
           feature: z.string(),
           title: z.string(),
           change: z.enum(['added', 'removed', 'changed', 'unchanged']),
+          profile: z.string().optional(),
           instructionsChanged: z.boolean(),
           captures: z.array(
             z
@@ -53,6 +54,15 @@ function unique<T>(items: T[], key: (item: T) => string, kind: string) {
 }
 const prose = (c?: Chapter) =>
   c && JSON.stringify([c.description, c.instructions, c.prerequisites ?? [], c.callouts ?? []]);
+const screenMetadata = (chapter?: Chapter) =>
+  chapter?.variant &&
+  JSON.stringify([
+    chapter.variant.profile,
+    chapter.variant.label,
+    chapter.variant.browser,
+    chapter.variant.viewport,
+    chapter.variant.deviceScaleFactor,
+  ]);
 function compareCaptures(
   before: Capture[],
   after: Capture[],
@@ -118,7 +128,8 @@ export async function compareResults(before: RunResult, after: RunResult) {
           .toBuffer();
         annotatedPixels.set(capture, createHash('sha256').update(annotatedDecoded).digest('hex'));
       }
-  const key = (c: Chapter) => JSON.stringify([c.feature, c.title]);
+  const key = (c: Chapter) =>
+    JSON.stringify(c.variant ? [c.feature, c.title, c.variant.profile] : [c.feature, c.title]);
   const a = unique(before.report.chapters, key, 'chapter feature/title'),
     b = unique(after.report.chapters, key, 'chapter feature/title');
   const chapters = [...new Set([...a.keys(), ...b.keys()])].map((id) => {
@@ -136,6 +147,7 @@ export async function compareResults(before: RunResult, after: RunResult) {
       JSON.stringify(old?.captures.map((c) => c.title)) !==
         JSON.stringify(next?.captures.map((c) => c.title)) ||
       instructionsChanged ||
+      screenMetadata(old) !== screenMetadata(next) ||
       old?.status !== next?.status ||
       old?.error !== next?.error ||
       JSON.stringify(old?.steps.map(({ text, status, error }) => ({ text, status, error }))) !==
@@ -146,6 +158,7 @@ export async function compareResults(before: RunResult, after: RunResult) {
     return {
       feature: chapter.feature,
       title: chapter.title,
+      profile: chapter.variant?.profile,
       change,
       instructionsChanged,
       captures,
@@ -161,6 +174,7 @@ export async function compareResults(before: RunResult, after: RunResult) {
       r.report.document,
       r.report.manual,
       r.report.profile,
+      r.report.responsive,
       r.report.viewport,
       r.report.selection,
       r.report.skippedScenarios,

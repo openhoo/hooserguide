@@ -58,6 +58,7 @@ export async function init(directory: string, baseURL = 'http://localhost:3000',
         language: 'en',
         profiles: {
           desktop: { viewport: { width: 1280, height: 800 } },
+          tablet: { viewport: { width: 768, height: 1024 }, hasTouch: true },
           mobile: {
             viewport: { width: 390, height: 844 },
             deviceScaleFactor: 2,
