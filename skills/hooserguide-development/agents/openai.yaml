@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Hooserguide Development'
+  short_description: 'Develop the guide tool and verify its contracts'
+  default_prompt: 'Use $hooserguide-development to implement and verify this change in the hooserguide source checkout.'

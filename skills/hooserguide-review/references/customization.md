@@ -53,6 +53,7 @@ Prerequisites are descriptions, not executable assertions. Assert the required s
     "summary": "Die wichtigsten Abläufe für die tägliche Arbeit."
   },
   "manual": {
+    "theme": "professional",
     "pageSize": "Letter",
     "orientation": "landscape",
     "margin": 36,
@@ -64,17 +65,18 @@ Prerequisites are descriptions, not executable assertions. Assert the required s
 
 These are optional fields to add to a complete config. `language` sets the browser locale and document language. Guide labels use German for `de`/`de-*` and English otherwise. Scenario names, explanations and captions stay in the language you authored; UI content is not automatically translated. PDF page numbers and image continuation labels are localized too.
 
-| Setting                   | Default    | Behavior                                                                       |
-| ------------------------- | ---------- | ------------------------------------------------------------------------------ |
-| `document.version`        | omitted    | Handbook version shown in all three formats                                    |
-| `document.productVersion` | omitted    | Application version label                                                      |
-| `document.audience`       | omitted    | Intended readers                                                               |
-| `document.summary`        | omitted    | Cover/hero introduction                                                        |
-| `manual.pageSize`         | `A4`       | `A4` or `Letter`                                                               |
-| `manual.orientation`      | `portrait` | `portrait` or `landscape`                                                      |
-| `manual.margin`           | `48`       | PDF margins in points, between 24 and 72                                       |
-| `manual.contents`         | `true`     | PDF cover and Markdown table of contents; HTML navigation remains available    |
-| `manual.showGeneratedAt`  | `true`     | Show capture/rebuild dates in the document; report evidence retains timestamps |
+| Setting                   | Default        | Behavior                                                                         |
+| ------------------------- | -------------- | -------------------------------------------------------------------------------- |
+| `document.version`        | omitted        | Handbook version shown in all three formats                                      |
+| `document.productVersion` | omitted        | Application version label                                                        |
+| `document.audience`       | omitted        | Intended readers                                                                 |
+| `document.summary`        | omitted        | Cover/hero introduction                                                          |
+| `manual.theme`            | `professional` | Shared HTML/PDF palette: professional, ocean, forest, sand, midnight or graphite |
+| `manual.pageSize`         | `A4`           | `A4` or `Letter`                                                                 |
+| `manual.orientation`      | `portrait`     | `portrait` or `landscape`                                                        |
+| `manual.margin`           | `48`           | PDF margins in points, between 24 and 72                                         |
+| `manual.contents`         | `true`         | PDF cover and Markdown table of contents; HTML navigation remains available      |
+| `manual.showGeneratedAt`  | `true`         | Show capture/rebuild dates in the document; report evidence retains timestamps   |
 
 Long screenshots are sliced according to the chosen page geometry, preserving all pixels and annotation groups where space allows. The PDF audit includes actual page dimensions and margin in `pdf-layout.json`.
 
@@ -105,6 +107,18 @@ hooserguide build <run-directory> --orientation portrait --page-size A4
 Open `index.html` directly or host the complete run directory. JavaScript adds a chapter search, annotation toggle and Print button without any remote dependency. Search matches all entered terms against chapter prose, prerequisites, callouts and captions. It hides nonmatching chapters and navigation items, announces the count and handles zero matches. Printing includes all chapters even when search is active. The annotation toggle switches between the masked original and annotated PNG and hides legends for originals. Printing preserves the chosen image variant.
 
 Without JavaScript, the complete guide, navigation and downloads remain usable. The optional toolbar is hidden. Controls have labels, visible keyboard focus, responsive sizing and reduced-motion support.
+
+The theme selector and **Download PDF** control appear before the guide title.
+The PDF control exists only when a PDF was generated and works without JavaScript.
+Theme switching needs JavaScript and persists per guide path when browser storage
+is available. `midnight` and `graphite` are dark; the remaining presets are light.
+Browser printing uses a light palette. Switching the reader theme does not
+regenerate the PDF; its palette is the configured `manual.theme`.
+
+`run` and evidence-only `build` accept `--theme <name>`. To change a delivered PDF's
+theme, rebuild the exact successful source run with that option or a config
+`manual.theme`. Review custom `branding.accentColor` for contrast on the selected
+palette. Screenshot colors remain the application's captured evidence colors.
 
 ## Inspect and compare evidence
 

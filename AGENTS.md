@@ -15,3 +15,18 @@ This is a TypeScript CLI/library for evidence-backed user manuals. The agent aut
 - See `skills/hooserguide-author` and `skills/hooserguide-review` for application-documentation tasks.
 
 - Pages publication must regenerate from successful verified evidence, include only intended artifacts, preserve source hashes and sanitize local source paths. Verify actual deployment URLs before claiming a live site.
+
+## Agent skills
+
+- For developing hooserguide itself, read
+  [hooserguide-development](skills/hooserguide-development/SKILL.md).
+- For using hooserguide in a consuming application, read
+  [hooserguide-author](skills/hooserguide-author/SKILL.md).
+- For checking generated manuals and their exact execution evidence, read
+  [hooserguide-review](skills/hooserguide-review/SKILL.md).
+
+Canonical installable skills live in `skills/`. The development skill is exposed
+through the relative `.agents/skills/hooserguide-development` discovery link.
+`init --skills` installs only the consumer author/review skills into the user's
+guide project. Keep audience routing, bundled references, metadata and installation
+contracts aligned with source changes.

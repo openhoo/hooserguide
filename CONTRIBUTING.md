@@ -11,3 +11,18 @@ Pdfcn source is pinned in `THIRD_PARTY_NOTICES.md`. Preserve its MIT license whe
 The committed demo is generated from `examples/tasks.feature`. Regenerate it with `npm run demo:docs`; that script also removes machine-specific source paths. Review the actual images and PDF before committing refreshed media.
 
 Contributions are licensed under Apache-2.0 for original project code. Existing third-party files retain their original licenses.
+
+## Contributor and consumer skills
+
+Use [hooserguide-development](skills/hooserguide-development/SKILL.md) when working
+on the tool. The source checkout discovers it through `.agents/skills`; the
+canonical files live under `skills/hooserguide-development`.
+
+The `hooserguide-author` and `hooserguide-review` skills serve agents working in
+consuming applications. Keep their references self-contained and their commands
+aligned with the shipped CLI/MCP. `init --skills` must not install the contributor
+skill into a consumer guide project.
+
+For skill changes, run `npm run test:skills` and verify an actual fresh install with
+`npm run test:skills:install`. Packaging changes also require `npm run test:package`.
+Avoid replaying browser workflows for skill-only prose changes.

@@ -10,4 +10,43 @@ Use when the user requests publishing a handbook to GitLab Pages or GitHub Pages
 - Failed steps, incomplete responsive groups, hash mismatches or export failures block publication. Existing target folders are never deleted. Backend actions remain applied after failed/cancelled generation; do not automatically replay them.
 - Review privacy for both masked variants and authored prose before authorized public delivery. Platform visibility is configured separately. After publishing, verify the exact deployment SHA, actual Pages URL, images, raw toggle and PDF/ZIP downloads. Report native platform/authentication blockers distinctly.
 
-Full pipeline examples and inputs are in the packaged `docs/pages.md` or repository README. GitLab component publication to its CI/CD Catalog is separate from Pages deployment.
+## Consumer pipeline shapes
+
+GitLab includes both pinned templates in the existing pipeline. Adapt startup,
+profiles and readiness to the consuming app; keep the source/output roots paired:
+
+```yaml
+stages: [test, deploy]
+include:
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.0/templates/generate/template.yml
+    inputs:
+      job-name: user-guide
+      config: docs/user-guide/hooserguide.config.json
+      output: output/user-guide
+      wait-url: http://127.0.0.1:3000/health
+      before-script:
+        - npm ci
+        - npm run start > /tmp/guide-app.log 2>&1 &
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.0/templates/pages/template.yml
+    inputs:
+      generate-job: user-guide
+      source: output/user-guide
+      output: public/user-guide
+```
+
+For GitHub, in the build job after app setup/readiness, use
+`openhoo/hooserguide/actions/generate@0.8.0` with `id: guide`, your `config` and
+`wait-url`. Run `actions/configure-pages@v5`, then
+`openhoo/hooserguide/actions/pages@0.8.0` with
+`run-directory: ${{ steps.guide.outputs.directory }}`. A separate `deploy` job
+needs the build, `pages: write` and `id-token: write` permissions, the
+`github-pages` environment, and `actions/deploy-pages@v4` with `id: deployment`.
+The environment URL is `${{ steps.deployment.outputs.page_url }}`. Configure the
+repository's Pages source as GitHub Actions and choose the intended default-branch
+or manual-dispatch triggers. Application dependency installation and startup stay
+in the caller's build job.
+
+These examples use a published release pin; choose the user's verified release or
+commit and keep package/action/template versions together. CI/CD Catalog
+publication is separate from a Pages deployment. The consumer workflow and its
+checks are contained in this reference; it does not require hooserguide source.

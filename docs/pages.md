@@ -12,7 +12,7 @@ The `generate` component supports GitLab 17.0+. The new `pages` component requir
 stages: [test, deploy]
 
 include:
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.7.1/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.0/templates/generate/template.yml
     inputs:
       job-name: user-guide
       config: docs/user-guide/hooserguide.config.json
@@ -22,7 +22,7 @@ include:
       before-script:
         - npm ci
         - npm run start > /tmp/app.log 2>&1 &
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.7.1/templates/pages/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.0/templates/pages/template.yml
     inputs:
       generate-job: user-guide
       source: output/user-guide
@@ -42,13 +42,13 @@ Adjust app startup, config and readiness to your application. Define the selecte
 | `generate-job`        | `hooserguide`                      | Generating job to download artifacts from.                                     |
 | `source`              | `output/hooserguide`               | Generator artifact root containing one job summary.                            |
 | `output`              | `public`                           | Fresh relative folder; existing content is never removed.                      |
-| `package`             | `github:openhoo/hooserguide#0.7.1` | Pinned isolated package installation.                                          |
+| `package`             | `github:openhoo/hooserguide#0.8.0` | Pinned isolated package installation.                                          |
 | `image`               | `node:22-bookworm`                 | Node.js 22+; no browser is needed to publish existing evidence.                |
 | `rules`               | Default branch                     | GitLab deployment rules. Keep them compatible with the generating job's rules. |
 | `runner-tags`         | `[]`                               | Runner selection.                                                              |
 | `artifacts-expire-in` | `1 week`                           | CI artifact retention; the Pages deployment uses `expire_in: never`.           |
 
-When importing to GitLab, use `component: $CI_SERVER_FQDN/<namespace>/hooserguide/pages@0.7.1` with the same inputs. See [GitLab integration](gitlab.md). CI/CD Catalog registration remains separate from Pages deployment. The repository's native self-test pipeline includes all three engines and a Pages job using the packed package.
+When importing to GitLab, use `component: $CI_SERVER_FQDN/<namespace>/hooserguide/pages@0.8.0` with the same inputs. See [GitLab integration](gitlab.md). CI/CD Catalog registration remains separate from Pages deployment. The repository's native self-test pipeline includes all three engines and a Pages job using the packed package.
 
 ## GitHub Pages
 
@@ -78,7 +78,7 @@ jobs:
           node-version: '22'
       - run: npm ci
       - run: npm run start > /tmp/app.log 2>&1 &
-      - uses: openhoo/hooserguide/actions/generate@0.7.1
+      - uses: openhoo/hooserguide/actions/generate@0.8.0
         id: guide
         with:
           config: docs/user-guide/hooserguide.config.json
@@ -90,7 +90,7 @@ jobs:
           name: guide-execution
           path: output/hooserguide-github/
       - uses: actions/configure-pages@v5
-      - uses: openhoo/hooserguide/actions/pages@0.7.1
+      - uses: openhoo/hooserguide/actions/pages@0.8.0
         with:
           run-directory: ${{ steps.guide.outputs.directory }}
 
@@ -124,7 +124,7 @@ Boolean inputs are strings `'true'` or `'false'`; invalid values fail. `profile`
 | --------------- | ---------------------------------- | -------------------------------------------------------------------- |
 | `run-directory` | Required                           | Exact successful run, preferably `steps.guide.outputs.directory`.    |
 | `output`        | `_hooserguide-pages`               | Fresh relative static output folder.                                 |
-| `package`       | `github:openhoo/hooserguide#0.7.1` | Pinned isolated package runtime.                                     |
+| `package`       | `github:openhoo/hooserguide#0.8.0` | Pinned isolated package runtime.                                     |
 | `artifact-name` | `github-pages`                     | Pages artifact name; use the same name in `deploy-pages` if changed. |
 
 The Pages action prepares and uploads the site; the official `deploy-pages` step deploys it. Its `directory` output identifies the prepared local static directory. To publish an existing CI run, provide its extracted directory directly without running the generate action again. Preserve its screenshot/report evidence together; the action refuses incomplete or failed evidence.

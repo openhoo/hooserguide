@@ -3,7 +3,9 @@
 ## Discovery and execution
 
 - `hooserguide_status {limit?: 1..50}`: pinned config path, app origin, browser/profile, readiness metadata, active operation and recent runs. Does not load plugins or open the app. `unreadableRuns` counts unreadable entries within the requested recent window.
-- `hooserguide_steps {}`: exact step catalogue. Loads trusted local plugin code.
+- `hooserguide_steps {search?}`: exact step catalogue, optionally filtered by substring. Loads trusted local plugin code.
+- `hooserguide_lint {profile?, responsive?, tagExpression?, scenario?, strict?}`: all source-located authoring diagnostics and suggested repairs. Loads plugins, never opens the app.
+- `hooserguide_outline {profile?, responsive?, tagExpression?, scenario?, strict?}`: structured planned chapters, prose, figures, excluded chapters and profile counts. `review.executed` is false; no new application evidence.
 - `hooserguide_validate {profile?, tagExpression?, scenario?}`: parse specs and check bindings without opening a browser. Loads plugins; does not verify UI selectors against the app.
 - `hooserguide_generate {profile?, pdf?, tagExpression?, scenario?, failFast?}`: execute workflows and export new evidence. May change app data. Use the profile and filters validated earlier. Reports record actual selection and skipped scenarios; validation includes planned built-in capture counts. Save the returned `runId`.
 
@@ -22,7 +24,7 @@ Run IDs are directory basenames returned by the tools. Runs must be direct manag
 
 ## Errors, cancellation and boundaries
 
-Check `isError` first. Domain failures return `status: "failed"` and `error: {code, message, hint, retryable}`. SDK argument-validation errors can contain only error text. Do not assume structured content is always present.
+Check `isError` first. Domain failures return `status: "failed"` and `error: {code, message, hint, retryable}`. Lint/outline review failures return the complete `review` diagnostic list; strict warning failures can have `review.valid: true`. SDK argument-validation errors can contain only error text. Do not assume structured content is always present.
 
 `BUSY` is retryable after the active generate/rebuild finishes. Status and inspection of explicitly pinned completed runs remain available while it executes; default selection and plugin-loading tools wait until it finishes. Generation reports progress when requested by the client. Client cancellation interrupts browser waits, releases the lock when cleanup finishes, and prevents a successful export. PDF rendering can take time to finish before cancellation is observed. Cancellation does not roll back app actions.
 

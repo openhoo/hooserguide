@@ -2,6 +2,7 @@ import { mkdir, writeFile, access, cp } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveConfig } from './config.js';
+import { setupEditor } from './authoring-scaffold.js';
 
 export const starterFeature = `@manual
 Feature: Your application
@@ -22,7 +23,12 @@ Feature: Your application
       """
 `;
 
-export async function init(directory: string, baseURL = 'http://localhost:3000', skills = false) {
+export async function init(
+  directory: string,
+  baseURL = 'http://localhost:3000',
+  skills = false,
+  editor = false,
+) {
   const root = resolve(directory);
   const paths = ['hooserguide.config.json', 'features/get-started.feature'];
   resolveConfig({ title: 'New guide', baseURL, features: ['features/*.feature'] });
@@ -38,7 +44,17 @@ export async function init(directory: string, baseURL = 'http://localhost:3000',
         throw new Error(`Skill already exists: ${destination}`);
     }
   }
-  for (const path of paths) {
+  for (const path of [
+    ...paths,
+    ...(editor
+      ? [
+          'hooserguide.code-workspace',
+          '.vscode/hooserguide.code-snippets',
+          '.hooserguide/config.schema.json',
+          '.hooserguide/capture.schema.json',
+        ]
+      : []),
+  ]) {
     const exists = await access(join(root, path)).then(
       () => true,
       () => false,
@@ -91,5 +107,10 @@ export async function init(directory: string, baseURL = 'http://localhost:3000',
       });
     }
   }
-  return { directory: root, config: join(root, paths[0]!), feature: join(root, paths[1]!) };
+  return {
+    directory: root,
+    config: join(root, paths[0]!),
+    feature: join(root, paths[1]!),
+    ...(editor ? { editor: await setupEditor(join(root, paths[0]!)) } : {}),
+  };
 }

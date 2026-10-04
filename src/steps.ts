@@ -144,6 +144,16 @@ export function builtinSteps(): StepRegistry {
   }
   const define = (pattern: string, example: string, description: string, handler: StepHandler) =>
     registry.define(new RegExp(pattern), handler, { example, description });
+  define(
+    '^I explain:$',
+    'I explain:',
+    'Add a multiline instruction from a text docstring.',
+    (c) => {
+      const text = c.step.argument?.docString?.content.trim();
+      if (!text) throw new Error('I explain: requires a non-empty text docstring');
+      c.instruction(text);
+    },
+  );
   for (const kind of ['note', 'tip', 'warning'] as const) {
     define(
       `^I add a ${kind} ${q}$`,

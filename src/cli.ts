@@ -15,13 +15,24 @@ import { VERSION } from './version.js';
 import { init } from './scaffold.js';
 import { serveMcp } from './mcp.js';
 import { demo } from './demo.js';
+import { lint, formatDiagnostics, formatOutline } from './authoring.js';
+import {
+  newChapter,
+  setupEditor,
+  chapterTemplates,
+  type ChapterTemplate,
+} from './authoring-scaffold.js';
 
 const help = `hooserguide — verified user guides from BDD + Playwright + pdfcn
 
 Usage:
-  hooserguide init [directory] --base-url http://localhost:3000 [--skills]
+  hooserguide init [directory] --base-url http://localhost:3000 [--skills] [--editor]
+  hooserguide new <chapter-title> [--template task|form|read-only] [--output features/task.feature] [--config ...]
+  hooserguide editor [--config hooserguide.config.json] [--json]
+  hooserguide lint [--config hooserguide.config.json] [--strict] [--json]
+  hooserguide outline [--config hooserguide.config.json] [--json]
   hooserguide validate [--config hooserguide.config.json] [--profile mobile] [--json]
-  hooserguide steps [--config hooserguide.config.json] [--json]
+  hooserguide steps [--config hooserguide.config.json] [--search capture] [--json]
   hooserguide run [--config hooserguide.config.json] [--profile mobile] [--output output/guides] [--headed] [--no-pdf] [--json]
   hooserguide build <run-directory> [--output output/rebuilt] [--config hooserguide.config.json] [--no-pdf] [--json]
   hooserguide inspect <run-directory> [--json]
@@ -32,7 +43,8 @@ Usage:
   hooserguide mcp [--config hooserguide.config.json]
 
 Responsive: run/validate accept --profiles desktop,tablet,mobile; run/build accept --screen-layout side-by-side|stacked.
-Selection: run/validate accept --tags "@manual and not @destructive" and --scenario "Settings".
+Selection: run/validate/lint/outline accept --tags "@manual and not @destructive" and --scenario "Settings".
+Authoring: lint collects source-located errors and editorial warnings; --strict also fails on warnings. Outline is a plan, not execution evidence.
 Run: --fail-fast stops after the first failed scenario.
 Themes: run/build accept --theme professional|ocean|forest|sand|midnight|graphite.
 PDF layout: run/build accept --page-size A4|Letter, --orientation portrait|landscape (or --landscape) and --margin 24..72 (points).
@@ -72,6 +84,10 @@ async function execute(args: string[]): Promise<void> {
       'screen-layout': { type: 'string' },
       theme: { type: 'string' },
       skills: { type: 'boolean' },
+      editor: { type: 'boolean' },
+      template: { type: 'string' },
+      search: { type: 'string' },
+      strict: { type: 'boolean' },
       tags: { type: 'string' },
       scenario: { type: 'string' },
       'fail-fast': { type: 'boolean' },
@@ -106,6 +122,10 @@ async function execute(args: string[]): Promise<void> {
       'bundle',
       'inspect',
       'pages',
+      'lint',
+      'outline',
+      'new',
+      'editor',
     ].includes(command)
   )
     throw new Error(`Unknown command ${command}. Use --help.`);
@@ -113,15 +133,19 @@ async function execute(args: string[]): Promise<void> {
     positionals.length >
     (command === 'compare'
       ? 3
-      : ['init', 'build', 'bundle', 'inspect', 'pages'].includes(command)
+      : ['init', 'build', 'bundle', 'inspect', 'pages', 'new'].includes(command)
         ? 2
         : 1)
   )
     throw new Error('Unexpected positional argument. Use --help.');
   const allowed: Record<string, string[]> = {
-    init: ['base-url', 'skills', 'json'],
+    init: ['base-url', 'skills', 'editor', 'json'],
+    new: ['config', 'template', 'output', 'json'],
+    editor: ['config', 'json'],
+    lint: ['config', 'profile', 'profiles', 'tags', 'scenario', 'strict', 'json'],
+    outline: ['config', 'profile', 'profiles', 'tags', 'scenario', 'json'],
     validate: ['config', 'profile', 'profiles', 'tags', 'scenario', 'json'],
-    steps: ['config', 'json'],
+    steps: ['config', 'search', 'json'],
     run: [
       'config',
       'profile',
@@ -187,6 +211,48 @@ async function execute(args: string[]): Promise<void> {
         : {}),
     ...(values.margin !== undefined ? { margin: Number(values.margin) } : {}),
   });
+  if (command === 'new') {
+    if (!positionals[1]) throw new Error('new requires a chapter title');
+    if (values.template && !chapterTemplates.includes(values.template as ChapterTemplate))
+      throw new Error(`Use --template ${chapterTemplates.join('|')}`);
+    const result = await newChapter(configPath, positionals[1], {
+      template: values.template as ChapterTemplate | undefined,
+      output: values.output,
+    });
+    output(
+      values.json
+        ? JSON.stringify(result)
+        : `Created ${result.feature}\nReplace REPLACE_ME, then run hooserguide lint --config ${configPath}`,
+    );
+    return;
+  }
+  if (command === 'editor') {
+    const result = await setupEditor(configPath);
+    output(
+      values.json
+        ? JSON.stringify(result)
+        : `Open ${result.workspace}\nInstalled ${result.snippets} snippets, local schemas and authoring tasks.`,
+    );
+    return;
+  }
+  if (command === 'lint' || command === 'outline') {
+    const result = await lint(
+      await loadConfig(configPath, {
+        ...selection,
+        ...responsiveSelection,
+        ...(values.profile ? { profile: values.profile } : {}),
+      }),
+    );
+    output(
+      values.json
+        ? JSON.stringify(result)
+        : command === 'lint'
+          ? formatDiagnostics(result)
+          : formatOutline(result),
+    );
+    if (!result.valid || (values.strict && result.totals.warnings)) process.exitCode = 1;
+    return;
+  }
   if (command === 'pages') {
     if (!positionals[1]) throw new Error('pages requires a run directory');
     output(
@@ -214,9 +280,15 @@ async function execute(args: string[]): Promise<void> {
   }
 
   if (command === 'steps') {
-    const steps = (
-      await loadRegistry(values.config ? await loadConfig(configPath) : undefined)
-    ).list();
+    const steps = (await loadRegistry(values.config ? await loadConfig(configPath) : undefined))
+      .list()
+      .filter(
+        (step) =>
+          !values.search ||
+          [step.example, step.description, step.pattern].some((value) =>
+            value?.toLowerCase().includes(values.search!.toLowerCase()),
+          ),
+      );
     output(
       values.json
         ? JSON.stringify({ steps })
@@ -232,11 +304,16 @@ async function execute(args: string[]): Promise<void> {
     return;
   }
   if (command === 'init') {
-    const result = await init(positionals[1] ?? '.', values['base-url'], values.skills);
+    const result = await init(
+      positionals[1] ?? '.',
+      values['base-url'],
+      values.skills,
+      values.editor,
+    );
     output(
       values.json
         ? JSON.stringify(result)
-        : `Created ${result.config}\nEdit ${result.feature}\nThen: hooserguide run --config ${result.config}`,
+        : `Created ${result.config}\nEdit ${result.feature}\nThen: hooserguide lint --config ${result.config}${result.editor ? '\nOpen ' + result.editor.workspace : ''}`,
     );
     return;
   }

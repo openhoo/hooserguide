@@ -15,3 +15,12 @@ export { preparePages, type PagesOptions } from './pages.js';
 
 export { manualThemes, manualThemeNames, resolveManualTheme } from './themes.js';
 export type { ManualTheme, ManualThemeName } from './themes.js';
+export { lint, formatDiagnostics, formatOutline, suggestSteps } from './authoring.js';
+export type { AuthoringReport, AuthoringDiagnostic } from './authoring.js';
+export {
+  newChapter,
+  chapterTemplate,
+  chapterTemplates,
+  setupEditor,
+} from './authoring-scaffold.js';
+export type { ChapterTemplate } from './authoring-scaffold.js';

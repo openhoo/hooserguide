@@ -44,6 +44,8 @@ args = ["/absolute/path/hooserguide/dist/cli.js", "mcp", "--config", "/absolute/
 | ----------------------------- | ------------------------------------------------------------------------------ |
 | `hooserguide_status`          | Inspect the pinned project, profiles, active operation and recent managed runs |
 | `hooserguide_steps`           | Discover built-in and trusted custom step examples                             |
+| `hooserguide_lint`            | Collect source-located errors, editorial warnings and repair suggestions       |
+| `hooserguide_outline`         | Review planned chapters, prose, figures, selection and profile counts          |
 | `hooserguide_validate`        | Check Gherkin, bindings and capture definitions without opening the app        |
 | `hooserguide_generate`        | Execute authorized workflows and export new evidence                           |
 | `hooserguide_inspect_run`     | Read an exact execution report and optional PDF layout audit                   |
@@ -56,7 +58,7 @@ args = ["/absolute/path/hooserguide/dist/cli.js", "mcp", "--config", "/absolute/
 
 1. Call `hooserguide_status {}` to confirm the pinned config, output, profiles and previous runs. Status never executes plugins or reads authentication state; the app URL is reduced to its origin.
 2. Call `hooserguide_steps {}` and use existing browser/file tools to inspect the app and author specs. Plugins are trusted local executable code. Validation and discovery can execute their registration code.
-3. Call `hooserguide_validate {profile: "mobile"}`, then `hooserguide_generate {profile: "mobile", pdf: true}`. Omit `profile` to use the configured default. Generation can change application data as specified.
+3. Use `hooserguide_lint {profile: "mobile"}` and `hooserguide_outline {profile: "mobile"}` to repair authoring issues and review planned coverage. These plans include `executed: false` and are not execution evidence. Then call `hooserguide_validate {profile: "mobile"}`, followed by `hooserguide_generate {profile: "mobile", pdf: true}`. Omit `profile` to use the configured default. Generation can change application data as specified.
 4. Save the returned `runId`. Call `hooserguide_inspect_run {runId}` and inspect every capture with `{runId, chapter: 1, capture: 1, variant: "annotated"}`, then `variant: "raw"`. Indices start at 1; the default variant is annotated.
 5. Check execution status, coverage and `hashVerified`, then review actual HTML and rendered PDF pages using the agent's artifact tools. Return exact artifact paths and limitations.
 
@@ -85,7 +87,7 @@ Run IDs are directory basenames, confined to direct children of the configured o
 
 ### Tool contracts and cancellation
 
-All nine tools expose strict input/output schemas, titles and structured results. Check `isError` first. Domain failures include `status: "failed"` and `error: {code, message, hint, retryable}`. SDK argument-validation errors may contain only text, so clients must tolerate absent `structuredContent`.
+All eleven tools expose strict input/output schemas, titles and structured results. Check `isError` first. Domain failures include `status: "failed"` and `error: {code, message, hint, retryable}`. Authoring lint/outline failures instead return a `review` with the full diagnostic list; strict warning failures can have `review.valid: true`. SDK argument-validation errors may contain only text, so clients must tolerate absent `structuredContent`. See [authoring](authoring.md) for CLI, editor, template and library interfaces.
 
 A server serializes generation/rebuild and returns retryable `BUSY` for overlapping operations and plugin-loading calls. Status and inspection of explicitly pinned completed runs remain available during generation; inspection without an ID waits for the active operation to finish. Clients can request MCP progress notifications for generation and cancel the in-flight request. Browser waits are interrupted and cleanup releases the lock. PDF rendering finishes before cancellation is observed; cancelled exports do not publish a successful handbook. Cancellation does not undo completed app actions. Inspect evidence before deciding whether to retry.
 
@@ -182,7 +184,18 @@ Install browsers in CI, start the target app and run the CLI. Upload the isolate
 
 ## Skills
 
-`hooserguide init --skills` copies both skills into the project's `.agents/skills/`. To install them globally, copy the complete directories `skills/hooserguide-author` and `skills/hooserguide-review` (including `references/` and `agents/`) from this repository into your agent's skill directory, for example `~/.codex/skills/`. Other clients can read the same `SKILL.md` instructions. See [author skill](../skills/hooserguide-author/SKILL.md) and [review skill](../skills/hooserguide-review/SKILL.md).
+`hooserguide init --skills` copies the consumer author/review skills into the guide
+project's `.agents/skills/`. Alternatively, use
+`npx skills add openhoo/hooserguide --skill hooserguide-author hooserguide-review`
+from the consuming application. Their references and UI metadata travel with the
+skills and do not require a source checkout. Runtime/browser installation is
+separate. Other clients can read the same `SKILL.md` instructions. See
+[author skill](../skills/hooserguide-author/SKILL.md) and
+[review skill](../skills/hooserguide-review/SKILL.md).
+
+The separate [development skill](../skills/hooserguide-development/SKILL.md) applies
+to work on hooserguide itself. Source discovery uses a relative link under
+`.agents/skills/`; `init --skills` does not install it into consumers.
 
 ## Responsive presentations
 

@@ -11,3 +11,16 @@ Confirm each box surrounds the intended control, each arrow reaches its target a
 Look for personal data in both original and annotated files. Config `masks` and capture `masks` affect both. Missing selectors fail closed, but the absence of a mask does not prove the app contains no private data. Avoid dumping private screenshot text or credentials into reports.
 
 Open the generated HTML at desktop and narrow widths. Check chapter navigation, focus, image sizing and escaped prose. Render the PDF to images with available PDF tooling, inspect its cover and all content pages, and verify screenshot slices preserve the full content at readable scale. Do not treat extracted text as evidence of correct layout.
+
+Check chapter-specific introductions and multiline instructions against the
+authored task. HTML, Markdown and PDF should preserve paragraph breaks in
+multiline instructions. Compare actual rendered prose rather than only the report.
+
+Find the theme selector and PDF download before the guide title. Verify the
+selected theme is readable, survives reload when storage is available and switches
+to light colors for printing. A reader theme change does not change the PDF file.
+Without JavaScript, the PDF download remains available and the theme picker is
+hidden. When no PDF was generated, the guide must not offer a broken PDF link.
+Use the session's browser download tools to save the real file, confirm it is a
+PDF and compare it with the exact reviewed export. A visible button or successful
+navigation alone does not establish a working download.

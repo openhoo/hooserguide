@@ -2,9 +2,15 @@
 
 Use this reference when generating or reviewing a manual through CI.
 
-## Browser qualification
+## Browser coverage in the consuming application
 
-The repository has dedicated Chromium, Firefox and WebKit qualification jobs. Local qualification is `npm run test:browsers` after `npx playwright install chromium firefox webkit`. `HOOSERGUIDE_TEST_BROWSER` selects one engine. Tests verify synthetic workflows and capture/export behavior; they do not establish the consuming app's browser coverage. Firefox uses a narrow viewport without `isMobile`; Chromium/WebKit support mobile emulation.
+Hooserguide supports Chromium, Firefox and WebKit. Its own qualification tests
+verify synthetic capture/export workflows, not the consuming app's browser
+coverage. Choose the actual browser/profile in the consumer config and validate
+and execute the selected application workflows. Install the selected browser
+through the consumer's Playwright dependency. Firefox uses a narrow viewport
+without `isMobile`; Chromium/WebKit support mobile emulation. Source-checkout
+qualification belongs to `hooserguide-development`, not this consumer workflow.
 
 ## GitLab generation
 

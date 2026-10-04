@@ -53,6 +53,13 @@ These are real browser regression captures comparing the pinned 0.2.0 implementa
 
 See the [review evidence and remaining limits](docs/review.md). Maintainers can reproduce this comparison with `npm run review:gallery`.
 
+## New in 0.8
+
+- **Authoring toolkit:** source-located lint diagnostics, repair suggestions, chapter outlines, task/form/read-only templates and an editor workspace with snippets and schema completion.
+- **Richer prose:** chapter-specific introductions and multiline instructions in HTML, Markdown and PDF.
+- **Two skill audiences:** contributor development guidance and self-contained consumer author/review skills, with real install and package checks.
+- **Agent interfaces:** searchable step discovery plus authoring lint and outline MCP tools.
+
 ## New in 0.6
 
 - **Automatic Pages publishing:** reusable GitLab Pages component and GitHub generation/Pages-upload actions.
@@ -84,7 +91,7 @@ The same high-DPI crop, privacy mask and reference arrow across the three engine
 - **Read offline:** search chapters, switch masked raw/annotated screenshots and print the whole guide.
 - **Review changes:** verified report inspection and run comparison distinguish prose, annotation and screenshot changes.
 - **Share one file:** portable ZIP with manuals, masked screenshots and a hash manifest.
-- **Integrate agents:** nine MCP tools plus project and exact-run artifact resources; both skills cover the new workflow.
+- **Integrate agents:** eleven MCP tools plus project and exact-run artifact resources; both skills cover the new workflow.
 
 The offline reader adds these controls without external dependencies:
 
@@ -135,7 +142,7 @@ Install directly from GitHub; an npm registry release is not required:
 ```sh
 npm install -D github:openhoo/hooserguide
 npm exec playwright -- install chromium
-npm exec hooserguide -- init docs/user-guide --base-url http://localhost:3000 --skills
+npm exec hooserguide -- init docs/user-guide --base-url http://localhost:3000 --skills --editor
 ```
 
 Edit the generated `features/get-started.feature` to match your app. Then:
@@ -146,6 +153,34 @@ npm exec hooserguide -- run --config docs/user-guide/hooserguide.config.json
 ```
 
 The `--skills` option installs authoring and review skills into your project's `.agents/skills/`. For programmatic agents add `--json`. For debugging add `--headed`. PDF is enabled by default; `--no-pdf` skips it.
+
+### Authoring toolkit
+
+Open the generated `hooserguide.code-workspace` for **step and chapter snippets,
+local schema completion, authoring tasks and source-located Problems**. Existing
+projects can add it with `hooserguide editor --config <config>`.
+
+```sh
+hooserguide new "Change account settings" --template form --config docs/user-guide/hooserguide.config.json
+hooserguide steps --search capture
+hooserguide lint --config docs/user-guide/hooserguide.config.json
+hooserguide outline --config docs/user-guide/hooserguide.config.json
+```
+
+- **Write from templates:** task, form and read-only chapters with introductions,
+  prerequisites, instructions, assertions and annotated captures.
+- **Find and repair problems:** collect errors across files and chapters with line
+  numbers, repair hints and similar step suggestions. `lint --strict` also fails
+  on editorial warnings; `--json` supplies structured feedback to agents and CI.
+- **Review coverage before execution:** the outline shows prose, figures,
+  prerequisites, source locations, planned profile counts and excluded chapters.
+- **Write longer instructions:** Scenario descriptions introduce individual
+  chapters; `I explain:` accepts multiline text docstrings.
+
+Lint and outlines do not open the app or create execution evidence. Replace
+template placeholders using actual app labels, then validate and run the same
+selection. See the [complete authoring workflow](docs/authoring.md), including
+editor setup, examples, diagnostics and MCP/library interfaces.
 
 Discover the supported steps or regenerate an existing guide without rerunning the app:
 
@@ -210,7 +245,7 @@ Minimal MCP configuration:
 }
 ```
 
-MCP exposes nine tools: project status, step discovery, validation, generation, exact run inspection, verified screenshot inspection, rebuild, run comparison and ZIP packaging. Read-only project and run artifact resources support client context attachment. Both `author-user-guide` and `review-user-guide` prompts guide agents through the workflow. Save the returned `runId` and pin it when reviewing annotated/raw screenshots or rebuilding; selection survives restarts. Generation supports progress and cancellation. See [MCP contracts and examples](docs/integration.md#recommended-agent-workflow). The server stays attached to the project config selected at startup.
+MCP exposes eleven tools: project status, searchable step discovery, authoring lint, guide outline, validation, generation, exact run inspection, verified screenshot inspection, rebuild, run comparison and ZIP packaging. Read-only project and run artifact resources support client context attachment. Both `author-user-guide` and `review-user-guide` prompts guide agents through the workflow. Save the returned `runId` and pin it when reviewing annotated/raw screenshots or rebuilding; selection survives restarts. Generation supports progress and cancellation. See [MCP contracts and examples](docs/integration.md#recommended-agent-workflow). The server stays attached to the project config selected at startup.
 
 ```ts
 import { loadConfig, run } from '@openhoo/hooserguide';
@@ -252,7 +287,7 @@ Every screen has its own BDD assertions, privacy masks and annotation coordinate
 **GitLab:** add the Pages component after your generating job:
 
 ```yaml
-- remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.7.1/templates/pages/template.yml
+- remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.0/templates/pages/template.yml
   inputs:
     generate-job: user-guide
     source: output/user-guide
@@ -263,12 +298,12 @@ Include `deploy` in your pipeline stages. This job uses GitLab 17.10+ and publis
 **GitHub:** use the generation action and hand its exact output to the Pages action:
 
 ```yaml
-- uses: openhoo/hooserguide/actions/generate@0.7.1
+- uses: openhoo/hooserguide/actions/generate@0.8.0
   id: guide
   with:
     config: docs/user-guide/hooserguide.config.json
     profiles: desktop,tablet,mobile
-- uses: openhoo/hooserguide/actions/pages@0.7.1
+- uses: openhoo/hooserguide/actions/pages@0.8.0
   with:
     run-directory: ${{ steps.guide.outputs.directory }}
 ```
@@ -281,7 +316,7 @@ Include the pinned template directly from GitHub:
 
 ```yaml
 include:
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.7.1/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.0/templates/generate/template.yml
     inputs:
       config: docs/user-guide/hooserguide.config.json
       browser: chromium
@@ -369,10 +404,43 @@ Each run has its own directory. All evidence readers reject contradictory succes
 
 ## Agent skills
 
-- [**hooserguide-author**](skills/hooserguide-author/SKILL.md): inspect the app, write meaningful BDD workflows, mask private data and produce the handbook.
-- [**hooserguide-review**](skills/hooserguide-review/SKILL.md): check execution evidence, reference accuracy, privacy masks and actual rendered PDF pages.
+Hooserguide provides two categories of agent skills:
 
-Install with `init --skills`, or copy these folders into your agent's skill directory. Both skills are plain Markdown and can be used by other agent runtimes.
+| Audience                                        | Skill                                                                  | Use it for                                                                              |
+| ----------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Developers working on hooserguide               | [**hooserguide-development**](skills/hooserguide-development/SKILL.md) | Implementation, debugging, public contracts, evidence invariants and shipping checks    |
+| Agents using hooserguide in another application | [**hooserguide-author**](skills/hooserguide-author/SKILL.md)           | Inspect the app, author workflows, repair writing diagnostics and generate the handbook |
+| Agents using hooserguide in another application | [**hooserguide-review**](skills/hooserguide-review/SKILL.md)           | Review exact execution evidence, both masked images and actual rendered exports         |
+
+### Install consumer skills
+
+From the application you want to document:
+
+```sh
+npx skills add openhoo/hooserguide --skill hooserguide-author hooserguide-review
+```
+
+Or install them while creating a guide with `hooserguide init docs/user-guide
+--skills`. This copies **only the consumer skills** into the guide project's
+`.agents/skills/`. Each skill carries its own references and UI metadata; no
+hooserguide source checkout is needed to use it. The skills installer supplies
+instructions, while the CLI and Playwright browsers are installed separately as
+shown in [Use it in your project](#use-it-in-your-project).
+
+### Use the contributor skill
+
+The source checkout discovers `hooserguide-development` through the relative
+`.agents/skills/hooserguide-development` link. The canonical source is under
+`skills/hooserguide-development`. To install it through the same skills manager:
+
+```sh
+npx skills add openhoo/hooserguide --skill hooserguide-development
+```
+
+All three skills are plain Markdown with bundled references and can be used by
+other agent runtimes. `npm run test:skills` checks metadata, references and source
+discovery. `npm run test:skills:install` verifies a real fresh local Skills CLI
+installation; package smoke tests separately verify consumer initialization.
 
 ## Development
 

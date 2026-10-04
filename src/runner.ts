@@ -5,8 +5,9 @@ import { pathToFileURL } from 'node:url';
 import parseTagExpression from '@cucumber/tag-expressions';
 import { applyCaptureDefaults } from './manual.js';
 import { parseFeature } from './gherkin.js';
-import { builtinSteps, target, formRows, type StepRegistry } from './steps.js';
-import { captureScreenshot, validateCapture } from './capture.js';
+import { builtinSteps, target, type StepRegistry } from './steps.js';
+import { captureScreenshot } from './capture.js';
+import { validateStepArguments } from './preflight.js';
 import { resolveConfig, selectProfile } from './config.js';
 import { publishReport } from './artifacts.js';
 import type { Chapter, Config, RunReport, RunResult } from './types.js';
@@ -45,25 +46,20 @@ async function prepare(config: Config) {
           tags.evaluate(p.tags.map((t) => t.name)) &&
           (!config.scenario || p.name.toLowerCase().includes(config.scenario.toLowerCase())),
       )
-      .map((p) => ({ ...f, pickle: p, source: paths[i]! })),
+      .map((p) => ({
+        ...f,
+        description:
+          p.astNodeIds.map((id) => f.nodes.get(id)?.description).find(Boolean) ?? f.description,
+        pickle: p,
+        source: paths[i]!,
+      })),
   );
   if (!scenarios.length) throw new Error('No scenarios selected');
   for (const s of scenarios) {
     if (!s.pickle.steps.length) throw new Error(`Scenario has no steps: ${s.pickle.name}`);
     for (const step of s.pickle.steps) {
       registry.resolve(step.text);
-      if (step.text === 'I fill the form:') formRows(step);
-      if (step.text.startsWith('I capture ')) {
-        validateCapture(
-          applyCaptureDefaults(
-            {
-              ...(step.argument?.docString ? JSON.parse(step.argument.docString.content) : {}),
-              title: 'Preflight',
-            },
-            config.captureDefaults,
-          ),
-        );
-      }
+      validateStepArguments(step, config);
     }
   }
   return { registry, scenarios };

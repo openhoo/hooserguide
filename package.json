@@ -1,6 +1,6 @@
 {
   "name": "@openhoo/hooserguide",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "type": "module",
   "description": "Evidence-backed user manuals from Gherkin, Playwright and annotated screenshots",
   "bin": {
@@ -22,6 +22,8 @@
     "demo:responsive": "npm run build && node scripts/demo-responsive.mjs",
     "demo:docs": "npm run build && node scripts/demo-docs.mjs",
     "test:package": "node scripts/smoke-package.mjs",
+    "test:skills": "node scripts/check-skills.mjs",
+    "test:skills:install": "node scripts/smoke-skills.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:browsers": "tsx --test test/browsers/*.test.ts"
@@ -82,6 +84,7 @@
     "docs/gitlab.md",
     "docs/responsive.md",
     "docs/pages.md",
+    "docs/authoring.md",
     "actions"
   ]
 }

@@ -43,6 +43,8 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
       'hooserguide_generate',
       'hooserguide_inspect_capture',
       'hooserguide_inspect_run',
+      'hooserguide_lint',
+      'hooserguide_outline',
       'hooserguide_rebuild',
       'hooserguide_status',
       'hooserguide_steps',
@@ -96,6 +98,21 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
     );
     const validation = await client.callTool({ name: 'hooserguide_validate', arguments: {} });
     assert.equal((validation.structuredContent as { valid: boolean }).valid, true);
+    const outline = await client.callTool({ name: 'hooserguide_outline', arguments: {} });
+    assert.equal(outline.isError, false);
+    assert.equal((outline.structuredContent as any).review.executed, false);
+    assert.equal((outline.structuredContent as any).review.chapters[0].title, 'Read welcome');
+    const linted = await client.callTool({ name: 'hooserguide_lint', arguments: { strict: true } });
+    assert.equal(linted.isError, true);
+    assert.equal((linted.structuredContent as any).review.valid, true);
+    const searched = await client.callTool({
+      name: 'hooserguide_steps',
+      arguments: { search: 'multiline' },
+    });
+    assert.deepEqual(
+      (searched.structuredContent as any).steps.map((step: any) => step.example),
+      ['I explain:'],
+    );
     const progress: number[] = [];
     const generated = await client.callTool(
       { name: 'hooserguide_generate', arguments: {} },

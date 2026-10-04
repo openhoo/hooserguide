@@ -134,6 +134,15 @@ And I capture "Settings"
 
 Original and annotated PNGs are masked before writing. Missing privacy selectors fail the capture. Masking is explicit; it is not automatic PII detection. CSS motion and running Web Animations are frozen before target measurement; previously paused Web Animations remain paused; annotations are rendered with an SVG layer and Sharp, without adding drawing elements to the application DOM.
 
+## Authoring tools
+
+See [authoring](authoring.md) for `lint`, `outline`, `new`, `editor`,
+searchable step discovery and their CLI/MCP/library contracts.
+
+`I explain:` accepts a nonempty plain-text docstring, optionally marked `text`,
+for one multiline instruction. A Scenario description introduces that chapter,
+falling back to the Feature description when absent.
+
 ## Reports and failures
 
 `report.json` schema version is 1. It records the timestamp, browser, language, chapters, executed steps, errors and captures. Captures contain relative image paths, image dimensions, target bounds and the SHA-256 of the annotated PNG and, for 0.2+ captures, the masked raw PNG. The report also includes effective viewport/profile, per-step `durationMs` and optional branding. See [report schema](../schemas/report.schema.json). Source paths in your own runs are absolute for traceability; the committed demo uses portable relative paths.

@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { checkSkill, compareSkillCopies, skillAudiences } from './check-skills.mjs';
 
 const root = await mkdtemp(join(tmpdir(), 'hooserguide-package-'));
 let tarball;
@@ -42,7 +43,26 @@ try {
   const version = execFileSync(binary, ['--version'], { encoding: 'utf8' }).trim();
   const expected = JSON.parse(await readFile('package.json', 'utf8')).version;
   if (version !== expected) throw new Error(`Unexpected version: ${version}`);
-  execFileSync(binary, ['init', 'docs/guide', '--skills', '--json'], { cwd: root, stdio: 'pipe' });
+  execFileSync(binary, ['init', 'docs/guide', '--skills', '--editor', '--json'], {
+    cwd: root,
+    stdio: 'pipe',
+  });
+  await access(join(root, 'docs/guide/hooserguide.code-workspace'));
+  await access(join(root, 'docs/guide/.hooserguide/config.schema.json'));
+  const authoring = JSON.parse(
+    execFileSync(binary, ['lint', '--config', 'docs/guide/hooserguide.config.json', '--json'], {
+      cwd: root,
+      encoding: 'utf8',
+    }),
+  );
+  if (!authoring.valid || authoring.executed !== false || authoring.totals.selected !== 1)
+    throw new Error('Installed authoring review failed');
+  const outline = execFileSync(
+    binary,
+    ['outline', '--config', 'docs/guide/hooserguide.config.json'],
+    { cwd: root, encoding: 'utf8' },
+  );
+  if (!outline.includes('Get started')) throw new Error('Installed outline missing chapter');
   execFileSync(binary, ['validate', '--config', 'docs/guide/hooserguide.config.json', '--json'], {
     cwd: root,
     stdio: 'pipe',
@@ -52,6 +72,23 @@ try {
   await access(
     join(root, 'docs/guide/.agents/skills/hooserguide-review/references/mcp-workflow.md'),
   );
+  for (const [name, audience] of Object.entries(skillAudiences)) {
+    const packaged = join(root, 'node_modules/@openhoo/hooserguide/skills', name);
+    await checkSkill(packaged, name);
+    await compareSkillCopies(resolve('skills', name), packaged);
+    const installed = join(root, 'docs/guide/.agents/skills', name);
+    if (audience === 'consumer') {
+      await checkSkill(installed, name);
+      await compareSkillCopies(packaged, installed);
+    } else if (
+      await access(installed).then(
+        () => true,
+        () => false,
+      )
+    ) {
+      throw new Error('init --skills installed contributor guidance into a consumer project');
+    }
+  }
   const mcp = new Client({ name: 'installed-package-test', version: '1.0.0' });
   try {
     await mcp.connect(
@@ -61,7 +98,7 @@ try {
         stderr: 'pipe',
       }),
     );
-    if ((await mcp.listTools()).tools.length !== 9) throw new Error('Installed MCP tools missing');
+    if ((await mcp.listTools()).tools.length !== 11) throw new Error('Installed MCP tools missing');
     const status = await mcp.callTool({ name: 'hooserguide_status', arguments: {} });
     if (status.isError || status.structuredContent?.status !== 'passed')
       throw new Error('Installed MCP status failed');
