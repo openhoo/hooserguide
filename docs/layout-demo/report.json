@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "title": "HooTasks — Benutzerhandbuch",
   "language": "de-DE",
-  "generatedAt": "2026-10-04T18:40:14.571Z",
+  "generatedAt": "2026-10-04T19:00:23.220Z",
   "status": "passed",
   "browser": "chromium",
   "viewport": {
@@ -186,7 +186,7 @@
         {
           "text": "I open \"/\"",
           "status": "passed",
-          "durationMs": 6
+          "durationMs": 9
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
@@ -221,12 +221,12 @@
         {
           "text": "I select \"high\" in \"label=Priority\"",
           "status": "passed",
-          "durationMs": 2
+          "durationMs": 1
         },
         {
           "text": "I click \"role=button:Create task\"",
           "status": "passed",
-          "durationMs": 29
+          "durationMs": 30
         },
         {
           "text": "\"role=status:Task result\" has text \"Task created successfully.\"",
@@ -246,12 +246,12 @@
         {
           "text": "I capture \"Gespeicherte Aufgabe prüfen\"",
           "status": "passed",
-          "durationMs": 154
+          "durationMs": 119
         },
         {
           "text": "I capture \"Aufgabenformular im Detail\"",
           "status": "passed",
-          "durationMs": 139
+          "durationMs": 143
         }
       ],
       "prerequisites": [
@@ -320,12 +320,12 @@
         {
           "text": "I open \"/\"",
           "status": "passed",
-          "durationMs": 6
+          "durationMs": 4
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
           "status": "passed",
-          "durationMs": 11
+          "durationMs": 12
         },
         {
           "text": "I add a note \"Einstellungen werden getrennt von den einzelnen Aufgaben gespeichert.\"",
@@ -340,7 +340,7 @@
         {
           "text": "I scroll to \"label=Email notifications\"",
           "status": "passed",
-          "durationMs": 40
+          "durationMs": 38
         },
         {
           "text": "I check \"label=Email notifications\"",
@@ -370,7 +370,7 @@
         {
           "text": "I capture \"Einstellungen des Arbeitsbereichs\"",
           "status": "passed",
-          "durationMs": 145
+          "durationMs": 147
         }
       ],
       "callouts": [

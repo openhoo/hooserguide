@@ -287,7 +287,7 @@ Every screen has its own BDD assertions, privacy masks and annotation coordinate
 **GitLab:** add the Pages component after your generating job:
 
 ```yaml
-- remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.1/templates/pages/template.yml
+- remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.2/templates/pages/template.yml
   inputs:
     generate-job: user-guide
     source: output/user-guide
@@ -298,12 +298,12 @@ Include `deploy` in your pipeline stages. This job uses GitLab 17.10+ and publis
 **GitHub:** use the generation action and hand its exact output to the Pages action:
 
 ```yaml
-- uses: openhoo/hooserguide/actions/generate@0.8.1
+- uses: openhoo/hooserguide/actions/generate@0.8.2
   id: guide
   with:
     config: docs/user-guide/hooserguide.config.json
     profiles: desktop,tablet,mobile
-- uses: openhoo/hooserguide/actions/pages@0.8.1
+- uses: openhoo/hooserguide/actions/pages@0.8.2
   with:
     run-directory: ${{ steps.guide.outputs.directory }}
 ```
@@ -316,7 +316,7 @@ Include the pinned template directly from GitHub:
 
 ```yaml
 include:
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.1/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.2/templates/generate/template.yml
     inputs:
       config: docs/user-guide/hooserguide.config.json
       browser: chromium
@@ -377,6 +377,11 @@ JavaScript when a PDF was generated. The selected theme is saved for that
 handbook path when browser storage is available. The configured theme also works
 without JavaScript. Browser printing uses a light palette; the downloadable PDF
 retains the configured theme. Switching the HTML theme does not regenerate the PDF.
+PDF contents entries are clickable and jump to the actual chapter headings,
+including when preceding content spans multiple pages. Chapter bookmarks also
+appear in the PDF reader’s navigation panel. `manual.contents: false` hides the
+contents list while keeping chapter bookmarks available.
+
 Screenshots and their annotations retain their evidence colors in every theme.
 Markdown has no theme styling.
 

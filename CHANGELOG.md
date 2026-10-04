@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.2 — 2026-10-04
+
+- Make the handbook header compact on desktop and mobile with smaller titles, reduced padding and concise metadata; tighten reader controls so content starts sooner.
+- Reduce PDF cover title size and top spacing.
+- Make PDF contents entries clickable with internal chapter destinations and reader bookmarks that resolve after pagination, including duplicate titles and overflowing content.
+- Keep chapter bookmarks when the contents list is disabled and add navigation and header-size regression checks.
+
 ## 0.8.1 — 2026-10-04
 
 - Improve control boundaries and keyboard focus contrast in all six HTML themes, including selected buttons and PDF downloads.

@@ -183,6 +183,10 @@ test('all themes rebuild verified evidence into readable HTML and PDF; viewer pe
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
         true,
       );
+      assert.ok(
+        (await page.locator('.hero').boundingBox())!.height <= 260,
+        `${name}: compact desktop header`,
+      );
       await assertRenderedContrast(page, name);
       // PDF pages must actually paint a background, including the page margins.
       const loading = getDocument({
@@ -232,6 +236,11 @@ test('all themes rebuild verified evidence into readable HTML and PDF; viewer pe
     assert.equal(
       await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
       true,
+    );
+    assert.ok((await page.locator('.hero').boundingBox())!.height <= 310, 'Compact mobile header');
+    assert.ok(
+      (await page.locator('main > section').first().boundingBox())!.y < 844,
+      'Mobile reader sees the first chapter without scrolling',
     );
     // Static HTML and clients with unavailable storage still work.
     const staticContext = await browser.newContext({ javaScriptEnabled: false });

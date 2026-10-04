@@ -80,6 +80,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
       : []),
   ];
   const presented = presentationChapters(report);
+  const chapterBookmark = (index: number) => `${index + 1}. ${presented[index]!.title}`;
   const pages: ReactNode[] = [];
   const figures: { id: string; slices: { top: number; height: number }[] }[] = [];
   // Register Fixed before flowing content so native overflow pages inherit the footer.
@@ -103,15 +104,15 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
       backgroundSize="fill"
     >
       {footer}
-      <View style={{ paddingTop: geometry.size.width > geometry.size.height ? 28 : 88 }}>
+      <View style={{ paddingTop: 12 }}>
         <Text variant="sm" weight="bold" color="primary" transform="uppercase">
           {l.guide}
         </Text>
-        <Heading level={1} style={{ fontSize: 38, marginTop: 16 }}>
+        <Heading level={1} style={{ fontSize: 28, marginTop: 8 }}>
           {report.title}
         </Heading>
         <Text color="mutedForeground">{branding.subtitle ?? l.subtitle}</Text>
-        <View style={{ borderTopWidth: 3, borderColor: accent, marginTop: 28, paddingTop: 18 }}>
+        <View style={{ borderTopWidth: 3, borderColor: accent, marginTop: 16, paddingTop: 12 }}>
           <Text variant="sm">
             {presented.length} {l.chapters}
           </Text>
@@ -125,9 +126,11 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
         {report.manual?.contents !== false ? <Heading level={3}>{l.contents}</Heading> : null}
         {report.manual?.contents !== false &&
           presented.map((c, i) => (
-            <Text key={i} variant="sm">
-              {i + 1}. {c.title}
-            </Text>
+            <View key={i} href={`#${chapterBookmark(i)}`}>
+              <Text variant="sm" color="primary" decoration="underline">
+                {i + 1}. {c.title}
+              </Text>
+            </View>
           ))}
       </View>
     </Page>,
@@ -146,7 +149,9 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
         <Text variant="sm" weight="bold" color="primary">
           {l.chapter.toUpperCase()} {String(i + 1).padStart(2, '0')}
         </Text>
-        <Heading level={1}>{chapter.title}</Heading>
+        <View bookmark={chapterBookmark(i)}>
+          <Heading level={1}>{chapter.title}</Heading>
+        </View>
         <Text color="mutedForeground">{chapter.description}</Text>
         {chapter.variants.some((v) => !sameGuidance(chapter, v)) ? (
           <Heading level={3}>{screenLabel(chapter.variant!)}</Heading>
