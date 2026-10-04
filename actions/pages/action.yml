@@ -9,7 +9,7 @@ inputs:
     default: _hooserguide-pages
   package:
     description: Pinned package source installed in an isolated runtime.
-    default: github:openhoo/hooserguide#0.8.0
+    default: github:openhoo/hooserguide#0.8.1
   artifact-name:
     description: Name passed to upload-pages-artifact and deploy-pages.
     default: github-pages

@@ -18,7 +18,7 @@ profiles and readiness to the consuming app; keep the source/output roots paired
 ```yaml
 stages: [test, deploy]
 include:
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.0/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.1/templates/generate/template.yml
     inputs:
       job-name: user-guide
       config: docs/user-guide/hooserguide.config.json
@@ -27,7 +27,7 @@ include:
       before-script:
         - npm ci
         - npm run start > /tmp/guide-app.log 2>&1 &
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.0/templates/pages/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.1/templates/pages/template.yml
     inputs:
       generate-job: user-guide
       source: output/user-guide
@@ -35,9 +35,9 @@ include:
 ```
 
 For GitHub, in the build job after app setup/readiness, use
-`openhoo/hooserguide/actions/generate@0.8.0` with `id: guide`, your `config` and
+`openhoo/hooserguide/actions/generate@0.8.1` with `id: guide`, your `config` and
 `wait-url`. Run `actions/configure-pages@v5`, then
-`openhoo/hooserguide/actions/pages@0.8.0` with
+`openhoo/hooserguide/actions/pages@0.8.1` with
 `run-directory: ${{ steps.guide.outputs.directory }}`. A separate `deploy` job
 needs the build, `pages: write` and `id-token: write` permissions, the
 `github-pages` environment, and `actions/deploy-pages@v4` with `id: deployment`.

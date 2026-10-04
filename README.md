@@ -287,7 +287,7 @@ Every screen has its own BDD assertions, privacy masks and annotation coordinate
 **GitLab:** add the Pages component after your generating job:
 
 ```yaml
-- remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.0/templates/pages/template.yml
+- remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.1/templates/pages/template.yml
   inputs:
     generate-job: user-guide
     source: output/user-guide
@@ -298,12 +298,12 @@ Include `deploy` in your pipeline stages. This job uses GitLab 17.10+ and publis
 **GitHub:** use the generation action and hand its exact output to the Pages action:
 
 ```yaml
-- uses: openhoo/hooserguide/actions/generate@0.8.0
+- uses: openhoo/hooserguide/actions/generate@0.8.1
   id: guide
   with:
     config: docs/user-guide/hooserguide.config.json
     profiles: desktop,tablet,mobile
-- uses: openhoo/hooserguide/actions/pages@0.8.0
+- uses: openhoo/hooserguide/actions/pages@0.8.1
   with:
     run-directory: ${{ steps.guide.outputs.directory }}
 ```
@@ -316,7 +316,7 @@ Include the pinned template directly from GitHub:
 
 ```yaml
 include:
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.0/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.1/templates/generate/template.yml
     inputs:
       config: docs/user-guide/hooserguide.config.json
       browser: chromium
@@ -380,9 +380,11 @@ retains the configured theme. Switching the HTML theme does not regenerate the P
 Screenshots and their annotations retain their evidence colors in every theme.
 Markdown has no theme styling.
 
-`branding.accentColor` overrides the accent in all presets; choose a color that
-remains readable on the backgrounds you offer. The built-in palettes use text
-contrasts of at least 4.5:1. Library users can import `manualThemeNames`,
+`branding.accentColor` keeps your exact brand color for decorative accents in all
+presets. HTML and PDF accent text use that color only when it meets 4.5:1 contrast
+on every text surface; otherwise they use the preset’s readable accent text.
+The built-in palettes use text contrasts of at least 4.5:1, with distinct control
+borders and keyboard focus indicators meeting at least 3:1. Library users can import `manualThemeNames`,
 `manualThemes` and `resolveManualTheme` to discover the presets.
 
 ## What you get

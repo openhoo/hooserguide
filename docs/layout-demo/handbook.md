@@ -2,7 +2,7 @@
 
 Handbuchversion: 1.0
 Zielgruppe: Teammitglieder
-Erstellt: 2026-10-02
+Erstellt: 2026-10-04
 
 Aufgaben anlegen, organisieren und Ergebnisse prüfen.
 
@@ -26,9 +26,12 @@ HooTasks hält die Arbeit Ihres Teams übersichtlich. Legen Sie Aufgaben an,   p
 
 ### Aufgabendetails ausfüllen
 
-A bezeichnet den Titel, B die Priorität. Wählen Sie Create task zum Speichern.
+
 
 ![Aufgabendetails ausfüllen](screenshots/01-01.png)
+
+
+A bezeichnet den Titel, B die Priorität. Wählen Sie Create task zum Speichern.
 
 - **A**: Geben Sie der Aufgabe einen aussagekräftigen Titel.
 - **B**: Wählen Sie eine passende Priorität für Ihr Team.
@@ -36,18 +39,24 @@ A bezeichnet den Titel, B die Priorität. Wählen Sie Create task zum Speichern.
 
 ### Gespeicherte Aufgabe prüfen
 
-Die Aufgabe erscheint im Arbeitsbereich. Die Bestätigung zeigt den erfolgreichen Speichervorgang.
+
 
 ![Gespeicherte Aufgabe prüfen](screenshots/01-02.png)
+
+
+Die Aufgabe erscheint im Arbeitsbereich. Die Bestätigung zeigt den erfolgreichen Speichervorgang.
 
 - **2**: Die neu angelegte Aufgabe.
 - **3**: Bestätigung des erfolgreichen Speicherns.
 
 ### Aufgabenformular im Detail
 
-Die Detailansicht hält das Formular lesbar und vergibt Referenzen automatisch.
+
 
 ![Aufgabenformular im Detail](screenshots/01-03.png)
+
+
+Die Detailansicht hält das Formular lesbar und vergibt Referenzen automatisch.
 
 - **A**: Der Aufgabentitel.
 - **B**: Die gewählte Priorität.
@@ -65,9 +74,12 @@ HooTasks hält die Arbeit Ihres Teams übersichtlich. Legen Sie Aufgaben an,   p
 
 ### Einstellungen des Arbeitsbereichs
 
-Die Einstellungen befinden sich unten im Arbeitsbereich. Lange Screenshots bleiben über mehrere PDF-Seiten lesbar.
+
 
 ![Einstellungen des Arbeitsbereichs](screenshots/02-01.png)
+
+
+Die Einstellungen befinden sich unten im Arbeitsbereich. Lange Screenshots bleiben über mehrere PDF-Seiten lesbar.
 
 - **A**: Schalten Sie Benachrichtigungen ein oder aus.
 - **B**: Speichern Sie Ihre Einstellungen.

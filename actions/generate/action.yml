@@ -6,7 +6,7 @@ inputs:
     default: 'hooserguide.config.json'
   package:
     description: Pinned package source, installed separately from app dependencies.
-    default: 'github:openhoo/hooserguide#0.8.0'
+    default: 'github:openhoo/hooserguide#0.8.1'
   output:
     description: Fresh relative artifact root.
     default: 'output/hooserguide-github'

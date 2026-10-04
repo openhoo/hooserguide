@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.1 — 2026-10-04
+
+- Improve control boundaries and keyboard focus contrast in all six HTML themes, including selected buttons and PDF downloads.
+- Preserve custom brand accents for decoration while using readable accent text in HTML and PDF when the brand color fails 4.5:1 contrast.
+- Keep callout borders visible with custom branding, distinguish warning labels, and improve search placeholders and screenshot-link focus indicators.
+- Add semantic and rendered contrast checks across every theme, custom accents, theme switching and emitted PDF text colors.
+
 ## 0.7.1 — 2026-10-04
 
 - Place the HTML theme selector above the handbook title so readers can change the theme immediately.

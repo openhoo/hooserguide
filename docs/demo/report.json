@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "title": "HooTasks — User guide",
   "language": "en",
-  "generatedAt": "2026-10-02T14:22:44.280Z",
+  "generatedAt": "2026-10-04T18:40:13.067Z",
   "status": "passed",
   "browser": "chromium",
   "viewport": {
@@ -181,12 +181,12 @@
         {
           "text": "I open \"/\"",
           "status": "passed",
-          "durationMs": 11
+          "durationMs": 18
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
           "status": "passed",
-          "durationMs": 20
+          "durationMs": 28
         },
         {
           "text": "I add a prerequisite \"Open your workspace with permission to create tasks.\"",
@@ -206,27 +206,27 @@
         {
           "text": "I capture \"Fill in the task details\"",
           "status": "passed",
-          "durationMs": 220
+          "durationMs": 197
         },
         {
           "text": "I fill \"label=Task title\" with \"Prepare the launch checklist\"",
           "status": "passed",
-          "durationMs": 11
+          "durationMs": 14
         },
         {
           "text": "I select \"high\" in \"label=Priority\"",
           "status": "passed",
-          "durationMs": 3
+          "durationMs": 2
         },
         {
           "text": "I click \"role=button:Create task\"",
           "status": "passed",
-          "durationMs": 36
+          "durationMs": 34
         },
         {
           "text": "\"role=status:Task result\" has text \"Task created successfully.\"",
           "status": "passed",
-          "durationMs": 2
+          "durationMs": 1
         },
         {
           "text": "\"testid=task-list\" has text \"Prepare the launch checklistHigh priority\"",
@@ -241,12 +241,12 @@
         {
           "text": "I capture \"Check the saved task\"",
           "status": "passed",
-          "durationMs": 225
+          "durationMs": 181
         },
         {
           "text": "I capture \"Task form in detail\"",
           "status": "passed",
-          "durationMs": 182
+          "durationMs": 156
         }
       ],
       "prerequisites": [
@@ -315,12 +315,12 @@
         {
           "text": "I open \"/\"",
           "status": "passed",
-          "durationMs": 8
+          "durationMs": 9
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
           "status": "passed",
-          "durationMs": 17
+          "durationMs": 13
         },
         {
           "text": "I add a note \"Preferences are configured separately from individual tasks.\"",
@@ -335,12 +335,12 @@
         {
           "text": "I scroll to \"label=Email notifications\"",
           "status": "passed",
-          "durationMs": 31
+          "durationMs": 39
         },
         {
           "text": "I check \"label=Email notifications\"",
           "status": "passed",
-          "durationMs": 36
+          "durationMs": 35
         },
         {
           "text": "\"label=Email notifications\" is checked",
@@ -350,7 +350,7 @@
         {
           "text": "I click \"role=button:Save preferences\"",
           "status": "passed",
-          "durationMs": 33
+          "durationMs": 32
         },
         {
           "text": "\"role=status:Preferences result\" has text \"Preferences saved.\"",
@@ -365,7 +365,7 @@
         {
           "text": "I capture \"Workspace preferences\"",
           "status": "passed",
-          "durationMs": 245
+          "durationMs": 187
         }
       ],
       "callouts": [

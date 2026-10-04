@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from '@playwright/test';
-import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { getDocument, OPS } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { build } from '../src/build.js';
 import { manualSchema } from '../src/config.js';
 import { manualThemes, manualThemeNames, resolveManualTheme } from '../src/themes.js';
@@ -26,7 +26,7 @@ const contrast = (a: string, b: string) => {
   return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
 };
 
-test('theme presets validate and text colors meet 4.5:1 contrast on their surfaces', () => {
+test('theme presets validate and semantic colors meet text and control contrast requirements', () => {
   assert.equal(resolveManualTheme().name, 'professional');
   for (const name of manualThemeNames) {
     assert.equal(manualSchema.parse({ theme: name }).theme, name);
@@ -42,8 +42,19 @@ test('theme presets validate and text colors meet 4.5:1 contrast on their surfac
     }
     for (const background of [c.background, c.surface, c.muted]) {
       assert.ok(contrast(c.mutedForeground, background) >= 4.5, `${name}: secondary text`);
-      assert.ok(contrast(c.primary, background) >= 4.5, `${name}: links`);
+      assert.ok(contrast(c.accentForeground, background) >= 4.5, `${name}: links`);
     }
+    for (const background of [c.tipBackground, c.warningBackground]) {
+      assert.ok(contrast(c.accentForeground, background) >= 4.5, `${name}: accent labels`);
+      assert.ok(contrast(c.mutedForeground, background) >= 4.5, `${name}: callout secondary text`);
+    }
+    for (const background of [c.background, c.surface, c.muted]) {
+      assert.ok(contrast(c.controlBorder, background) >= 3, `${name}: control boundaries`);
+      assert.ok(contrast(c.focus, background) >= 3, `${name}: keyboard focus`);
+    }
+    assert.ok(contrast(c.heroMuted, c.hero) >= 3, `${name}: pressed control boundary`);
+    assert.ok(contrast(c.warning, c.warningBackground) >= 4.5, `${name}: warning label`);
+    assert.ok(contrast(c.heroForeground, c.hero) >= 4.5);
     assert.ok(contrast(c.heroMuted, c.hero) >= 4.5);
     assert.equal(resolveManualTheme(name, { accentColor: '#123456' }).colors.primary, '#123456');
     assert.equal(manualThemes[name].colors.primary, c.primary);
@@ -51,6 +62,91 @@ test('theme presets validate and text colors meet 4.5:1 contrast on their surfac
   assert.throws(() => manualSchema.parse({ theme: 'unknown' }));
   assert.throws(() => manualSchema.parse({ theme: 'toString' }));
 });
+
+test('custom accents preserve branding while keeping text readable across every theme', () => {
+  for (const name of manualThemeNames) {
+    for (const accentColor of ['#ffffff', '#000000', '#ffff00', '#808080', '#123456']) {
+      const c = resolveManualTheme(name, { accentColor }).colors;
+      assert.equal(c.primary, accentColor);
+      for (const bg of [c.background, c.surface, c.muted, c.tipBackground, c.warningBackground]) {
+        assert.ok(contrast(c.accentForeground, bg) >= 4.5, `${name} ${accentColor}: accent text`);
+      }
+      assert.equal(c.focus, manualThemes[name].colors.focus);
+    }
+    const accentColor = manualThemes[name].colors.primary;
+    assert.equal(resolveManualTheme(name, { accentColor }).colors.accentForeground, accentColor);
+  }
+  assert.throws(() => resolveManualTheme('professional', { accentColor: 'red' }));
+});
+
+const rgbHex = (color: string) =>
+  '#' +
+  color
+    .match(/\d+/g)!
+    .slice(0, 3)
+    .map((value) => Number(value).toString(16).padStart(2, '0'))
+    .join('');
+
+async function assertRenderedContrast(page: import('@playwright/test').Page, name: string) {
+  const pairs = await page.evaluate(() => {
+    return [...document.querySelectorAll('body *')]
+      .filter(
+        (el) =>
+          el.getClientRects().length &&
+          !el.closest('[aria-hidden="true"]') &&
+          !['SCRIPT', 'STYLE', 'OPTION'].includes(el.tagName) &&
+          [...el.childNodes].some(
+            (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
+          ),
+      )
+      .map((el) => {
+        let ancestor: Element | null = el;
+        let bg = 'rgba(0, 0, 0, 0)';
+        while (ancestor && bg === 'rgba(0, 0, 0, 0)') {
+          bg = getComputedStyle(ancestor).backgroundColor;
+          ancestor = ancestor.parentElement;
+        }
+        return { label: el.tagName + '.' + el.className, text: getComputedStyle(el).color, bg };
+      });
+  });
+  for (const pair of pairs) {
+    assert.ok(
+      contrast(rgbHex(pair.text), rgbHex(pair.bg)) >= 4.5,
+      `${name}: rendered ${pair.label} ${pair.text} on ${pair.bg}`,
+    );
+  }
+  for (const selector of [
+    '#guide-search',
+    '#annotations',
+    '#print-guide',
+    '#guide-theme',
+    '.pdf-download',
+  ]) {
+    const colors = await page.locator(selector).evaluate((el) => {
+      const c = getComputedStyle(el);
+      return { border: c.borderTopColor, bg: c.backgroundColor };
+    });
+    assert.ok(
+      contrast(rgbHex(colors.border), rgbHex(colors.bg)) >= 3,
+      `${name}: ${selector} border`,
+    );
+  }
+  const placeholder = await page.locator('#guide-search').evaluate((el) => {
+    const c = getComputedStyle(el, '::placeholder');
+    return { color: c.color, bg: getComputedStyle(el).backgroundColor, opacity: c.opacity };
+  });
+  assert.equal(placeholder.opacity, '1');
+  assert.ok(contrast(rgbHex(placeholder.color), rgbHex(placeholder.bg)) >= 4.5);
+  await page.keyboard.press('Tab');
+  await page.locator('#guide-theme').focus();
+  const focus = await page.locator('#guide-theme').evaluate((el) => ({
+    color: getComputedStyle(el).outlineColor,
+    style: getComputedStyle(el).outlineStyle,
+    bg: getComputedStyle(document.body).backgroundColor,
+  }));
+  assert.equal(focus.style, 'solid');
+  assert.ok(contrast(rgbHex(focus.color), rgbHex(focus.bg)) >= 3, `${name}: rendered focus`);
+}
 
 test('all themes rebuild verified evidence into readable HTML and PDF; viewer persists selection and prints light', async () => {
   const root = await mkdtemp(join(tmpdir(), 'hooserguide-themes-'));
@@ -87,6 +183,7 @@ test('all themes rebuild verified evidence into readable HTML and PDF; viewer pe
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
         true,
       );
+      await assertRenderedContrast(page, name);
       // PDF pages must actually paint a background, including the page margins.
       const loading = getDocument({
         data: new Uint8Array(await readFile(result.artifacts.pdf!)),
@@ -159,6 +256,65 @@ test('all themes rebuild verified evidence into readable HTML and PDF; viewer pe
     assert.equal(await blockedPage.locator('html').getAttribute('data-theme'), 'graphite');
     await blocked.close();
     await context.close();
+  } finally {
+    await browser.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('custom accents render readable HTML and PDF text in every theme', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'hooserguide-brand-contrast-'));
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage();
+    for (const name of manualThemeNames) {
+      const accentColor = manualThemes[name].colorScheme === 'light' ? '#ffffff' : '#000000';
+      const result = await build('docs/demo', {
+        output: join(root, name),
+        manual: { theme: name },
+        branding: { accentColor },
+      });
+      assert.equal(result.report.status, 'passed', result.report.exportError);
+      await page.goto(pathToFileURL(result.artifacts.html!).href);
+      await assertRenderedContrast(page, `${name} branded`);
+      const variables = await page.evaluate(() => {
+        const c = getComputedStyle(document.documentElement);
+        return {
+          brand: c.getPropertyValue('--accent').trim(),
+          text: c.getPropertyValue('--accent-ink').trim(),
+        };
+      });
+      assert.equal(variables.brand, accentColor);
+      const expected = resolveManualTheme(name, { accentColor }).colors.accentForeground;
+      assert.equal(variables.text, expected);
+      // The cover's first text is the small accent label. Inspect the emitted PDF
+      // drawing operators so the HTML fallback cannot hide a PDF regression.
+      const loading = getDocument({
+        data: new Uint8Array(await readFile(result.artifacts.pdf!)),
+        useSystemFonts: true,
+      });
+      const pdf = await loading.promise;
+      try {
+        const operators = await (await pdf.getPage(1)).getOperatorList();
+        let fill: unknown;
+        let found = false;
+        for (let i = 0; i < operators.fnArray.length; i++) {
+          if (operators.fnArray[i] === OPS.setFillRGBColor) fill = operators.argsArray[i][0];
+          if (operators.fnArray[i] === OPS.showText) {
+            assert.equal(fill, expected, `${name}: emitted PDF accent text`);
+            found = true;
+            break;
+          }
+        }
+        assert.ok(found, `${name}: PDF cover has text`);
+      } finally {
+        await loading.destroy();
+      }
+      // Reader theme changes must re-evaluate custom contrast, including a
+      // switch between light and dark backgrounds in the same generated HTML.
+      await page.locator('#guide-theme').selectOption(name === 'midnight' ? 'sand' : 'midnight');
+      await assertRenderedContrast(page, `${name} branded after switching`);
+    }
   } finally {
     await browser.close();
     await rm(root, { recursive: true, force: true });

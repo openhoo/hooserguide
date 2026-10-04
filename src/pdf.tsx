@@ -44,8 +44,8 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
       background: colors.surface,
       muted: colors.muted,
       mutedForeground: colors.mutedForeground,
-      primary: accent,
-      primaryForeground: badgeTextColor(accent),
+      primary: colors.accentForeground,
+      primaryForeground: badgeTextColor(colors.accentForeground),
       border: colors.border,
       warning: colors.warning,
     },
@@ -169,7 +169,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
               padding: 14,
               marginBottom: 12,
               borderLeftWidth: 3,
-              borderColor: callout.kind === 'warning' ? colors.warning : accent,
+              borderColor: callout.kind === 'warning' ? colors.warning : colors.accentForeground,
               backgroundColor:
                 callout.kind === 'warning'
                   ? colors.warningBackground
