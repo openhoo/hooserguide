@@ -103,6 +103,18 @@ Additional built-in steps:
 
 Phrases are case-sensitive. `Given`, `When`, `Then`, `And` and `But` have normal Gherkin semantics. Use escaped quotes (`\"`) inside quoted arguments. The official Gherkin parser compiles outlines, backgrounds and localized keywords; plugins can handle additional behavior and data tables.
 
+Built-in step arguments are validated before browser launch. Only `I explain:`
+accepts a text docstring, `I capture "..."` accepts a JSON object docstring, and
+`I fill the form:` accepts a selector/value data table. Other built-in steps
+reject attached arguments. Navigation and URL assertion values must resolve as
+URLs against `baseURL`; element counts must be safe non-negative integers.
+Trusted plugins own validation of their custom argument syntax.
+
+Environment-fill failures identify the variable without retaining browser fill
+logs, because those logs can contain escaped or abbreviated secret values.
+Check the selector and variable availability without printing credentials. Set
+capture masks explicitly when the filled value is visible in screenshots.
+
 ## Capture docstring
 
 ```gherkin

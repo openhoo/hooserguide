@@ -68,6 +68,19 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
 const output = (...values: unknown[]) => {
   process.stdout.write(format(...values) + '\n');
 };
+/** Let interrupted workflows close browsers and retain failed evidence before exiting. */
+async function interruptible<T>(operation: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const controller = new AbortController();
+  const cancel = () => controller.abort();
+  process.once('SIGINT', cancel);
+  process.once('SIGTERM', cancel);
+  try {
+    return await operation(controller.signal);
+  } finally {
+    process.removeListener('SIGINT', cancel);
+    process.removeListener('SIGTERM', cancel);
+  }
+}
 async function execute(args: string[]): Promise<void> {
   const { values, positionals } = parseArgs({
     args,
@@ -194,10 +207,12 @@ async function execute(args: string[]): Promise<void> {
   };
   if (values['fail-fast'] && values['no-fail-fast'])
     throw new Error('Use --fail-fast or --no-fail-fast, not both');
-  if (values.profile && values.profiles) throw new Error('Use --profile or --profiles, not both');
-  const responsiveSelection = values.profiles
-    ? { responsive: { profiles: values.profiles.split(',').map((p) => p.trim()) } }
-    : {};
+  if (values.profile !== undefined && values.profiles !== undefined)
+    throw new Error('Use --profile or --profiles, not both');
+  const responsiveSelection =
+    values.profiles !== undefined
+      ? { responsive: { profiles: values.profiles.split(',').map((p) => p.trim()) } }
+      : {};
   if (values.orientation && values.landscape)
     throw new Error('Use --orientation or --landscape, not both');
   const layout = manualSchema.parse({
@@ -240,7 +255,7 @@ async function execute(args: string[]): Promise<void> {
       await loadConfig(configPath, {
         ...selection,
         ...responsiveSelection,
-        ...(values.profile ? { profile: values.profile } : {}),
+        ...(values.profile !== undefined ? { profile: values.profile } : {}),
       }),
     );
     output(
@@ -257,7 +272,9 @@ async function execute(args: string[]): Promise<void> {
     if (!positionals[1]) throw new Error('pages requires a run directory');
     output(
       JSON.stringify(
-        await preparePages(positionals[1], { output: values.output }),
+        await interruptible((signal) =>
+          preparePages(positionals[1]!, { output: values.output }, { signal }),
+        ),
         null,
         values.json ? undefined : 2,
       ),
@@ -274,7 +291,7 @@ async function execute(args: string[]): Promise<void> {
         ? await inspectRun(positionals[1])
         : command === 'compare'
           ? await compareRuns(positionals[1], positionals[2]!)
-          : await bundle(positionals[1], values.output);
+          : await interruptible((signal) => bundle(positionals[1]!, values.output, { signal }));
     output(JSON.stringify(result, null, values.json ? undefined : 2));
     return;
   }
@@ -322,7 +339,7 @@ async function execute(args: string[]): Promise<void> {
       await loadConfig(configPath, {
         ...selection,
         ...responsiveSelection,
-        ...(values.profile ? { profile: values.profile } : {}),
+        ...(values.profile !== undefined ? { profile: values.profile } : {}),
       }),
     );
     output(
@@ -341,7 +358,7 @@ async function execute(args: string[]): Promise<void> {
           ...responsiveSelection,
           ...(values.headed ? { headed: true } : {}),
           ...(values['no-pdf'] ? { pdf: false } : {}),
-          ...(values.profile ? { profile: values.profile } : {}),
+          ...(values.profile !== undefined ? { profile: values.profile } : {}),
           ...(values.output ? { output: resolve(values.output) } : {}),
           ...(values['fail-fast']
             ? { failFast: true }
@@ -352,16 +369,26 @@ async function execute(args: string[]): Promise<void> {
       : undefined;
   const result =
     command === 'build'
-      ? await build(positionals[1]!, {
-          output: values.output,
-          pdf: values['no-pdf'] ? false : buildConfig?.pdf,
-          branding: buildConfig?.branding,
-          document: buildConfig?.document,
-          manual: { ...buildConfig?.manual, ...layout },
-        })
+      ? await interruptible((signal) =>
+          build(
+            positionals[1]!,
+            {
+              output: values.output,
+              pdf: values['no-pdf'] ? false : buildConfig?.pdf,
+              branding: buildConfig?.branding,
+              document: buildConfig?.document,
+              manual: { ...buildConfig?.manual, ...layout },
+            },
+            { signal },
+          ),
+        )
       : command === 'demo'
-        ? await demo(resolve(values.output ?? 'output/demo'))
-        : await run({ ...runConfig!, manual: { ...runConfig!.manual, ...layout } });
+        ? await interruptible((signal) =>
+            demo(resolve(values.output ?? 'output/demo'), {}, { signal }),
+          )
+        : await interruptible((signal) =>
+            run({ ...runConfig!, manual: { ...runConfig!.manual, ...layout } }, { signal }),
+          );
   const summary = {
     status: result.report.status,
     profile: result.report.profile,

@@ -142,7 +142,14 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
       if (!browsers.has(engine))
         browsers.set(
           engine,
-          await { chromium, firefox, webkit }[engine].launch({ headless: !config.headed }),
+          await { chromium, firefox, webkit }[engine].launch({
+            headless: !config.headed,
+            // A caller-owned cancellation signal controls cleanup and failed evidence.
+            // Playwright's process handlers must not terminate the host before it publishes.
+            ...(options.signal
+              ? { handleSIGINT: false, handleSIGTERM: false, handleSIGHUP: false }
+              : {}),
+          }),
         );
       if (options.signal?.aborted) throw new Error('Run cancelled');
     }

@@ -222,6 +222,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
             </Text>
             <PdfImage
               src={`data:image/png;base64,${overview.bytes.toString('base64')}`}
+              alt={`${capture.title} · ${chapter.variants.map((v) => screenLabel(v.variant!)).join(' / ')}`}
               variant="bordered"
               width={pageWidth}
               height={height}
@@ -307,6 +308,13 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
               ) : null}
               <PdfImage
                 src={`data:image/png;base64,${data.toString('base64')}`}
+                alt={[
+                  capture.title,
+                  variant.variant ? screenLabel(variant.variant) : '',
+                  total > 1 ? `${l.part} ${slice + 1}/${total}` : '',
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
                 variant="bordered"
                 width={imageWidth}
                 height={(height * imageWidth) / capture.width}

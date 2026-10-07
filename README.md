@@ -90,7 +90,7 @@ The same high-DPI crop, privacy mask and reference arrow across the three engine
 - **Set screenshot defaults:** automatic letters/numbers, mark color, crop padding and full-page behavior with local overrides.
 - **Read offline:** search chapters, switch masked raw/annotated screenshots and print the whole guide.
 - **Review changes:** verified report inspection and run comparison distinguish prose, annotation and screenshot changes.
-- **Share one file:** portable ZIP with manuals, masked screenshots and a hash manifest.
+- **Share one file:** portable ZIP with regenerated manuals, verified masked screenshots and a hash manifest.
 - **Integrate agents:** eleven MCP tools plus project and exact-run artifact resources; both skills cover the new workflow.
 
 The offline reader adds these controls without external dependencies:
@@ -287,7 +287,7 @@ Every screen has its own BDD assertions, privacy masks and annotation coordinate
 **GitLab:** add the Pages component after your generating job:
 
 ```yaml
-- remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.2/templates/pages/template.yml
+- remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.3/templates/pages/template.yml
   inputs:
     generate-job: user-guide
     source: output/user-guide
@@ -298,12 +298,12 @@ Include `deploy` in your pipeline stages. This job uses GitLab 17.10+ and publis
 **GitHub:** use the generation action and hand its exact output to the Pages action:
 
 ```yaml
-- uses: openhoo/hooserguide/actions/generate@0.8.2
+- uses: openhoo/hooserguide/actions/generate@0.8.3
   id: guide
   with:
     config: docs/user-guide/hooserguide.config.json
     profiles: desktop,tablet,mobile
-- uses: openhoo/hooserguide/actions/pages@0.8.2
+- uses: openhoo/hooserguide/actions/pages@0.8.3
   with:
     run-directory: ${{ steps.guide.outputs.directory }}
 ```
@@ -316,7 +316,7 @@ Include the pinned template directly from GitHub:
 
 ```yaml
 include:
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.2/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.3/templates/generate/template.yml
     inputs:
       config: docs/user-guide/hooserguide.config.json
       browser: chromium

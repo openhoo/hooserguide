@@ -26,6 +26,12 @@ A Scenario description overrides the Feature description for its chapter.
 for one multiline instruction. Several `I explain` steps create separate numbered
 instructions. Prose and prerequisites never assert application state.
 
+Built-in attachments belong only on `I explain:` (text docstring), `I capture
+"..."` (JSON object docstring) and `I fill the form:` (selector/value table).
+Other built-in steps reject docstrings/tables before app actions. Malformed URLs
+and counts outside the safe integer range also fail preflight. Trusted plugins
+own validation of their custom arguments.
+
 ## Diagnostics and outline
 
 `lint --config <config> --json` / `hooserguide_lint` collect syntax, binding,

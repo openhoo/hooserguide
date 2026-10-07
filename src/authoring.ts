@@ -299,7 +299,7 @@ export async function lint(input: Config): Promise<AuthoringReport> {
             masks:
               (config.masks?.length ?? 0) + (Array.isArray(spec.masks) ? spec.masks.length : 0),
           });
-          if (!spec.description?.trim?.())
+          if (typeof spec.description !== 'string' || !spec.description.trim())
             add(
               'CAPTURE_DESCRIPTION',
               'Figure has no reader-facing description.',

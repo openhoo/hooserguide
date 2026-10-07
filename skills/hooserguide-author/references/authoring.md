@@ -53,6 +53,12 @@ Feature: Account settings
 
 Remove or adapt example privacy selectors to the actual app. Missing masks fail closed. Global config `masks` apply to original and annotated captures. Never put credentials directly into feature files; use environment-fill steps or a local ignored `storageState`.
 
+If an environment-fill step fails, its diagnostic identifies the environment
+variable and omits the browser's fill error log, which can expose escaped or
+abbreviated credentials. Check the selector, input state and variable availability
+without printing the value. The step does not automatically mask a filled input;
+configure screenshot masks wherever that value remains visible.
+
 Use `focus: "testid=panel"` and `padding: 40` for a cropped screenshot of one form or dialog. `padding` defaults to 24; marks must fit inside the crop and arrow origins are crop-relative. Focus and fullPage cannot be combined. `autoLabels: "letters"` or `"numbers"` fills missing references while preserving explicit ones; duplicate references fail. Captioned marks without labels receive numeric references even without `autoLabels`. If badges crowd the screenshot, use more focus padding or split the capture.
 
 Mark kinds are `box`, `arrow` and `both`. Labels accept 1–4 letters or digits. Colors use `#RRGGBB`; optional `from: {x, y}` sets arrow origins in screenshot CSS pixels. `fullPage: true` captures long pages and splits them into readable PDF images. For viewport screenshots all targets must fit together; split the capture when they do not. Locators can be strings (`role=button:Save`, `label=Name`, `text=Done`, `testid=save`, `css=.save`) or JSON objects (`{"role":"button","name":"Save"}`).

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.3 — 2026-10-07
+
+- Reject ignored built-in step arguments, malformed URLs, impossible counts and empty CLI profile selections before application actions; retain lint diagnostics for malformed capture descriptions.
+- Keep environment-fill failures free of browser logs that can expose encoded or abbreviated secret values.
+- Handle CLI interruption through cancellation signals, close browsers and retain failed evidence without publishing successful manuals.
+- Regenerate portable bundle manuals from verified screenshots and sanitized reports instead of trusting existing exports.
+- Check canonical Pages output separation before creating directories, including nested paths through source symlink aliases.
+- Validate direct comparisons and crop dimensions, enforce limits during artifact reads and bind provenance hashes to the parsed report snapshot.
+- Tag PDF headings semantically and provide screenshot alternative text, screen labels and continuation parts while preserving visual layout.
+- Keep long desktop contents scrollable and prepare offscreen screenshots for native browser printing.
+- Align documentation and consumer skills; add 14 regression tests and refresh the published examples.
+
 ## 0.8.2 — 2026-10-04
 
 - Make the handbook header compact on desktop and mobile with smaller titles, reduced padding and concise metadata; tighten reader controls so content starts sooner.

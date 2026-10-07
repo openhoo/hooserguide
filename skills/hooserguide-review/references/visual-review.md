@@ -24,3 +24,5 @@ hidden. When no PDF was generated, the guide must not offer a broken PDF link.
 Use the session's browser download tools to save the real file, confirm it is a
 PDF and compare it with the exact reviewed export. A visible button or successful
 navigation alone does not establish a working download.
+
+For PDF accessibility, inspect the tagged structure as well as the rendered pages: headings should expose H1-H6 roles and screenshot figures should retain their titles, screen labels and continuation parts as alternative text. These checks do not establish full PDF/UA conformance. For long guides, confirm that the desktop contents list scrolls inside the viewport and its final link is reachable by keyboard. Check native browser printing as well as the Print button, including chapters hidden by search.

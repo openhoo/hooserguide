@@ -1,4 +1,4 @@
-import { readFile, realpath, readdir, stat } from 'node:fs/promises';
+import { open, realpath, readdir, stat } from 'node:fs/promises';
 import { basename, dirname, join, relative, isAbsolute, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import sharp from 'sharp';
@@ -44,7 +44,29 @@ async function artifactPath(directory: string, path: string, maxBytes: number) {
   return actual;
 }
 export async function readRunArtifact(directory: string, path: string, maxBytes = 2 * 1024 * 1024) {
-  return readFile(await artifactPath(directory, path, maxBytes));
+  if (!Number.isSafeInteger(maxBytes) || maxBytes < 0)
+    throw new Error('Artifact byte limit must be a nonnegative safe integer');
+  const handle = await open(await artifactPath(directory, path, maxBytes), 'r');
+  try {
+    // Bound the actual read too: a file may grow after the initial stat.
+    const chunks: Buffer[] = [];
+    let total = 0;
+    for (;;) {
+      const chunk = Buffer.alloc(Math.min(64 * 1024, maxBytes - total + 1));
+      const { bytesRead } = await handle.read(chunk, 0, chunk.length, null);
+      if (!bytesRead) return Buffer.concat(chunks, total);
+      total += bytesRead;
+      if (total > maxBytes)
+        throw new GuideError(
+          'ARTIFACT_TOO_LARGE',
+          'Artifact exceeds the tool size limit.',
+          'Use local artifact tools for large files or create smaller focused captures.',
+        );
+      chunks.push(chunk.subarray(0, bytesRead));
+    }
+  } finally {
+    await handle.close();
+  }
 }
 export async function loadManagedRun(output: string, runId: string): Promise<RunResult> {
   runIdSchema.parse(runId);
@@ -60,8 +82,14 @@ export async function loadManagedRun(output: string, runId: string): Promise<Run
 }
 /** Load local run evidence with the same artifact containment gates as MCP. */
 export async function loadRunDirectory(path: string): Promise<RunResult> {
+  return (await loadRunSnapshot(path)).run;
+}
+/** Keep provenance tied to the exact bounded report bytes used for parsing. */
+export async function loadRunSnapshot(
+  path: string,
+): Promise<{ run: RunResult; reportBytes: Buffer }> {
   const directory = await realpath(path);
-  const report = await readRunReport(directory);
+  const { report, reportBytes } = await readRunReportSnapshot(directory);
   const artifacts: RunResult['artifacts'] = { report: join(directory, 'report.json') };
   if (report.status === 'passed' && !report.exportError) {
     for (const [kind, name] of [
@@ -77,15 +105,17 @@ export async function loadRunDirectory(path: string): Promise<RunResult> {
       }
     }
   }
-  return { report, directory, artifacts };
+  return { run: { report, directory, artifacts }, reportBytes };
 }
 /** Bounded, contained report read; rebuilding need not have the old manual exports. */
 export async function readRunReport(directory: string): Promise<RunReport> {
-  const report = reportSchema.parse(
-    JSON.parse((await readRunArtifact(directory, 'report.json')).toString('utf8')),
-  ) as RunReport;
+  return (await readRunReportSnapshot(directory)).report;
+}
+async function readRunReportSnapshot(directory: string) {
+  const reportBytes = await readRunArtifact(directory, 'report.json');
+  const report = reportSchema.parse(JSON.parse(reportBytes.toString('utf8'))) as RunReport;
   assertReportIntegrity(report);
-  return report;
+  return { report, reportBytes };
 }
 export async function managedRunIds(output: string) {
   try {

@@ -2,6 +2,8 @@ import { z } from 'zod';
 import sharp from 'sharp';
 import { createHash } from 'node:crypto';
 import { loadRunDirectory, verifiedCapture, GuideError } from './evidence.js';
+import { reportSchema, assertReportIntegrity } from './report.js';
+import type { RunReport } from './types.js';
 import type { Chapter, Capture, RunResult } from './types.js';
 
 export const comparisonSchema = z
@@ -102,6 +104,10 @@ function compareCaptures(
 
 /** Verified evidence comparison; it never opens the target app. */
 export async function compareResults(before: RunResult, after: RunResult) {
+  before = { ...before, report: reportSchema.parse(before.report) as RunReport };
+  after = { ...after, report: reportSchema.parse(after.report) as RunReport };
+  assertReportIntegrity(before.report);
+  assertReportIntegrity(after.report);
   const pixels = new Map<Capture, string>(),
     annotatedPixels = new Map<Capture, string>();
   for (const run of [before, after])

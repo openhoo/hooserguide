@@ -2,7 +2,7 @@
 
 Guide version: 1.0
 Audience: Workspace members
-Generated: 2026-10-04
+Generated: 2026-10-07
 
 Create, organize and verify tasks in your HooTasks workspace.
 

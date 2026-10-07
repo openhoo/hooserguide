@@ -103,9 +103,10 @@ export function builtinSteps(): StepRegistry {
     if (value === undefined) throw new Error(`Missing environment variable: ${variable}`);
     try {
       await c.target(unquote(selector!)).fill(value);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(value ? message.replaceAll(value, '[REDACTED]') : message);
+    } catch {
+      // Browser error logs may encode, escape or abbreviate the supplied value.
+      // Never persist those logs for a secret-bearing fill operation.
+      throw new Error(`Could not fill the requested input from environment variable: ${variable}`);
     }
   });
   registry.define(new RegExp(`^I select ${q} in ${q}$`), async (c, value, selector) => {

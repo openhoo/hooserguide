@@ -103,6 +103,13 @@ does not interpret Markdown or execute content. Use several `I explain` steps fo
 separate numbered instructions. Prerequisites and callouts remain descriptive;
 assertion steps verify application state.
 
+Only `I explain:`, `I capture "..."` and `I fill the form:` accept attached
+arguments: a text docstring, a JSON object docstring and a selector/value table,
+respectively. Other built-in steps reject attached docstrings or tables before
+any browser actions. Malformed navigation/assertion URLs and element counts
+outside the safe integer range also fail this preflight. Trusted plugins validate
+their own argument syntax.
+
 ## Get all authoring feedback at once
 
 ```sh
@@ -114,7 +121,8 @@ hooserguide steps --config docs/user-guide/hooserguide.config.json --search uplo
 
 Lint continues across files, chapters and steps. It reports errors for Gherkin
 syntax, undefined/ambiguous bindings, malformed quoted arguments, form tables,
-capture options, empty multiline instructions, missing screenshots and empty
+unexpected attached arguments, malformed URLs, capture options, empty multiline
+instructions, missing screenshots and empty
 selections. Undefined steps include up to three similar documented phrases.
 Suggestions are examples; adapt their selectors to the actual app.
 

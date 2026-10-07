@@ -725,7 +725,13 @@ export function createMcpServer(configPath: string) {
         return response({ status: 'passed', runId: basename(source.directory), ...result });
       } catch (error) {
         return failure(
-          error,
+          extra.signal.aborted
+            ? new GuideError(
+                'CANCELLED',
+                'Bundle creation was cancelled.',
+                'Source evidence remains available; inspect outputs before retrying.',
+              )
+            : error,
           'BUNDLE_FAILED',
           'Select successful intact evidence and a writable output.',
         );

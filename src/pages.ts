@@ -12,7 +12,7 @@ import {
 import { resolve, relative, isAbsolute, dirname, join, basename, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { loadRunDirectory, verifiedCapture, readRunArtifact } from './evidence.js';
+import { loadRunSnapshot, verifiedCapture } from './evidence.js';
 import { requireSuccessfulEvidence } from './report.js';
 import { renderManual } from './render.js';
 import { renderPdf } from './pdf.js';
@@ -37,7 +37,7 @@ export const contained = (root: string, path: string) => {
 };
 
 /** Allocate only after checking the nearest existing ancestor, including symlinks. */
-export async function freshDirectory(root: string, output: string) {
+export async function freshDirectory(root: string, output: string, sourceEvidence?: string) {
   if (isAbsolute(output))
     throw new Error('Pages output must be a relative directory inside the workspace');
   const destination = resolve(root, output);
@@ -52,6 +52,14 @@ export async function freshDirectory(root: string, output: string) {
         throw new Error('Pages output ancestor resolves outside the workspace');
       if (ancestor === destination)
         throw new Error('Pages output already exists; choose a fresh directory');
+      // Resolve the missing suffix against the actual existing ancestor before
+      // recursive mkdir can create any parents inside the source evidence.
+      const prospective = resolve(actual, relative(ancestor, destination));
+      if (
+        sourceEvidence &&
+        (contained(sourceEvidence, prospective) || contained(prospective, sourceEvidence))
+      )
+        throw new Error('Pages output must be separate from the source evidence');
       break;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
@@ -74,14 +82,17 @@ export async function preparePages(
   const options = optionsSchema.parse(input);
   controls.signal?.throwIfAborted();
   const root = await realpath(resolve(options.root ?? process.cwd()));
-  const run = await loadRunDirectory(source);
+  const { run, reportBytes: original } = await loadRunSnapshot(source);
   requireSuccessfulEvidence(run.report);
   const requested = resolve(root, options.output);
   if (contained(run.directory, requested) || contained(requested, run.directory))
     throw new Error('Pages output must be separate from the source evidence');
-  const destination = await freshDirectory(root, options.output);
+  const destination = await freshDirectory(root, options.output, run.directory);
   let staging: string | undefined;
   try {
+    const actualDestination = await realpath(destination);
+    if (contained(run.directory, actualDestination) || contained(actualDestination, run.directory))
+      throw new Error('Pages output must be separate from the source evidence');
     staging = await mkdtemp(join(dirname(destination), '.pages-'));
     await mkdir(join(staging, 'screenshots'));
     const report = structuredClone(run.report);
@@ -102,7 +113,6 @@ export async function preparePages(
       }
     report.rebuiltAt = new Date().toISOString();
     // The hash identifies the original report without copying its machine-specific source paths.
-    const original = await readRunArtifact(run.directory, 'report.json');
     report.sourceReportSha256 = createHash('sha256').update(original).digest('hex');
     await writeFile(join(staging, 'report.json'), JSON.stringify(report, null, 2) + '\n');
     if (run.artifacts.pdf) await renderPdf(report, staging);

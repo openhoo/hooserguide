@@ -2,7 +2,9 @@
 
 ## CLI for any agent
 
-`--json` produces one machine-readable summary with `status`, an isolated run `directory`, absolute `artifacts` paths and per-chapter status. Success exits 0; failed scenarios, invalid configuration or export errors exit 1. Human progress and errors do not pollute JSON stdout. Preflight errors are written as JSON to stderr.
+`--json` produces one machine-readable summary with `status`, an isolated run `directory`, absolute `artifacts` paths and per-chapter status. Success exits 0; failed scenarios, invalid configuration or export errors exit 1. Human progress and errors do not pollute JSON stdout. Preflight errors are written as JSON to stderr. Explicit empty `--profile` or `--profiles` selections are rejected.
+
+Interrupt `run`, `demo`, `build`, `bundle` or `pages` with Ctrl-C or SIGTERM to cancel safely. Browser waits stop, resources close and interrupted execution retains failed evidence without successful manuals. PDF rendering finishes before cancellation is observed. Cancellation does not undo completed application actions; inspect the recorded evidence before retrying.
 
 ```sh
 hooserguide init docs/user-guide --base-url http://localhost:3000 --skills
@@ -51,7 +53,7 @@ args = ["/absolute/path/hooserguide/dist/cli.js", "mcp", "--config", "/absolute/
 | `hooserguide_inspect_run`     | Read an exact execution report and optional PDF layout audit                   |
 | `hooserguide_inspect_capture` | Review a hash-checked annotated or masked raw PNG inline                       |
 | `hooserguide_compare_runs`    | Compare two pinned runs after image verification                               |
-| `hooserguide_bundle`          | Write a portable ZIP with sanitized report and hash manifest                   |
+| `hooserguide_bundle`          | Regenerate portable manuals with sanitized report and hash manifest            |
 | `hooserguide_rebuild`         | Re-export successful evidence using current branding without opening the app   |
 
 ### Recommended agent workflow
@@ -66,7 +68,7 @@ args = ["/absolute/path/hooserguide/dist/cli.js", "mcp", "--config", "/absolute/
 
 Validation/generation accept `tagExpression` and `scenario` in addition to `profile`; generation also accepts `failFast`. The validation plan includes feature names, tags and built-in capture counts. Status includes document/layout/defaults and configured filters. Run summaries include actual selection and skipped scenarios. See [customization](customization.md).
 
-`hooserguide_compare_runs {beforeRunId, afterRunId}` checks both runs' images and returns differences by unique chapter/capture titles. It opens no browser. `hooserguide_bundle {runId}` packages a successful run into a unique ZIP under `output/bundles/`, returns its path/hash and supports cancellation. Explicit pinned comparison/bundling can read completed evidence during generation. Packaging does not publish externally.
+`hooserguide_compare_runs {beforeRunId, afterRunId}` checks both runs' images and returns differences by unique chapter/capture titles. It opens no browser. `hooserguide_bundle {runId}` regenerates manuals from a successful run's verified screenshots and sanitized report into a unique ZIP under `output/bundles/`, returns its path/hash and supports cancellation. Existing HTML, Markdown, PDF and layout files are not copied into the archive; review the regenerated exports before delivery. Explicit pinned comparison/bundling can read completed evidence during generation. Packaging does not publish externally.
 
 ### Read-only resources
 

@@ -4,7 +4,8 @@ import {
   usePdfcnTheme,
   useSafeMemo,
 } from "../theme-provider.js";
-import { StyleSheet, Text } from "../../../lib/pdf-primitives.js";
+import { H1, H2, H3, H4, H5, H6 } from "@formepdf/react";
+import { StyleSheet } from "../../../lib/pdf-primitives.js";
 import type { Style } from "../../../lib/pdf-primitives.js";
 import { resolveColor } from "../../../lib/resolve-color.js";
 import type { PDFComponentProps } from "../../../types/pdf-components.js";
@@ -176,5 +177,6 @@ export const Heading = ({
   if (style) {
     styleArray.push(...[style].flat());
   }
-  return <Text style={mergePdfStyles(styleArray)}>{children}</Text>;
+  const SemanticHeading = { 1: H1, 2: H2, 3: H3, 4: H4, 5: H5, 6: H6 }[safeLevel];
+  return <SemanticHeading style={mergePdfStyles(styleArray)}>{children}</SemanticHeading>;
 };

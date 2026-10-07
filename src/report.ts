@@ -150,6 +150,11 @@ export function assertReportIntegrity(report: RunReport): void {
   for (const chapter of report.chapters) {
     for (const capture of chapter.captures) {
       if (
+        capture.crop &&
+        (capture.crop.width !== capture.width || capture.crop.height !== capture.height)
+      )
+        throw new Error('Crop dimensions differ from the evidence screenshot');
+      if (
         ids.has(capture.id) ||
         paths.has(capture.image) ||
         paths.has(capture.raw) ||

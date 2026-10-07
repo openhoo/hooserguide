@@ -40,12 +40,17 @@ document.querySelector('#annotations').addEventListener('click', event => {
   document.querySelectorAll('figure img').forEach(image => { image.src = enabled ? image.dataset.annotated : image.dataset.raw; if (image.parentElement.matches('.screen-image')) image.parentElement.href = image.src; });
   document.querySelectorAll('.legend').forEach(legend => { legend.hidden = !enabled; });
 });
+const preparePrintImages = () => [...document.querySelectorAll('figure img')].map(image => {
+  image.loading = 'eager';
+  return image;
+});
+// Native browser printing bypasses the toolbar, so prime offscreen images too.
+window.addEventListener('beforeprint', preparePrintImages);
 document.querySelector('#print-guide').addEventListener('click', async event => {
   const button = event.currentTarget;
   button.disabled = true;
   try {
-    await Promise.all([...document.querySelectorAll('figure img')].map(async image => {
-      image.loading = 'eager';
+    await Promise.all(preparePrintImages().map(async image => {
       await image.decode().catch(() => {});
     }));
     window.print();

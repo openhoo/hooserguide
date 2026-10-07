@@ -78,7 +78,7 @@ These are optional fields to add to a complete config. `language` sets the brows
 | `manual.contents`         | `true`         | PDF cover and Markdown table of contents; HTML navigation remains available      |
 | `manual.showGeneratedAt`  | `true`         | Show capture/rebuild dates in the document; report evidence retains timestamps   |
 
-Long screenshots are sliced according to the chosen page geometry, preserving all pixels and annotation groups where space allows. The PDF audit includes actual page dimensions and margin in `pdf-layout.json`.
+Long screenshots are sliced according to the chosen page geometry, preserving all pixels and annotation groups where space allows. The PDF audit includes actual page dimensions and margin in `pdf-layout.json`. PDF exports retain semantic headings and alternative text for screenshots, including screen labels and continuation parts, for readers that expose tagged PDF structure.
 
 ```sh
 hooserguide run --config hooserguide.config.json --page-size Letter --landscape --margin 36
@@ -104,7 +104,7 @@ hooserguide build <run-directory> --orientation portrait --page-size A4
 
 ## Use the offline HTML reader
 
-Open `index.html` directly or host the complete run directory. JavaScript adds a chapter search, annotation toggle and Print button without any remote dependency. Search matches all entered terms against chapter prose, prerequisites, callouts and captions. It hides nonmatching chapters and navigation items, announces the count and handles zero matches. Printing includes all chapters even when search is active. The annotation toggle switches between the masked original and annotated PNG and hides legends for originals. Printing preserves the chosen image variant.
+Open `index.html` directly or host the complete run directory. JavaScript adds a chapter search, annotation toggle and Print button without any remote dependency. Search matches all entered terms against chapter prose, prerequisites, callouts and captions. It hides nonmatching chapters and navigation items, announces the count and handles zero matches. Printing includes all chapters even when search is active. The annotation toggle switches between the masked original and annotated PNG and hides legends for originals. Printing preserves the chosen image variant. Both the Print button and native browser printing prepare offscreen screenshots for loading; the Print button also waits for image decoding. Long desktop contents lists scroll within the viewport, keeping every chapter reachable by keyboard.
 
 Without JavaScript, the complete guide, navigation and downloads remain usable. The optional toolbar is hidden. Controls have labels, visible keyboard focus, responsive sizing and reduced-motion support.
 
@@ -144,8 +144,8 @@ const archive = await bundle('output/guides/run-after', 'deliverables/user-guide
 hooserguide bundle <run-directory> --output deliverables/user-guide.zip --json
 ```
 
-ZIP packaging requires successful, intact evidence. It includes HTML, Markdown, optional PDF, both masked screenshot variants, the report, optional PDF audit and `bundle-manifest.json`. Config, feature source files, plugins, overlays, cookies and login state are excluded. Local feature paths in the copied report are reduced to basenames; source files and the original report remain untouched. The manifest records the original report hash plus path, bytes and SHA-256 of every included artifact except the manifest itself.
+ZIP packaging requires successful, intact evidence. Manuals are regenerated from verified screenshots and the sanitized report; existing HTML, Markdown, PDF and layout exports are not copied. Review the regenerated manuals before delivery. It includes HTML, Markdown, optional PDF, both masked screenshot variants, the report, optional PDF audit and `bundle-manifest.json`. Config, feature source files, plugins, overlays, cookies and login state are excluded. Local feature paths in the copied report are reduced to basenames; source files and the original report remain untouched. The manifest records the original report hash plus path, bytes and SHA-256 of every included artifact except the manifest itself.
 
 The default destination is `<run-directory>.zip`. Existing files are never overwritten. Extract the full archive and open `index.html`; relative images and downloads keep working. Review screenshot and prose privacy before external delivery. Packaging verifies stored evidence, but does not discover unmasked personal data.
 
-Limits: 64 MiB per manual/image, 2 MiB report/PDF audit, and 128 MiB total source artifacts. ZIP size and its hash are returned. The API accepts `{signal}` as its third argument; cancelled or failed writes remove their partial file. MCP writes unique bundles under the configured output's `bundles/` directory. Packaging itself does not publish externally.
+Limits: 64 MiB per manual/image, 2 MiB report/PDF audit, and 128 MiB total packaged artifacts. ZIP size and its hash are returned. The API accepts `{signal}` as its third argument; cancelled or failed writes remove their partial file. MCP writes unique bundles under the configured output's `bundles/` directory. Packaging itself does not publish externally.

@@ -147,13 +147,15 @@ test('editor setup and chapter templates work in a consumer project and preserve
   const root = await mkdtemp(join(tmpdir(), 'guide-editor-'));
   try {
     await mkdir(join(root, '.vscode'));
-    await writeFile(join(root, '.vscode/settings.json'), '{"editor.fontSize":17}');
+    const settings = '{\n // Personal editor preferences\n "editor.fontSize":17,\n}\n';
+    const tasks =
+      '{\n // Existing app tasks\n "version":"2.0.0",\n "tasks":[{"label":"App build","command":"npm run build",},],\n}\n';
+    await writeFile(join(root, '.vscode/settings.json'), settings);
+    await writeFile(join(root, '.vscode/tasks.json'), tasks);
     const project = await init(root, undefined, true, true);
     assert.ok(project.editor!.snippets > 30);
-    assert.equal(
-      await readFile(join(root, '.vscode/settings.json'), 'utf8'),
-      '{"editor.fontSize":17}',
-    );
+    assert.equal(await readFile(join(root, '.vscode/settings.json'), 'utf8'), settings);
+    assert.equal(await readFile(join(root, '.vscode/tasks.json'), 'utf8'), tasks);
     const workspace = JSON.parse(await readFile(project.editor!.workspace, 'utf8'));
     assert.equal(workspace.tasks.tasks[0].args[2], 'lint');
     const snippets = JSON.parse(

@@ -48,6 +48,8 @@ export type PdfImageVariant =
  */
 export interface PdfImageProps {
   src: PdfImageSrc;
+  /** Alternative text forwarded to the tagged PDF figure. */
+  alt?: string;
   /**
    * @default 'default'
    */
@@ -130,6 +132,7 @@ const createImageStyles = (t: PdfcnTheme) => {
 
 export const PdfImage = ({
   src,
+  alt,
   variant = "default",
   width,
   height,
@@ -185,7 +188,7 @@ export const PdfImage = ({
 
   const content = (
     <View style={styles.container}>
-      <Image src={src as never} style={imageStyles as never} />
+      <Image src={src as never} alt={alt} style={imageStyles as never} />
       {caption ? <PDFText style={styles.caption}>{caption}</PDFText> : null}
     </View>
   );

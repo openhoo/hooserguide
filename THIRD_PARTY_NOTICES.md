@@ -6,7 +6,7 @@ Source: https://github.com/shadcn-labs/pdfcn
 
 Pinned commit: `39c75c1abbbad7b89ad1d8d3ea740ef635818a4b`
 
-Vendored registry items: Forme utils, professional theme, Text, Heading, PdfImage, PageNumber and PageFooter. Files are in `src/pdfcn/`. Import aliases were converted to local ESM paths; TypeScript null assertions were added for strict index checking. The project theme customizes colors and headings outside the vendored source. Original license is retained in `src/pdfcn/LICENSE` and copied into `dist/pdfcn/LICENSE` for distribution.
+Vendored registry items: Forme utils, professional theme, Text, Heading, PdfImage, PageNumber and PageFooter. Files are in `src/pdfcn/`. Import aliases were converted to local ESM paths; TypeScript null assertions were added for strict index checking. The Heading wrapper uses Forme semantic H1-H6 elements while preserving its theme styles. The PdfImage wrapper forwards alternative text to Forme images so tagged PDF figures retain their accessible descriptions. The project theme customizes colors and headings outside the vendored source. Original license is retained in `src/pdfcn/LICENSE` and copied into `dist/pdfcn/LICENSE` for distribution.
 
 These third-party files remain MIT licensed; original hooserguide code is Apache-2.0. Other npm dependencies retain the licenses shipped by their respective packages.
 

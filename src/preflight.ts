@@ -11,7 +11,21 @@ export function validateStepArguments(step: PickleStep, config: Config): void {
   } catch {
     return; // Trusted plugins own validation of their own argument syntax.
   }
-  for (const quoted of step.text.matchAll(/"(?:[^"\\]|\\.)*"/g)) JSON.parse(quoted[0]);
+  const quoted = [...step.text.matchAll(/"(?:[^"\\]|\\.)*"/g)].map(
+    (match) => JSON.parse(match[0]) as string,
+  );
+  if (
+    step.argument &&
+    step.text !== 'I fill the form:' &&
+    step.text !== 'I explain:' &&
+    !step.text.startsWith('I capture ')
+  )
+    throw new Error('This built-in step does not accept a docstring or data table');
+  if (step.text.startsWith('I open ') || step.text.startsWith('the URL is '))
+    new URL(quoted[0]!, config.baseURL);
+  const count = / has count (\d+)$/.exec(step.text);
+  if (count && !Number.isSafeInteger(Number(count[1])))
+    throw new Error('Element counts must be safe non-negative integers');
   if (step.text === 'I fill the form:') formRows(step);
   if (step.text === 'I explain:') {
     if (!step.argument?.docString?.content.trim())

@@ -2,7 +2,7 @@
 
 Handbuchversion: 1.0
 Zielgruppe: Teammitglieder
-Erstellt: 2026-10-04
+Erstellt: 2026-10-07
 
 Aufgaben anlegen, organisieren und Ergebnisse prüfen.
 

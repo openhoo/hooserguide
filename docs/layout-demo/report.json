@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "title": "HooTasks — Benutzerhandbuch",
   "language": "de-DE",
-  "generatedAt": "2026-10-04T19:00:23.220Z",
+  "generatedAt": "2026-10-07T07:47:25.361Z",
   "status": "passed",
   "browser": "chromium",
   "viewport": {
@@ -122,8 +122,8 @@
               }
             }
           ],
-          "sha256": "1de384050618b009c9714aa0ddd0fba457f7986ba7cdcdaa626ce1315f5c2083",
-          "rawSha256": "f6855007275bc39159a145bdc4b3805043a7890caf5fbee6eee89fda724bf218"
+          "sha256": "9964614988eb986f78644a86fee10eca6a2603d6f6d010d51008958e48211517",
+          "rawSha256": "9033586700735d312b229350920422830d9abf56bbf3d1e91dfe9182f0be3f82"
         },
         {
           "id": "01-03",
@@ -186,12 +186,12 @@
         {
           "text": "I open \"/\"",
           "status": "passed",
-          "durationMs": 9
+          "durationMs": 6
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
           "status": "passed",
-          "durationMs": 13
+          "durationMs": 14
         },
         {
           "text": "I add a prerequisite \"Öffnen Sie Ihren Arbeitsbereich mit der Berechtigung, Aufgaben anzulegen.\"",
@@ -211,22 +211,22 @@
         {
           "text": "I capture \"Aufgabendetails ausfüllen\"",
           "status": "passed",
-          "durationMs": 169
+          "durationMs": 176
         },
         {
           "text": "I fill \"label=Task title\" with \"Prepare the launch checklist\"",
           "status": "passed",
-          "durationMs": 7
+          "durationMs": 8
         },
         {
           "text": "I select \"high\" in \"label=Priority\"",
           "status": "passed",
-          "durationMs": 1
+          "durationMs": 2
         },
         {
           "text": "I click \"role=button:Create task\"",
           "status": "passed",
-          "durationMs": 30
+          "durationMs": 38
         },
         {
           "text": "\"role=status:Task result\" has text \"Task created successfully.\"",
@@ -246,12 +246,12 @@
         {
           "text": "I capture \"Gespeicherte Aufgabe prüfen\"",
           "status": "passed",
-          "durationMs": 119
+          "durationMs": 167
         },
         {
           "text": "I capture \"Aufgabenformular im Detail\"",
           "status": "passed",
-          "durationMs": 143
+          "durationMs": 106
         }
       ],
       "prerequisites": [
@@ -320,12 +320,12 @@
         {
           "text": "I open \"/\"",
           "status": "passed",
-          "durationMs": 4
+          "durationMs": 8
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
           "status": "passed",
-          "durationMs": 12
+          "durationMs": 14
         },
         {
           "text": "I add a note \"Einstellungen werden getrennt von den einzelnen Aufgaben gespeichert.\"",
@@ -340,12 +340,12 @@
         {
           "text": "I scroll to \"label=Email notifications\"",
           "status": "passed",
-          "durationMs": 38
+          "durationMs": 36
         },
         {
           "text": "I check \"label=Email notifications\"",
           "status": "passed",
-          "durationMs": 35
+          "durationMs": 36
         },
         {
           "text": "\"label=Email notifications\" is checked",
@@ -355,7 +355,7 @@
         {
           "text": "I click \"role=button:Save preferences\"",
           "status": "passed",
-          "durationMs": 33
+          "durationMs": 32
         },
         {
           "text": "\"role=status:Preferences result\" has text \"Preferences saved.\"",
@@ -370,7 +370,7 @@
         {
           "text": "I capture \"Einstellungen des Arbeitsbereichs\"",
           "status": "passed",
-          "durationMs": 147
+          "durationMs": 193
         }
       ],
       "callouts": [
