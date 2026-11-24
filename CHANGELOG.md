@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.4 — 2026-11-24
+
+- Reject missing captures and malformed selector shorthand before execution. Bound capture waits and recheck masks after scrolling and across the screenshot.
+- Require screenshots to decode during verification. Rebuild from the report and PNGs, including over MCP when the original manuals are missing. Keep unverified overlay sidecars in the original run.
+- Keep Pages downloads and ZIP files tied to the same verified source report. Compare crop changes and reject screenshot paths that collide on case-insensitive filesystems.
+- Attribute responsive instructions to every applicable screen, keep warnings before actions, and avoid enlarging small captures in HTML and PDF.
+- Shorten the README to a runnable walkthrough. Both demo tasks now check their saved state after a reload.
+- Publish the authoring guides, configuration reference, troubleshooting and delivery instructions in the [GitHub Wiki](https://github.com/openhoo/hooserguide/wiki).
+- Check editor and skill destinations before scaffolding, so a conflicting file or symlink leaves the project untouched.
+- Update the MCP SDK, Zod and six transitive dependencies to resolve eight npm audit findings.
+
 ## 0.8.3 — 2026-10-07
 
 - Reject ignored built-in step arguments, malformed URLs, impossible counts and empty CLI profile selections before application actions; retain lint diagnostics for malformed capture descriptions.

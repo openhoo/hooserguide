@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import parseTagExpression from '@cucumber/tag-expressions';
 import { applyCaptureDefaults } from './manual.js';
 import { parseFeature } from './gherkin.js';
-import { builtinSteps, target, type StepRegistry } from './steps.js';
+import { builtinSteps, classifyStep, target, type StepRegistry } from './steps.js';
 import { captureScreenshot } from './capture.js';
 import { validateStepArguments } from './preflight.js';
 import { resolveConfig, selectProfile } from './config.js';
@@ -61,6 +61,8 @@ async function prepare(config: Config) {
       registry.resolve(step.text);
       validateStepArguments(step, config);
     }
+    if (s.pickle.steps.every((step) => classifyStep(step.text) === 'builtin'))
+      throw new Error(`Scenario must capture at least one screenshot: ${s.pickle.name}`);
   }
   return { registry, scenarios };
 }
@@ -75,7 +77,7 @@ export async function validate(input: Config) {
       name: s.pickle.name,
       feature: s.feature,
       tags: s.pickle.tags.map((t) => t.name),
-      captures: s.pickle.steps.filter((step) => step.text.startsWith('I capture ')).length,
+      captures: s.pickle.steps.filter((step) => classifyStep(step.text) === 'capture').length,
       source: s.source,
       steps: s.pickle.steps.length,
     })),

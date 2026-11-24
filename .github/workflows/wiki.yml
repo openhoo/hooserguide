@@ -1,0 +1,50 @@
+name: Publish documentation wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'scripts/wiki.mjs'
+      - '.github/workflows/wiki.yml'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: hooserguide-wiki
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install the Markdown parser
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build and publish the wiki
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          wiki="$RUNNER_TEMP/hooserguide.wiki"
+          gh auth setup-git --hostname github.com
+          git clone "https://github.com/$GITHUB_REPOSITORY.wiki.git" "$wiki"
+          node scripts/wiki.mjs --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_SHA" --output "$wiki"
+          git -C "$wiki" add -- '*.md'
+          if ! git -C "$wiki" diff --cached --quiet; then
+            git -C "$wiki" -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m "Sync wiki from ${GITHUB_SHA:0:12}"
+            git -C "$wiki" push origin HEAD
+          fi

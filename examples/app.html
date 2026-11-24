@@ -124,6 +124,8 @@
         font-weight: 600;
       }
       [role='status'] {
+        width: fit-content;
+        max-width: 100%;
         font-size: 13px;
         color: #087344;
         min-height: 24px;
@@ -241,27 +243,41 @@
     </main>
     <footer>HooTasks demo · Built for the hooserguide walkthrough</footer>
     <script>
+      const list = document.getElementById('task-list');
+      const priority = document.getElementById('priority');
+      const notifications = document.getElementById('notifications');
+      const tasks = JSON.parse(sessionStorage.getItem('hootasks.tasks') ?? '[]');
+
+      function renderTasks() {
+        if (!tasks.length) return;
+        list.replaceChildren(
+          ...tasks.map(({ title, priorityLabel }) => {
+            const task = document.createElement('div');
+            task.className = 'task';
+            const badge = document.createElement('span');
+            badge.className = 'priority';
+            badge.textContent = priorityLabel;
+            task.append(document.createTextNode(title), badge);
+            return task;
+          }),
+        );
+      }
+
+      renderTasks();
+      notifications.checked = sessionStorage.getItem('hootasks.notifications') === 'true';
       document.getElementById('task-form').addEventListener('submit', (event) => {
         event.preventDefault();
-        const title = document.getElementById('task-title').value;
-        const priority = document.getElementById('priority');
-        const task = document.createElement('div');
-        task.className = 'task';
-        task.append(document.createTextNode(title));
-        const badge = document.createElement('span');
-        badge.className = 'priority';
-        badge.textContent = priority.selectedOptions[0].textContent;
-        task.append(badge);
-        document.getElementById('task-list').replaceChildren(task);
-        sessionStorage.setItem('task', JSON.stringify({ title, priority: priority.value }));
+        tasks.push({
+          title: document.getElementById('task-title').value,
+          priorityLabel: priority.selectedOptions[0].textContent,
+        });
+        sessionStorage.setItem('hootasks.tasks', JSON.stringify(tasks));
+        renderTasks();
         document.getElementById('task-result').textContent = 'Task created successfully.';
       });
       document.getElementById('preferences-form').addEventListener('submit', (event) => {
         event.preventDefault();
-        sessionStorage.setItem(
-          'notifications',
-          String(document.getElementById('notifications').checked),
-        );
+        sessionStorage.setItem('hootasks.notifications', String(notifications.checked));
         document.getElementById('preferences-result').textContent = 'Preferences saved.';
       });
     </script>

@@ -1,46 +1,54 @@
 # Configuration and step reference
 
+Look up [configuration](#configuration), [selectors](#selectors), [step phrases](#built-in-step-phrases), [screenshot options](#capture-docstring) or [report fields](#reports-and-failures). For a first scenario, follow the [authoring guide](authoring.md).
+
 ## Configuration
 
-JSON config is validated strictly: unknown fields are errors. Optional `$schema` supports editor completion with `schemas/config.schema.json`.
+Save this as `hooserguide.config.json` beside your `features/` directory and point `baseURL` at your running app:
 
-| Field               | Default       | Meaning                                                             |
-| ------------------- | ------------- | ------------------------------------------------------------------- |
-| `title`             | required      | Handbook title                                                      |
-| `baseURL`           | required      | HTTP(S) application URL for relative navigation                     |
-| `features`          | required      | Nonempty array of feature paths or glob patterns                    |
-| `output`            | `output`      | Parent directory for isolated runs                                  |
-| `tag`               | all scenarios | One tag such as `@manual`                                           |
-| `tagExpression`     | none          | Cucumber tag expression; overrides `tag`                            |
-| `scenario`          | none          | Case-insensitive scenario-name substring                            |
-| `failFast`          | false         | Stop after first failed scenario and record skipped coverage        |
-| `document`          | none          | Guide/product version, audience and summary                         |
-| `manual`            | A4 portrait   | Theme, page size, orientation, margin, contents and date visibility |
-| `captureDefaults`   | none          | Default auto-labels, mark color, focus padding and fullPage         |
-| `language`          | `en`          | Browser locale and document language tag                            |
-| `viewport`          | 1280 × 800    | Browser CSS viewport width/height                                   |
-| `deviceScaleFactor` | 1             | Browser scale factor; screenshots still use CSS pixels              |
-| `browser`           | `chromium`    | Chromium, Firefox or WebKit                                         |
-| `headed`            | false         | Open a visible browser for debugging                                |
-| `timeoutMs`         | 10000         | Browser action/assertion timeout, 100–120000 milliseconds           |
-| `storageState`      | none          | Local Playwright authentication state file                          |
-| `masks`             | none          | Privacy selectors applied to every capture                          |
-| `plugins`           | none          | Trusted local ESM step modules                                      |
-| `pdf`               | true          | Enable pdfcn / Forme PDF export                                     |
+```json
+{
+  "title": "Workspace guide",
+  "baseURL": "http://localhost:3000",
+  "features": ["features/*.feature"]
+}
+```
 
-`features`, `output`, `plugins` and `storageState` are relative to the config file. API config passed directly to `run()` is relative to the process working directory. Each feature pattern must match a file. Feature files are sorted and duplicate paths are deduplicated. Scenarios run sequentially in fresh browser contexts, with the configured authentication state loaded for each one.
+Unknown fields are rejected. The [configuration schema](../schemas/config.schema.json) lists accepted values; the [editor setup](authoring.md#start-with-an-editor-workspace) installs a local copy.
 
-Additional config fields:
+| Field               | Default       | Meaning                                                                            |
+| ------------------- | ------------- | ---------------------------------------------------------------------------------- |
+| `title`             | required      | Handbook title                                                                     |
+| `baseURL`           | required      | HTTP(S) application URL for relative navigation                                    |
+| `features`          | required      | Nonempty array of feature paths or glob patterns                                   |
+| `output`            | `output`      | Parent directory for isolated runs                                                 |
+| `tag`               | all scenarios | One tag such as `@manual`                                                          |
+| `tagExpression`     | none          | Cucumber tag expression; overrides `tag`                                           |
+| `scenario`          | none          | Case-insensitive scenario-name substring                                           |
+| `failFast`          | false         | Stop after first failed scenario and record skipped coverage                       |
+| `document`          | none          | Guide/product version, audience and summary                                        |
+| `manual`            | A4 portrait   | Theme, page size, orientation, margin, contents and date visibility                |
+| `captureDefaults`   | none          | Default auto-labels, mark color, focus padding and fullPage                        |
+| `language`          | `en`          | Browser locale and document language tag                                           |
+| `viewport`          | 1280 × 800    | Browser CSS viewport width/height                                                  |
+| `deviceScaleFactor` | 1             | Browser scale factor; screenshots still use CSS pixels                             |
+| `browser`           | `chromium`    | Chromium, Firefox or WebKit                                                        |
+| `headed`            | false         | Open a visible browser for debugging                                               |
+| `timeoutMs`         | 10000         | Browser action/assertion timeout, 100–120000 milliseconds                          |
+| `storageState`      | none          | Local Playwright authentication state file                                         |
+| `masks`             | none          | Privacy selectors applied to every capture                                         |
+| `plugins`           | none          | Trusted local ESM step modules                                                     |
+| `pdf`               | true          | Enable pdfcn / Forme PDF export                                                    |
+| `profiles`          | none          | Named browser settings; see [profile examples](advanced.md#named-browser-profiles) |
+| `profile`           | base settings | Default profile name; `--profile` overrides it                                     |
+| `responsive`        | none          | Two to four profiles, their order, labels and [presentation layout](responsive.md) |
+| `branding`          | hooserguide   | Display name, subtitle and six-digit hex accent color                              |
 
-| Field      | Default       | Meaning                                                        |
-| ---------- | ------------- | -------------------------------------------------------------- |
-| `profiles` | none          | Named browser settings for responsive runs                     |
-| `profile`  | base settings | Selected profile name; CLI `--profile` overrides it            |
-| `branding` | hooserguide   | Optional `name`, `subtitle` and hex `accentColor` for HTML/PDF |
+Paths in `features`, `output`, `plugins` and `storageState` resolve relative to the config file. When passing a config object directly to `run()`, relative paths resolve from the process working directory. Each feature pattern must match; files are sorted and deduplicated. Each selected scenario gets a fresh browser context and the configured storage state.
 
-See [advanced workflows](advanced.md) for complete profiles, branding, focus captures and evidence-only rebuilds.
+### Theme selection
 
-See [customization and sharing](customization.md) for all fields and override rules.
+`manual.theme` sets the default HTML and PDF theme. `--theme` overrides it for `run` and `build`. See [manual themes](customization.md#manual-themes) for the six presets and reader controls.
 
 ## Selectors
 
@@ -53,67 +61,64 @@ See [customization and sharing](customization.md) for all fields and override ru
 | `css=#save`        | `{"css":"#save"}`                 |
 | `#save`            | `{"css":"#save"}`                 |
 
-Accessible names, labels and text use exact matching. Bare strings are Playwright locator selectors. Mark targets must resolve to one visible element; masking selectors may match multiple elements but must match at least one. For unusual accessible names containing colons, the string role selector splits only at the first colon.
+Use string selectors inside Gherkin steps. In a capture or config, you can also use the object form. Accessible names, labels and text match exactly; `role=button:Save: draft` selects a button named “Save: draft”. Unprefixed strings go to Playwright. Annotation and focus targets require one visible element. Each privacy selector must match at least one element and can mask several.
 
 ## Built-in step phrases
 
-| Phrase                                            | Effect                                                         |
-| ------------------------------------------------- | -------------------------------------------------------------- |
-| `I open "/settings"`                              | Navigate and wait for DOM content                              |
-| `I click "role=button:Save"`                      | Click a locator                                                |
-| `I fill "label=Name" with "Demo"`                 | Fill a text field                                              |
-| `I fill "label=Password" from env "APP_PASSWORD"` | Fill without storing the value in the feature/report step text |
-| `I select "high" in "label=Priority"`             | Select an option by value                                      |
-| `I check "label=Notifications"`                   | Check a checkbox                                               |
-| `I uncheck "label=Notifications"`                 | Uncheck a checkbox                                             |
-| `I press "Enter" on "label=Search"`               | Send a key to a locator                                        |
-| `I scroll to "testid=preferences"`                | Scroll a locator into view                                     |
-| `"role=heading:Settings" is visible`              | Retry a visibility assertion                                   |
-| `"role=status:Result" has text "Saved"`           | Retry an exact text assertion                                  |
-| `I explain "Select Save."`                        | Add user-facing prose to the chapter                           |
-| `I add a prerequisite "Sign in as an editor."`    | Add a descriptive chapter prerequisite                         |
-| `I add a note "Only your profile changes."`       | Add an informational callout                                   |
-| `I add a tip "Use a recognizable name."`          | Add a tip callout                                              |
-| `I add a warning "Review before saving."`         | Add a warning callout                                          |
-| `I capture "Settings"`                            | Capture and optionally annotate the current state              |
+Use `npx hooserguide steps --search save` to find a phrase. Add `--config hooserguide.config.json` to include local plugins, or `--json` for the binding patterns, examples and descriptions. The phrases below are case-sensitive. Gherkin keywords may be localized; escape quotes inside arguments as `\"`.
 
-Additional built-in steps:
+### Navigate and interact
 
-| Phrase                                                              | Effect                                       |
-| ------------------------------------------------------------------- | -------------------------------------------- |
-| `I fill the form:`                                                  | Fill inputs from a selector/value data table |
-| `I hover "role=button:Help"`                                        | Hover a locator                              |
-| `I double click "testid=item"`                                      | Double-click a locator                       |
-| `I clear "label=Search"`                                            | Clear an input                               |
-| `I upload "fixtures/avatar.png" to "label=Avatar"`                  | Upload a feature-relative file               |
-| `I drag "testid=task" to "testid=column"`                           | Drag an element to another element           |
-| `I reload the page`                                                 | Reload for persistence checks                |
-| `I go back` / `I go forward`                                        | Navigate browser history                     |
-| `"testid=loading" is hidden`                                        | Assert hidden or detached state              |
-| `"role=button:Save" is enabled` / `is disabled`                     | Assert control state                         |
-| `"label=Notifications" is checked` / `is unchecked`                 | Assert checkbox state                        |
-| `"label=Name" has value "Demo"`                                     | Assert an input value                        |
-| `"testid=tasks" contains text "Launch"`                             | Assert a substring                           |
-| `"css=.task" has count 3`                                           | Assert the match count                       |
-| `"role=button:Save" has attribute "aria-pressed" with value "true"` | Assert an attribute                          |
-| `the URL is "/settings"`                                            | Assert exact URL relative to `baseURL`       |
-| `the page title is "Settings"`                                      | Assert the document title                    |
+| Phrase                                             | Effect                                                         |
+| -------------------------------------------------- | -------------------------------------------------------------- |
+| `I open "/settings"`                               | Navigate and wait for DOM content                              |
+| `I click "role=button:Save"`                       | Click a locator                                                |
+| `I fill "label=Name" with "Demo"`                  | Fill a text field                                              |
+| `I fill "label=Password" from env "APP_PASSWORD"`  | Fill without storing the value in the feature/report step text |
+| `I select "high" in "label=Priority"`              | Select an option by value                                      |
+| `I check "label=Notifications"`                    | Check a checkbox                                               |
+| `I uncheck "label=Notifications"`                  | Uncheck a checkbox                                             |
+| `I press "Enter" on "label=Search"`                | Send a key to a locator                                        |
+| `I scroll to "testid=preferences"`                 | Scroll a locator into view                                     |
+| `I fill the form:`                                 | Fill inputs from a selector/value data table                   |
+| `I hover "role=button:Help"`                       | Hover a locator                                                |
+| `I double click "testid=item"`                     | Double-click a locator                                         |
+| `I clear "label=Search"`                           | Clear an input                                                 |
+| `I upload "fixtures/avatar.png" to "label=Avatar"` | Upload a feature-relative file                                 |
+| `I drag "testid=task" to "testid=column"`          | Drag an element to another element                             |
+| `I reload the page`                                | Reload for persistence checks                                  |
+| `I go back` / `I go forward`                       | Navigate browser history                                       |
 
-`hooserguide steps --json` returns patterns, examples and descriptions. Add `--config` for plugins; custom bindings may pass `{example, description}` as the third argument to `registry.define`.
+### Check the result
 
-Phrases are case-sensitive. `Given`, `When`, `Then`, `And` and `But` have normal Gherkin semantics. Use escaped quotes (`\"`) inside quoted arguments. The official Gherkin parser compiles outlines, backgrounds and localized keywords; plugins can handle additional behavior and data tables.
+| Phrase                                                              | Effect                                 |
+| ------------------------------------------------------------------- | -------------------------------------- |
+| `"role=heading:Settings" is visible`                                | Retry a visibility assertion           |
+| `"role=status:Result" has text "Saved"`                             | Retry an exact text assertion          |
+| `"testid=loading" is hidden`                                        | Assert hidden or detached state        |
+| `"role=button:Save" is enabled` / `is disabled`                     | Assert control state                   |
+| `"label=Notifications" is checked` / `is unchecked`                 | Assert checkbox state                  |
+| `"label=Name" has value "Demo"`                                     | Assert an input value                  |
+| `"testid=tasks" contains text "Launch"`                             | Assert a substring                     |
+| `"css=.task" has count 3`                                           | Assert the match count                 |
+| `"role=button:Save" has attribute "aria-pressed" with value "true"` | Assert an attribute                    |
+| `the URL is "/settings"`                                            | Assert exact URL relative to `baseURL` |
+| `the page title is "Settings"`                                      | Assert the document title              |
 
-Built-in step arguments are validated before browser launch. Only `I explain:`
-accepts a text docstring, `I capture "..."` accepts a JSON object docstring, and
-`I fill the form:` accepts a selector/value data table. Other built-in steps
-reject attached arguments. Navigation and URL assertion values must resolve as
-URLs against `baseURL`; element counts must be safe non-negative integers.
-Trusted plugins own validation of their custom argument syntax.
+### Write instructions and take screenshots
 
-Environment-fill failures identify the variable without retaining browser fill
-logs, because those logs can contain escaped or abbreviated secret values.
-Check the selector and variable availability without printing credentials. Set
-capture masks explicitly when the filled value is visible in screenshots.
+| Phrase                                         | Effect                                            |
+| ---------------------------------------------- | ------------------------------------------------- |
+| `I explain "Select Save."`                     | Add user-facing prose to the chapter              |
+| `I add a prerequisite "Sign in as an editor."` | Add a descriptive chapter prerequisite            |
+| `I add a note "Only your profile changes."`    | Add an informational callout                      |
+| `I add a tip "Use a recognizable name."`       | Add a tip callout                                 |
+| `I add a warning "Review before saving."`      | Add a warning callout                             |
+| `I capture "Settings"`                         | Capture and optionally annotate the current state |
+
+Only `I explain:` (plain-text docstring), `I capture "…"` (JSON object docstring) and `I fill the form:` (two-column data table) accept attached arguments. Built-in chapters need at least one capture. Validation catches invalid shorthand, URLs that cannot resolve against `baseURL`, and counts outside the safe integer range before browser actions. Trusted plugins define and validate their own steps and may take screenshots.
+
+Use the environment-fill step for credentials. Its failure message names the variable without retaining the browser's fill log. Explicitly mask the field if the value can appear in screenshots.
 
 ## Capture docstring
 
@@ -130,53 +135,45 @@ And I capture "Settings"
         "kind": "both",
         "label": "A",
         "caption": "Save your changes.",
-        "color": "#e11d48",
-        "from": { "x": 900, "y": 400 }
+        "color": "#e11d48"
       }
     ]
   }
   """
 ```
 
-`kind` defaults to `box`; alternatives are `arrow` and `both`. Labels are optional and contain 1–4 ASCII letters/digits. Captioned marks without explicit labels receive unique numeric references. Caption-less marks remain unlabeled unless `autoLabels` is selected. Legacy rebuilds display unlabeled captions without inventing references. `color` is a six-digit hex color. `from` is optional: automatic arrow origins try to avoid other marked targets. Explicit coordinates are screenshot CSS pixels and must be inside the image.
+| Option                           | Behavior                                                                                                                                                                                                                                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `marks[].kind`, `color`          | `box` (default), `arrow` or `both`. Colors use six-digit hex codes.                                                                                                                                                                                                                                           |
+| `label`, `caption`, `autoLabels` | Labels contain 1–4 ASCII letters or digits and must be unique per capture. Captions become legends. Captioned marks get numbers by default; choose `"letters"` or `"numbers"` to label all marks automatically. Explicit labels take precedence. Older captions without labels remain unchanged when rebuilt. |
+| `marks[].from`                   | Optional arrow origin, such as `{"x":64,"y":72}`, within the final screenshot. Automatic origins try to avoid other marked controls.                                                                                                                                                                          |
+| `fullPage`                       | Default `false`: scroll the first mark into view and require all marks to fit. Use `true` to capture the document from its origin. Viewport crops on zoomed mobile pages account for the visual viewport.                                                                                                     |
+| `focus`, `padding`               | Crop around one visible element with 24 CSS pixels of padding by default (0–500 allowed). Marks must fit in the crop. See the [focused capture example](advanced.md#capture-a-specific-panel).                                                                                                                |
+| `masks`                          | Mask these targets in addition to the global config masks. Original and annotated PNGs come from the same masked image.                                                                                                                                                                                       |
 
-`focus`, `padding` and `autoLabels` are described in [advanced workflows](advanced.md).
-
-`fullPage` defaults to false. Full-page captures start at the document origin for consistent scroll coordinates. Viewport captures scroll the first marked element into view and reject targets outside the final viewport. Split captures if all controls cannot fit in one image. On zoomed mobile pages, target coordinates are transformed into final screenshot pixels; full-page and focus captures retain document CSS pixels.
-
-Original and annotated PNGs are masked before writing. Missing privacy selectors fail the capture. Masking is explicit; it is not automatic PII detection. CSS motion and running Web Animations are frozen before target measurement; previously paused Web Animations remain paused; annotations are rendered with an SVG layer and Sharp, without adding drawing elements to the application DOM.
+Each privacy selector must match after the page settles. If its match count or bounds change while the browser takes the screenshot, neither image is saved. Review both variants for any private information your masks did not cover. Font and animation-frame waits honor `timeoutMs`. Motion is paused for measuring; previously paused animations stay paused. Boxes, arrows and labels are drawn onto the captured image.
 
 ## Authoring tools
 
-See [authoring](authoring.md) for `lint`, `outline`, `new`, `editor`,
-searchable step discovery and their CLI/MCP/library contracts.
-
-`I explain:` accepts a nonempty plain-text docstring, optionally marked `text`,
-for one multiline instruction. A Scenario description introduces that chapter,
-falling back to the Feature description when absent.
+See the [authoring guide](authoring.md) for editor setup, chapter templates, lint diagnostics and outline review. `lint`, `outline` and `validate` do not execute browser steps.
 
 ## Reports and failures
 
-`report.json` schema version is 1. It records the timestamp, browser, language, chapters, executed steps, errors and captures. Captures contain relative image paths, image dimensions, target bounds and the SHA-256 of the annotated PNG and, for 0.2+ captures, the masked raw PNG. The report also includes effective viewport/profile, per-step `durationMs` and optional branding. See [report schema](../schemas/report.schema.json). Source paths in your own runs are absolute for traceability; the committed demo uses portable relative paths.
+Each execution writes a separate run directory. Read `report.json` for the exact selection, browser, profile, viewport, chapter and step results, durations, errors and screenshots. Captures include relative PNG paths, dimensions, annotation bounds and image hashes. Feature paths are absolute in a local run. The [report schema](../schemas/report.schema.json) is version 1.
 
-The run status is failed if any scenario or exporter fails. Failed scenarios retain available screenshot evidence. No HTML, Markdown or PDF handbook is published for a failed run. An export failure appears in `exportError`. Preflight errors throw before launching the browser. Exported files appear under a unique run directory; previous runs are never reused as current evidence.
+| Result          | What to open                                                                                                            |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Passed          | `index.html`, `handbook.md` or `handbook.pdf` (when PDF export is enabled). Keep the screenshots beside them.           |
+| Failed scenario | The report names the chapter and failed step or setup error. Available captures are retained; no handbook is published. |
+| Export failure  | Read `exportError`. A PDF audit, if present, is diagnostic rather than a finished handbook.                             |
+| Preflight error | Fix the reported config, feature or argument. The browser has not run.                                                  |
 
-Full-page screenshots are split into page-sized images in the PDF to preserve readability. HTML and Markdown use the complete image. `pdf-layout.json` records page count, rendering warnings from the Forme content audit, and each figure's exact pixel slice ranges. Legends appear alongside the slice containing their target. Very tall annotation groups may span slices; inspect the rendered pages. Standard fonts cover common Latin text; custom embedded fonts are needed for other scripts. The default document template uses English structural labels, with authored prose and browser/document language controlled by the config.
+In `--json` mode, completed results go to stdout, including failed runs with exit code 1. Exceptions go to stderr with exit code 1. Plugin console diagnostics go to stderr; plugins should not write directly to stdout.
+
+HTML and Markdown use the complete screenshot. PDF may split a tall figure across pages; `pdf-layout.json` records page count, warnings and exact slice ranges. Check the pages and legends visually, especially when a tall annotation spans slices. Standard PDF fonts cover common Latin text; the template has no configurable font embedding for other scripts.
 
 ## Evidence integrity
 
-Every report reader and renderer validates the strict report schema and execution consistency. A passed report must have passing chapters and steps, at least one step and capture per chapter, no recorded errors (including empty error strings), and no skipped scenarios. Screenshot IDs and paths must be unique across the run; reference labels must be unique within each capture, and annotation bounds must fit the image.
+Readers check the report's schema and consistency. A passing chapter has passing steps and at least one capture. A passing run has no errors or skipped executions. Screenshot IDs and paths must be unique, labels distinct within each capture, and marks inside the image.
 
-Rebuild, inspection, comparison and bundle share contained artifact reads: reports and layout files are limited to 2 MiB, image/manual files to 64 MiB. Escaping symlinks are rejected, including a symlinked `report.json`. The direct `renderManual` and `renderPdf` APIs also verify both PNG variants before exporting. Legacy reports without raw hashes remain readable, with the limitation explicitly reported during inspection/comparison.
-
-Comparison includes browser engine, scenario tags and executed step text/status/error. Step durations and PNG compression changes are ignored; both annotated and raw pixels are decoded before comparison. An unchanged comparison does not replace visual review or prove that the application is current.
-
-With `--json`, CLI results occupy stdout and trusted plugin console diagnostics go to stderr. Plugins must not write directly to stdout. Exceptional command failures return their JSON diagnostic on stderr with exit code 1; completed failed runs return a failed run summary on stdout with exit code 1.
-
-### Theme selection
-
-`manual.theme` accepts `professional` (default), `ocean`, `forest`, `sand`,
-`midnight` and `graphite`. The last two presets are dark. `run` and `build`
-accept `--theme <name>` to override the configuration. Rebuilds preserve the
-selected theme in `report.json`; MCP configuration uses the same `manual.theme`
-field. See [manual themes](../README.md#manual-themes) for appearance and viewer behavior.
+Rebuild, inspection, compare and portable exports verify screenshot dimensions, PNG decoding and available hashes. Current runs record SHA-256 for both images; 0.1 runs have no raw hash. `renderManual` and `renderPdf` verify images as well. Contained reads reject paths or symlinks outside the run; limits are 2 MiB for reports/layout and 64 MiB for images/manuals. The unsigned report establishes file consistency, not independent proof of origin. See [compare and inspect](customization.md#inspect-and-compare-evidence) for how to interpret changes.

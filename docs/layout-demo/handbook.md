@@ -2,7 +2,7 @@
 
 Handbuchversion: 1.0
 Zielgruppe: Teammitglieder
-Erstellt: 2026-10-07
+Erstellt: 2026-11-24
 
 Aufgaben anlegen, organisieren und Ergebnisse prüfen.
 
@@ -13,7 +13,7 @@ Aufgaben anlegen, organisieren und Ergebnisse prüfen.
 
 ## 1. Die erste Aufgabe anlegen
 
-HooTasks hält die Arbeit Ihres Teams übersichtlich. Legen Sie Aufgaben an,   prüfen Sie das gespeicherte Ergebnis und passen Sie Ihre Einstellungen an.
+Legen Sie eine Aufgabe an. Prüfen Sie nach dem Neuladen, ob Titel und Priorität weiterhin in der Liste stehen.
 
 ### Voraussetzungen
 
@@ -26,10 +26,7 @@ HooTasks hält die Arbeit Ihres Teams übersichtlich. Legen Sie Aufgaben an,   p
 
 ### Aufgabendetails ausfüllen
 
-
-
 ![Aufgabendetails ausfüllen](screenshots/01-01.png)
-
 
 A bezeichnet den Titel, B die Priorität. Wählen Sie Create task zum Speichern.
 
@@ -39,10 +36,7 @@ A bezeichnet den Titel, B die Priorität. Wählen Sie Create task zum Speichern.
 
 ### Gespeicherte Aufgabe prüfen
 
-
-
 ![Gespeicherte Aufgabe prüfen](screenshots/01-02.png)
-
 
 Die Aufgabe erscheint im Arbeitsbereich. Die Bestätigung zeigt den erfolgreichen Speichervorgang.
 
@@ -51,10 +45,7 @@ Die Aufgabe erscheint im Arbeitsbereich. Die Bestätigung zeigt den erfolgreiche
 
 ### Aufgabenformular im Detail
 
-
-
 ![Aufgabenformular im Detail](screenshots/01-03.png)
-
 
 Die Detailansicht hält das Formular lesbar und vergibt Referenzen automatisch.
 
@@ -64,7 +55,7 @@ Die Detailansicht hält das Formular lesbar und vergibt Referenzen automatisch.
 
 ## 2. Benachrichtigungen anpassen
 
-HooTasks hält die Arbeit Ihres Teams übersichtlich. Legen Sie Aufgaben an,   prüfen Sie das gespeicherte Ergebnis und passen Sie Ihre Einstellungen an.
+Legen Sie für diese Browsersitzung fest, ob Sie E-Mail-Benachrichtigungen erhalten möchten.
 
 > **Hinweis:** Einstellungen werden getrennt von den einzelnen Aufgaben gespeichert.
 
@@ -74,10 +65,7 @@ HooTasks hält die Arbeit Ihres Teams übersichtlich. Legen Sie Aufgaben an,   p
 
 ### Einstellungen des Arbeitsbereichs
 
-
-
 ![Einstellungen des Arbeitsbereichs](screenshots/02-01.png)
-
 
 Die Einstellungen befinden sich unten im Arbeitsbereich. Lange Screenshots bleiben über mehrere PDF-Seiten lesbar.
 

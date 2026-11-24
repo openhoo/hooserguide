@@ -1,29 +1,31 @@
 # Advanced workflows
 
+Use these recipes when a basic scenario needs [a close-up](#capture-a-specific-panel), [a form table](#fill-a-form-using-a-gherkin-table), [one browser profile](#named-browser-profiles) or [a new export of existing evidence](#rebuild-from-existing-evidence). Run the CLI examples from the directory containing your guide config.
+
 ## Capture a specific panel
 
-Focus screenshots improve readability when a full page contains navigation or unrelated information. The original and annotated images both contain only the cropped, masked region.
+This capture from the [HooTasks example](../examples/tasks.feature) keeps the task form readable without surrounding navigation:
 
 ```gherkin
 And I capture "Task form in detail"
   """json
   {
-    "focus": "testid=task-form",
+    "focus": "css=.grid > .card:first-child",
     "padding": 40,
     "autoLabels": "letters",
+    "description": "A focused view keeps the form readable and assigns references automatically.",
     "marks": [
-      { "target": "label=Task title", "kind": "box", "caption": "Enter a descriptive title." },
-      { "target": "role=button:Save", "kind": "both", "color": "#2563eb", "caption": "Save the task." }
+      { "target": "label=Task title", "kind": "box", "caption": "Your task title." },
+      { "target": "label=Priority", "kind": "both", "color": "#2563eb", "caption": "The selected priority." },
+      { "target": "role=status:Task result", "kind": "arrow", "caption": "The save confirmation." }
     ]
   }
   """
 ```
 
-`focus` must resolve to one visible element. `padding` defaults to 24 CSS pixels and accepts 0–500. Focus cannot be combined with `fullPage: true`; marks must fit in the final crop. Explicit arrow `from` coordinates are relative to the cropped image. The report records the crop's origin and dimensions in full-document CSS pixels.
+The focus target must be one visible element and contain every mark after padding. The browser takes a masked full-page image, then crops both variants; the report keeps the crop's document coordinates. Explicit arrow origins are relative to the final crop. Very large documents are still subject to the browser's full-page screenshot limits.
 
-The browser first captures a masked full-page buffer and Sharp extracts the desired region. This keeps coordinates consistent at high DPI and after scrolling; very large documents still have the browser's full-page capture limits.
-
-`autoLabels: "letters"` generates A, B, … Z, AA, AB, …; `"numbers"` generates 1, 2, 3, …. Explicit labels are retained and skipped by the automatic sequence. Without `autoLabels`, captioned marks still receive missing numeric references, while marks without captions or labels remain unnumbered. Duplicate explicit labels fail validation. Numbers and letters are scoped to each screenshot, and captions become matching HTML/PDF/Markdown legends.
+With `autoLabels: "letters"`, marks get A through Z, then AA, AB and so on. Explicit labels are preserved and skipped by the sequence. See the [capture reference](reference.md#capture-docstring) for numeric labels, padding limits and mask behavior.
 
 ![Focused screenshot with automatically assigned references](demo/screenshots/01-03.png)
 
@@ -41,82 +43,63 @@ And I reload the page
 Then "label=Name" has value "Demo User"
 ```
 
-The header must be exactly `selector | value`, with at least one data row. Each row fills a text input. Use `I select`, `I check` or a custom step for other controls. For credentials use the environment-fill step instead of writing a secret in a table. Reload assertions are useful when documenting durable saved state rather than only an immediate UI confirmation.
+Use two separate header cells named `selector` and `value` and at least one data row. Every row fills a text input. Use `I select` or `I check` for other controls and the [environment-fill step](reference.md#navigate-and-interact) for credentials. A reload after saving distinguishes a persisted change from text still sitting in the form.
 
-Uploads resolve paths relative to the `.feature` file:
-
-```gherkin
-When I upload "fixtures/avatar.png" to "label=Avatar"
-And I drag "testid=task" to "testid=done-column"
-Then "testid=done-column" contains text "Launch checklist"
-```
-
-Hover, double-click, clear and browser-history actions are also available. Discover exact phrases with `hooserguide steps --json`; use `--config` to include custom plugins.
+The [step catalogue](reference.md#built-in-step-phrases) also covers uploads (paths resolve relative to the feature file), drag and drop, hover and history navigation.
 
 ## Named browser profiles
 
+For one mobile run, use the `mobile` profile already supplied by `init`:
+
+```sh
+npx hooserguide validate --profile mobile
+npx hooserguide run --profile mobile --json
+```
+
+Add named entries to the config's `profiles` object when you need another viewport or color scheme. For example, this fragment defines a narrow, dark browser:
+
 ```json
 {
-  "title": "My app — User guide",
-  "baseURL": "http://localhost:3000",
-  "features": ["features/**/*.feature"],
-  "output": "output/guides",
   "profiles": {
-    "desktop": { "viewport": { "width": 1280, "height": 800 } },
-    "mobile": {
+    "mobile-dark": {
       "viewport": { "width": 390, "height": 844 },
       "deviceScaleFactor": 2,
       "isMobile": true,
-      "hasTouch": true
-    },
-    "dark": { "colorScheme": "dark" }
-  },
-  "branding": {
-    "name": "Acme",
-    "subtitle": "Everything you need for your first day.",
-    "accentColor": "#7c3aed"
+      "hasTouch": true,
+      "colorScheme": "dark"
+    }
   }
 }
 ```
 
-```sh
-hooserguide validate --profile mobile
-hooserguide run --profile desktop --json
-hooserguide run --profile mobile --json
-```
+A profile inherits the base viewport, scale factor and browser unless it overrides them. Set `profile` for the default selection; unknown names fail before launch. Install the chosen browser engine. For Firefox, use a narrow viewport and omit `isMobile: true`.
 
-Each command executes a separate run. Profiles override the corresponding base viewport, scale factor and browser, while other base settings remain. Supported profile settings are `viewport`, `deviceScaleFactor`, `browser`, `isMobile`, `hasTouch` and `colorScheme`. Set config `profile` to choose a default. Unknown names fail before browser launch. `init` includes desktop and mobile profiles.
-
-Firefox does not support `isMobile`; use a mobile viewport without that flag or select Chromium/WebKit. Install the selected browser first. Workflow selectors and viewport captures must accommodate the actual responsive UI. Full-page or focus captures can help when mobile layout moves controls apart. Profiles emulate browser settings; they are not physical-device tests.
-
-The report records the selected profile, effective viewport and the duration of each executed step. Existing config without profiles continues to use its base browser settings.
+The report records the selected profile, effective viewport and step durations. To show several screens side by side in one handbook, use a [responsive run](responsive.md).
 
 ## Rebuild from existing evidence
 
-Re-export a successful run without opening the application:
+Use `build` after changing the cover, theme or PDF layout. Set `RUN` to the directory printed by a successful `run` and choose an output outside it:
 
 ```sh
-hooserguide build output/guides/run-<timestamp>-<id> \
-  --output output/rebuilt --config hooserguide.config.json --json
+RUN="output/hooserguide/run-…"
+npx hooserguide build "$RUN" --config hooserguide.config.json --output output/rebuilt --json
 ```
 
-`--config` is optional; it reads branding, document metadata, manual layout and PDF settings from a complete project config. Other execution settings are not used and no feature files are rerun. `--no-pdf` exports only HTML and Markdown. Without `--output`, builds are saved under a sibling `rebuilt` directory.
+With `--config`, the new handbook uses the project's branding, document metadata, manual options and PDF setting. With no `--output`, builds go under a sibling `rebuilt` directory. `--no-pdf` exports HTML and Markdown. The app is never opened; if the workflow, selectors or masks changed, edit the feature or config and generate a new run.
 
-The source report and screenshots remain untouched. Rebuild validates the report, successful chapter/step states, screenshot paths, image dimensions and annotated PNG SHA-256 values. Raw PNG hashes are checked when the source report includes them; 0.1 reports did not have raw-image hashes. Missing/changed images or symlinks escaping the source run fail the build. Hash checks detect changes against a trusted report; they do not authenticate an unsigned report.
-
-The new report retains the original `generatedAt`, adds `rebuiltAt` and the SHA-256 of the source report. A rebuilt guide represents the original capture time; it does not claim that the application was checked again. Branding changes affect the document template, not the screenshot contents.
+A rebuild needs only the original report and its verified, decodable PNGs. It copies both image variants byte for byte, leaves unhashed SVG overlays in the original run, and checks that even a symlinked output resolves outside the source. The new report retains the original `generatedAt` and adds `rebuiltAt` and `sourceReportSha256`. Older runs without raw-image hashes have the [documented integrity limitation](reference.md#evidence-integrity).
 
 ```ts
 import { build } from '@openhoo/hooserguide';
 
-const result = await build('output/guides/run-<timestamp>-<id>', {
+const result = await build(runDirectory, {
   output: 'output/rebuilt',
   branding: { name: 'Acme', accentColor: '#7c3aed' },
 });
 if (result.report.status !== 'passed') throw new Error(result.report.exportError);
 ```
 
-MCP clients start with `hooserguide_status` and `hooserguide_steps`, pass the same `profile` to generation/validation, and pin the returned `runId` in inspection/rebuild calls. `hooserguide_rebuild` re-exports selected successful evidence with current project branding. Rebuild does not require application access.
+For MCP, pin the `runId` in `hooserguide_rebuild` so you re-export the evidence you reviewed. See the [MCP workflow](integration.md).
 
 ## Customization, comparison and portable delivery
 

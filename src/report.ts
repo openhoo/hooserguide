@@ -154,16 +154,14 @@ export function assertReportIntegrity(report: RunReport): void {
         (capture.crop.width !== capture.width || capture.crop.height !== capture.height)
       )
         throw new Error('Crop dimensions differ from the evidence screenshot');
-      if (
-        ids.has(capture.id) ||
-        paths.has(capture.image) ||
-        paths.has(capture.raw) ||
-        capture.image === capture.raw
-      )
+      // A portable guide must keep both PNGs distinct on case-insensitive filesystems.
+      const image = capture.image.toLowerCase(),
+        raw = capture.raw.toLowerCase();
+      if (ids.has(capture.id) || paths.has(image) || paths.has(raw) || image === raw)
         throw new Error('Evidence contains duplicate screenshot IDs or paths');
       ids.add(capture.id);
-      paths.add(capture.image);
-      paths.add(capture.raw);
+      paths.add(image);
+      paths.add(raw);
       validateCapture({
         title: capture.title,
         marks: capture.marks.map(({ bounds: _bounds, ...mark }) => mark),

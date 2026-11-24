@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "title": "HooTasks — User guide",
   "language": "en",
-  "generatedAt": "2026-10-07T07:47:22.204Z",
+  "generatedAt": "2026-11-24T07:25:23.702Z",
   "status": "passed",
   "browser": "chromium",
   "viewport": {
@@ -22,7 +22,7 @@
     {
       "title": "Create your first task",
       "feature": "Work with HooTasks",
-      "description": "HooTasks keeps your team's work organized. Create a task, verify the saved\n  result and adjust your workspace preferences with these short walkthroughs.",
+      "description": "Add a task and check that its title and priority are still in the list after you reload.",
       "source": "examples/tasks.feature",
       "tags": [
         "@manual",
@@ -112,12 +112,12 @@
               "bounds": {
                 "x": 159,
                 "y": 668.5625,
-                "width": 438,
+                "width": 158.640625,
                 "height": 24
               }
             }
           ],
-          "sha256": "1de384050618b009c9714aa0ddd0fba457f7986ba7cdcdaa626ce1315f5c2083",
+          "sha256": "2cf73baffb46e6c5948965dcaff66a84953b904ab4022d335ae50b13c782e7ad",
           "rawSha256": "f6855007275bc39159a145bdc4b3805043a7890caf5fbee6eee89fda724bf218"
         },
         {
@@ -162,7 +162,7 @@
               "bounds": {
                 "x": 69,
                 "y": 425.5625,
-                "width": 438,
+                "width": 158.640625,
                 "height": 24
               }
             }
@@ -173,7 +173,7 @@
             "width": 576,
             "height": 519
           },
-          "sha256": "8d61a6f34634c21e3c5ea3b2761cd0e1903c6e7b10b289e43d64ee9f7f1b3927",
+          "sha256": "4302ed5510ff41503da13a2b851d26cd7adfba10cfa61368986649be123da7aa",
           "rawSha256": "eaf40b62fa59adcda78ed1117f479f4658906423dbe62601f288b15faca64346"
         }
       ],
@@ -181,12 +181,12 @@
         {
           "text": "I open \"/\"",
           "status": "passed",
-          "durationMs": 90
+          "durationMs": 7
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
           "status": "passed",
-          "durationMs": 107
+          "durationMs": 13
         },
         {
           "text": "I add a prerequisite \"Open your workspace with permission to create tasks.\"",
@@ -206,22 +206,22 @@
         {
           "text": "I capture \"Fill in the task details\"",
           "status": "passed",
-          "durationMs": 560
+          "durationMs": 182
         },
         {
           "text": "I fill \"label=Task title\" with \"Prepare the launch checklist\"",
           "status": "passed",
-          "durationMs": 43
+          "durationMs": 7
         },
         {
           "text": "I select \"high\" in \"label=Priority\"",
           "status": "passed",
-          "durationMs": 5
+          "durationMs": 2
         },
         {
           "text": "I click \"role=button:Create task\"",
           "status": "passed",
-          "durationMs": 73
+          "durationMs": 32
         },
         {
           "text": "\"role=status:Task result\" has text \"Task created successfully.\"",
@@ -241,12 +241,22 @@
         {
           "text": "I capture \"Check the saved task\"",
           "status": "passed",
-          "durationMs": 163
+          "durationMs": 156
         },
         {
           "text": "I capture \"Task form in detail\"",
           "status": "passed",
-          "durationMs": 150
+          "durationMs": 155
+        },
+        {
+          "text": "I reload the page",
+          "status": "passed",
+          "durationMs": 4
+        },
+        {
+          "text": "\"testid=task-list\" has text \"Prepare the launch checklistHigh priority\"",
+          "status": "passed",
+          "durationMs": 7
         }
       ],
       "prerequisites": [
@@ -262,7 +272,7 @@
     {
       "title": "Customize workspace notifications",
       "feature": "Work with HooTasks",
-      "description": "HooTasks keeps your team's work organized. Create a task, verify the saved\n  result and adjust your workspace preferences with these short walkthroughs.",
+      "description": "Choose whether to receive email notifications and save that choice for this browser session.",
       "source": "examples/tasks.feature",
       "tags": [
         "@manual",
@@ -320,7 +330,7 @@
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
           "status": "passed",
-          "durationMs": 13
+          "durationMs": 12
         },
         {
           "text": "I add a note \"Preferences are configured separately from individual tasks.\"",
@@ -340,7 +350,7 @@
         {
           "text": "I check \"label=Email notifications\"",
           "status": "passed",
-          "durationMs": 33
+          "durationMs": 34
         },
         {
           "text": "\"label=Email notifications\" is checked",
@@ -350,7 +360,7 @@
         {
           "text": "I click \"role=button:Save preferences\"",
           "status": "passed",
-          "durationMs": 32
+          "durationMs": 33
         },
         {
           "text": "\"role=status:Preferences result\" has text \"Preferences saved.\"",
@@ -365,7 +375,17 @@
         {
           "text": "I capture \"Workspace preferences\"",
           "status": "passed",
-          "durationMs": 194
+          "durationMs": 185
+        },
+        {
+          "text": "I reload the page",
+          "status": "passed",
+          "durationMs": 4
+        },
+        {
+          "text": "\"label=Email notifications\" is checked",
+          "status": "passed",
+          "durationMs": 7
         }
       ],
       "callouts": [

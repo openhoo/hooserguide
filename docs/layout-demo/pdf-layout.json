@@ -1,5 +1,5 @@
 {
-  "pages": 16,
+  "pages": 12,
   "warnings": [],
   "figures": [
     {
@@ -7,15 +7,11 @@
       "slices": [
         {
           "top": 0,
-          "height": 300
+          "height": 427
         },
         {
-          "top": 300,
-          "height": 297
-        },
-        {
-          "top": 597,
-          "height": 303
+          "top": 427,
+          "height": 473
         }
       ]
     },
@@ -24,15 +20,11 @@
       "slices": [
         {
           "top": 0,
-          "height": 300
+          "height": 495
         },
         {
-          "top": 300,
-          "height": 288
-        },
-        {
-          "top": 588,
-          "height": 312
+          "top": 495,
+          "height": 405
         }
       ]
     },
@@ -41,15 +33,11 @@
       "slices": [
         {
           "top": 0,
-          "height": 173
+          "height": 184
         },
         {
-          "top": 173,
-          "height": 173
-        },
-        {
-          "top": 346,
-          "height": 173
+          "top": 184,
+          "height": 335
         }
       ]
     },
@@ -58,19 +46,15 @@
       "slices": [
         {
           "top": 0,
-          "height": 372
+          "height": 496
         },
         {
-          "top": 372,
-          "height": 372
+          "top": 496,
+          "height": 495
         },
         {
-          "top": 744,
-          "height": 371
-        },
-        {
-          "top": 1115,
-          "height": 371
+          "top": 991,
+          "height": 495
         }
       ]
     }

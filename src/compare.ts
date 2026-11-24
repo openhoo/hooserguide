@@ -91,6 +91,8 @@ function compareCaptures(
       annotatedPixels.get(old) !== annotatedPixels.get(next) ||
       pixelsChanged ||
       annotationsChanged ||
+      JSON.stringify(old.crop) !== JSON.stringify(next.crop) ||
+      Boolean(old.rawSha256) !== Boolean(next.rawSha256) ||
       old.description !== next.description;
     return {
       title,

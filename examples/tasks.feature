@@ -9,6 +9,8 @@ Feature: Work with HooTasks
 
   @tasks
   Scenario: Create your first task
+    Add a task and check that its title and priority are still in the list after you reload.
+
     And I add a prerequisite "Open your workspace with permission to create tasks."
     And I add a tip "Use a short title that describes the next action."
     And I explain "Enter a clear task title and choose its priority."
@@ -55,8 +57,13 @@ Feature: Work with HooTasks
       }
       """
 
+    When I reload the page
+    Then "testid=task-list" has text "Prepare the launch checklistHigh priority"
+
   @preferences
   Scenario: Customize workspace notifications
+    Choose whether to receive email notifications and save that choice for this browser session.
+
     And I add a note "Preferences are configured separately from individual tasks."
     And I add a warning "Enable email notifications only for an account you control."
     When I scroll to "label=Email notifications"
@@ -76,3 +83,5 @@ Feature: Work with HooTasks
         ]
       }
       """
+    When I reload the page
+    Then "label=Email notifications" is checked

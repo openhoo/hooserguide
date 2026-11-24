@@ -206,6 +206,17 @@ test('real responsive executions retain each screen, align annotations, group HT
       manual: { orientation: 'landscape' },
     });
     assert.equal(pdf.report.status, 'passed', pdf.report.exportError);
+    const layout = JSON.parse(await readFile(join(pdf.directory, 'pdf-layout.json'), 'utf8')) as {
+      figures: { id: string; slices: { top: number; height: number }[] }[];
+    };
+    for (const capture of captures) {
+      const slices = layout.figures.find((figure) => figure.id === capture.id)!.slices;
+      assert.ok(slices.length <= 2, 'This viewport fits on two landscape detail pages');
+      assert.equal(
+        slices.reduce((height, slice) => height + slice.height, 0),
+        capture.height,
+      );
+    }
     const loading = getDocument({
       data: new Uint8Array(await readFile(pdf.artifacts.pdf!)),
       useSystemFonts: true,

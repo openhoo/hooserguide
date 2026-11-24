@@ -28,11 +28,24 @@ export function screenLabel(variant: ScreenVariant): string {
 export function screenLayout(report: RunReport) {
   return report.manual?.screenLayout ?? report.responsive?.layout ?? 'side-by-side';
 }
-export function sameGuidance(a: Chapter, b: Chapter) {
-  return (
-    JSON.stringify([a.instructions, a.prerequisites, a.callouts, a.description]) ===
-    JSON.stringify([b.instructions, b.prerequisites, b.callouts, b.description])
-  );
+/** Shared instructions apply to every listed screen, even when another screen differs. */
+export function guidanceGroups(variants: Chapter[]) {
+  const groups = new Map<string, Chapter[]>();
+  for (const variant of variants) {
+    const key = JSON.stringify([
+      variant.description,
+      variant.prerequisites ?? [],
+      variant.callouts ?? [],
+      variant.instructions,
+    ]);
+    const members = groups.get(key);
+    if (members) members.push(variant);
+    else groups.set(key, [variant]);
+  }
+  return [...groups.values()].map((members) => ({
+    chapter: members[0]!,
+    label: groups.size > 1 ? members.map((v) => screenLabel(v.variant!)).join(' / ') : '',
+  }));
 }
 /** A non-cropped overview. Full-size, annotation-aware detail pages remain available in PDF. */
 export async function comparisonImage(

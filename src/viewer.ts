@@ -30,7 +30,7 @@ search.addEventListener('input', () => {
     links[i].hidden = !matches;
     if (matches) count++;
   });
-  result.textContent = count + ' ' + result.dataset.label;
+  result.textContent = terms.length ? count + ' ' + (count === 1 ? result.dataset.one : result.dataset.label) : '';
   empty.hidden = count !== 0;
 });
 document.querySelector('#annotations').addEventListener('click', event => {

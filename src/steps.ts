@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import { parseTarget } from './targets.js';
 import { dirname, resolve } from 'node:path';
 import type { StepHandler, StepContext, Target, CaptureSpec, StepDocumentation } from './types.js';
 
@@ -33,35 +34,27 @@ export class StepRegistry {
 
 /** Strings support css=, role=button:Save, label=Email, text=Welcome, testid=save. */
 export function target(page: StepContext['page'], value: Target) {
-  if (typeof value === 'string') {
-    const m = /^(role|label|text|testid|css)=(.*)$/s.exec(value);
-    if (!m) return page.locator(value);
-    const [, kind, body] = m;
-    if (kind === 'role') {
-      const at = body!.indexOf(':');
-      if (at < 1) throw new Error('Role selector must be role=button:Accessible name');
-      return page.getByRole(body!.slice(0, at) as Parameters<typeof page.getByRole>[0], {
-        name: body!.slice(at + 1),
-        exact: true,
-      });
-    }
-    if (kind === 'label') return page.getByLabel(body!, { exact: true });
-    if (kind === 'text') return page.getByText(body!, { exact: true });
-    if (kind === 'testid') return page.getByTestId(body!);
-    return page.locator(body!);
-  }
-  if ('role' in value) return page.getByRole(value.role, { name: value.name, exact: true });
-  if ('label' in value) return page.getByLabel(value.label, { exact: true });
-  if ('text' in value) return page.getByText(value.text, { exact: true });
-  if ('testId' in value) return page.getByTestId(value.testId);
-  return page.locator(value.css);
+  const selector = parseTarget(value);
+  if ('role' in selector)
+    return page.getByRole(selector.role, { name: selector.name, exact: true });
+  if ('label' in selector) return page.getByLabel(selector.label, { exact: true });
+  if ('text' in selector) return page.getByText(selector.text, { exact: true });
+  if ('testId' in selector) return page.getByTestId(selector.testId);
+  return page.locator(selector.css);
 }
 
 const q = '"((?:[^"\\\\]|\\\\.)*)"';
 const unquote = (s: string) => JSON.parse(`"${s}"`) as string;
 export function formRows(step: StepContext['step']): { selector: string; value: string }[] {
   const rows = step.argument?.dataTable?.rows;
-  if (!rows || rows.length < 2 || rows[0]?.cells.map((c) => c.value).join('|') !== 'selector|value')
+  const header = rows?.[0]?.cells;
+  if (
+    !rows ||
+    rows.length < 2 ||
+    header?.length !== 2 ||
+    header[0]!.value !== 'selector' ||
+    header[1]!.value !== 'value'
+  )
     throw new Error(
       'I fill the form requires a non-empty data table with selector and value columns',
     );
@@ -314,4 +307,15 @@ export function builtinSteps(): StepRegistry {
     },
   );
   return registry;
+}
+
+// Isolate built-in discovery from each project's mutable plugin registry.
+const standardSteps = builtinSteps();
+export function classifyStep(text: string): 'builtin' | 'capture' | 'custom' {
+  try {
+    standardSteps.resolve(text);
+    return text.startsWith('I capture ') ? 'capture' : 'builtin';
+  } catch {
+    return 'custom';
+  }
 }

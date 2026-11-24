@@ -26,3 +26,22 @@ skill into a consumer guide project.
 For skill changes, run `npm run test:skills` and verify an actual fresh install with
 `npm run test:skills:install`. Packaging changes also require `npm run test:package`.
 Avoid replaying browser workflows for skill-only prose changes.
+
+## Maintain the GitHub Wiki
+
+Edit the guides in `docs/`. The wiki home, sidebar and troubleshooting page live in `docs/wiki/`. The repository copies contain relative links for offline use; the wiki renderer converts them to links between wiki pages and to assets in the matching source revision.
+
+```sh
+node scripts/wiki.mjs --check
+node scripts/wiki.mjs --output output/wiki-preview
+```
+
+The [wiki workflow](https://github.com/openhoo/hooserguide/actions/workflows/wiki.yml) publishes documentation changes from `main`. To inspect the published files or sync them manually, clone the wiki as a sibling repository:
+
+```sh
+git clone https://github.com/openhoo/hooserguide.wiki.git ../hooserguide.wiki
+node scripts/wiki.mjs --ref "$(git rev-parse HEAD)" --output ../hooserguide.wiki
+git -C ../hooserguide.wiki status --short
+```
+
+For manual publication, start from a clean, up-to-date wiki clone and a source commit already on GitHub. Review the diff before committing and pushing in the wiki clone. Edit generated pages in the main repository; independently authored wiki pages can coexist under other names.

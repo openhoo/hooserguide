@@ -5,7 +5,7 @@ import { resolveConfig } from './config.js';
 import { parseFeature } from './gherkin.js';
 import { loadRegistry } from './runner.js';
 import { validateStepArguments } from './preflight.js';
-import { builtinSteps } from './steps.js';
+import { classifyStep } from './steps.js';
 import type { Config } from './types.js';
 
 const locationSchema = z.object({
@@ -65,14 +65,10 @@ export type AuthoringReport = z.infer<typeof authoringSchema>;
 export type AuthoringDiagnostic = z.infer<typeof diagnosticSchema>;
 
 function isAssertion(step: { text: string; type?: string }): boolean {
-  try {
-    builtinSteps().resolve(step.text);
-    return /^(?:"(?:[^"\\]|\\.)*" (?:is |has |contains text )|the URL is |the page title is )/.test(
-      step.text,
-    );
-  } catch {
-    return step.type === 'Outcome'; // A custom Then binding can assert app state.
-  }
+  if (classifyStep(step.text) === 'custom') return step.type === 'Outcome';
+  return /^(?:"(?:[^"\\]|\\.)*" (?:is |has |contains text )|the URL is |the page title is )/.test(
+    step.text,
+  );
 }
 
 /** Rank documented bindings without guessing user selectors or executing a handler. */
@@ -279,7 +275,7 @@ export async function lint(input: Config): Promise<AuthoringReport> {
         }
         if (step.text === 'I explain:' && step.argument?.docString)
           chapter.instructions.push(step.argument.docString.content);
-        if (step.text.startsWith('I capture ')) {
+        if (classifyStep(step.text) === 'capture') {
           let spec: { description?: string; marks?: unknown[]; masks?: unknown[] } = {};
           let title = step.text.slice(10);
           try {
@@ -310,14 +306,7 @@ export async function lint(input: Config): Promise<AuthoringReport> {
         }
       }
       if (!chapter.captures.length) {
-        const custom = pickle.steps.some((step) => {
-          try {
-            builtinSteps().resolve(step.text);
-            return false;
-          } catch {
-            return true;
-          }
-        });
+        const custom = pickle.steps.some((step) => classifyStep(step.text) === 'custom');
         add(
           'MISSING_CAPTURE',
           custom

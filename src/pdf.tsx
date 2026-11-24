@@ -2,7 +2,7 @@ import { verifyReportImages, readRunArtifact } from './evidence.js';
 import { reportSchema, requireSuccessfulEvidence } from './report.js';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { Document, Page, Fixed, View, Strong } from '@formepdf/react';
 import { renderDocumentWithLayout } from '@formepdf/core';
 import sharp from 'sharp';
@@ -21,7 +21,7 @@ import {
   screenLabel,
   screenLayout,
   comparisonImage,
-  sameGuidance,
+  guidanceGroups,
 } from './responsive.js';
 import { resolveManualTheme } from './themes.js';
 import { badgeTextColor } from './annotations.js';
@@ -114,7 +114,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
         <Text color="mutedForeground">{branding.subtitle ?? l.subtitle}</Text>
         <View style={{ borderTopWidth: 3, borderColor: accent, marginTop: 16, paddingTop: 12 }}>
           <Text variant="sm">
-            {presented.length} {l.chapters}
+            {presented.length} {presented.length === 1 ? l.oneChapter : l.chapters}
           </Text>
           {metadata.map((text, i) => (
             <Text key={i} variant="sm">
@@ -152,47 +152,52 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
         <View bookmark={chapterBookmark(i)}>
           <Heading level={1}>{chapter.title}</Heading>
         </View>
-        <Text color="mutedForeground">{chapter.description}</Text>
-        {chapter.variants.some((v) => !sameGuidance(chapter, v)) ? (
-          <Heading level={3}>{screenLabel(chapter.variant!)}</Heading>
-        ) : null}
-        {chapter.prerequisites?.length ? (
-          <>
-            <Heading level={3}>{l.prerequisites}</Heading>
-            {chapter.prerequisites.map((text, n) => (
-              <Text key={n} variant="sm">
+        {guidanceGroups(chapter.variants).map(({ chapter: guidance, label }, index) => (
+          <Fragment key={index}>
+            {label ? <Heading level={3}>{label}</Heading> : null}
+            {guidance.description ? (
+              <Text color="mutedForeground">{guidance.description}</Text>
+            ) : null}
+            {guidance.prerequisites?.length ? (
+              <>
+                <Heading level={label ? 4 : 3}>{l.prerequisites}</Heading>
+                {guidance.prerequisites.map((text, n) => (
+                  <Text key={n} variant="sm">
+                    {n + 1}. {text}
+                  </Text>
+                ))}
+              </>
+            ) : null}
+            {(guidance.callouts ?? []).map((callout, n) => (
+              <View
+                key={`callout-${n}`}
+                wrap
+                style={{
+                  padding: 14,
+                  marginBottom: 12,
+                  borderLeftWidth: 3,
+                  borderColor:
+                    callout.kind === 'warning' ? colors.warning : colors.accentForeground,
+                  backgroundColor:
+                    callout.kind === 'warning'
+                      ? colors.warningBackground
+                      : callout.kind === 'tip'
+                        ? colors.tipBackground
+                        : colors.muted,
+                }}
+              >
+                <Text variant="sm" noMargin>
+                  <Strong>{l[callout.kind]}: </Strong>
+                  {callout.text}
+                </Text>
+              </View>
+            ))}
+            {guidance.instructions.map((text, n) => (
+              <Text key={n}>
                 {n + 1}. {text}
               </Text>
             ))}
-          </>
-        ) : null}
-        {(chapter.callouts ?? []).map((callout, n) => (
-          <View
-            key={`callout-${n}`}
-            wrap
-            style={{
-              padding: 14,
-              marginBottom: 12,
-              borderLeftWidth: 3,
-              borderColor: callout.kind === 'warning' ? colors.warning : colors.accentForeground,
-              backgroundColor:
-                callout.kind === 'warning'
-                  ? colors.warningBackground
-                  : callout.kind === 'tip'
-                    ? colors.tipBackground
-                    : colors.muted,
-            }}
-          >
-            <Text variant="sm" noMargin>
-              <Strong>{l[callout.kind]}: </Strong>
-              {callout.text}
-            </Text>
-          </View>
-        ))}
-        {chapter.instructions.map((text, n) => (
-          <Text key={n}>
-            {n + 1}. {text}
-          </Text>
+          </Fragment>
         ))}
       </Page>,
     );
@@ -236,44 +241,16 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
       }
     }
     for (const variant of chapter.variants) {
-      if (!sameGuidance(chapter, variant))
-        pages.push(
-          <Page
-            key={`guidance-${i}-${variant.variant!.profile}`}
-            size={geometry.size}
-            margin={geometry.margin}
-            style={pageStyle}
-            backgroundImage={pageBackground}
-            backgroundSize="fill"
-          >
-            {footer}
-            <Heading level={3}>{screenLabel(variant.variant!)}</Heading>
-            <Text>{variant.description}</Text>
-            {(variant.prerequisites ?? []).map((text, n) => (
-              <Text key={`pre-${n}`} variant="sm">
-                {l.prerequisites}: {text}
-              </Text>
-            ))}
-            {variant.instructions.map((text, n) => (
-              <Text key={n}>
-                {n + 1}. {text}
-              </Text>
-            ))}
-            {(variant.callouts ?? []).map((callout, n) => (
-              <Text key={`callout-${n}`} variant="sm">
-                {l[callout.kind]}: {callout.text}
-              </Text>
-            ))}
-          </Page>,
-        );
       for (const [j, capture] of variant.captures.entries()) {
         const image = await readRunArtifact(directory, capture.image, 64 * 1024 * 1024);
         // Long screenshots are split into readable page-sized images, without shrinking or cropping content away.
-        // A modestly taller single figure avoids a nearly empty continuation page.
-        const imageWidth = variant.variant ? Math.min(pageWidth, capture.width * 0.75) : pageWidth;
-        const scaledHeight = (capture.height * imageWidth) / capture.width;
-        const maximum = Math.min(460, Math.max(140, geometry.contentHeight - 240));
-        const imageBudget = scaledHeight <= maximum ? maximum : Math.max(100, maximum - 60);
+        // Preserve the captured CSS size (96 px per 72 pt), including single-profile focus crops.
+        const imageWidth = Math.min(pageWidth, capture.width * 0.75);
+        // Leave space for the heading and footer; only reserve caption/legend space when used.
+        // Forme can flow unusually long authored prose to subsequent pages.
+        const hasLegend = capture.marks.some((mark) => mark.label || mark.caption);
+        const reserve = 120 + (capture.description ? 36 : 0) + (hasLegend ? 36 : 0);
+        const imageBudget = Math.min(460, geometry.contentHeight - reserve);
         const maxSliceHeight = Math.max(1, Math.floor((imageBudget * capture.width) / imageWidth));
         const slices = planImageSlices(capture, maxSliceHeight);
         const total = slices.length;

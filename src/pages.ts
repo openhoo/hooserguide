@@ -1,22 +1,14 @@
-import {
-  mkdir,
-  mkdtemp,
-  writeFile,
-  realpath,
-  lstat,
-  rename,
-  rm,
-  readFile,
-  rmdir,
-} from 'node:fs/promises';
-import { resolve, relative, isAbsolute, dirname, join, basename, sep } from 'node:path';
+import { mkdir, mkdtemp, writeFile, realpath, rename, rm, readFile, rmdir } from 'node:fs/promises';
+import { resolve, isAbsolute, dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { loadRunSnapshot, verifiedCapture } from './evidence.js';
+import { loadRunSnapshot } from './evidence.js';
+import { contained, prospectivePath } from './output-path.js';
+export { contained } from './output-path.js';
 import { requireSuccessfulEvidence } from './report.js';
 import { renderManual } from './render.js';
 import { renderPdf } from './pdf.js';
-import { bundle } from './bundle.js';
+import { stagePortableEvidence, writeStagedArchive } from './bundle.js';
 
 export interface PagesOptions {
   /** A fresh directory inside root; existing files are never removed. */
@@ -31,11 +23,6 @@ const optionsSchema = z
     bundle: z.boolean().default(true),
   })
   .strict();
-export const contained = (root: string, path: string) => {
-  const rel = relative(root, path);
-  return rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel);
-};
-
 /** Allocate only after checking the nearest existing ancestor, including symlinks. */
 export async function freshDirectory(root: string, output: string, sourceEvidence?: string) {
   if (isAbsolute(output))
@@ -43,33 +30,24 @@ export async function freshDirectory(root: string, output: string, sourceEvidenc
   const destination = resolve(root, output);
   if (destination === root || !contained(root, destination))
     throw new Error('Pages output must be inside the workspace');
-  let ancestor = destination;
-  for (;;) {
-    try {
-      await lstat(ancestor);
-      const actual = await realpath(ancestor);
-      if (!contained(root, actual))
-        throw new Error('Pages output ancestor resolves outside the workspace');
-      if (ancestor === destination)
-        throw new Error('Pages output already exists; choose a fresh directory');
-      // Resolve the missing suffix against the actual existing ancestor before
-      // recursive mkdir can create any parents inside the source evidence.
-      const prospective = resolve(actual, relative(ancestor, destination));
-      if (
-        sourceEvidence &&
-        (contained(sourceEvidence, prospective) || contained(prospective, sourceEvidence))
-      )
-        throw new Error('Pages output must be separate from the source evidence');
-      break;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-      ancestor = dirname(ancestor);
-    }
-  }
+  const prospective = await prospectivePath(destination);
+  if (!contained(root, prospective))
+    throw new Error('Pages output ancestor resolves outside the workspace');
+  if (
+    sourceEvidence &&
+    (contained(sourceEvidence, prospective) || contained(prospective, sourceEvidence))
+  )
+    throw new Error('Pages output must be separate from the source evidence');
   await mkdir(dirname(destination), { recursive: true });
   if (!contained(root, await realpath(dirname(destination))))
     throw new Error('Pages output parent resolves outside the workspace');
-  await mkdir(destination);
+  try {
+    await mkdir(destination);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'EEXIST')
+      throw new Error('Pages output already exists; choose a fresh directory');
+    throw error;
+  }
   return destination;
 }
 
@@ -94,23 +72,7 @@ export async function preparePages(
     if (contained(run.directory, actualDestination) || contained(actualDestination, run.directory))
       throw new Error('Pages output must be separate from the source evidence');
     staging = await mkdtemp(join(dirname(destination), '.pages-'));
-    await mkdir(join(staging, 'screenshots'));
-    const report = structuredClone(run.report);
-    for (const chapter of report.chapters)
-      chapter.source = basename(chapter.source.replaceAll('\\', '/'));
-    for (const skipped of report.skippedScenarios ?? [])
-      skipped.source = basename(skipped.source.replaceAll('\\', '/'));
-    for (const chapter of report.chapters)
-      for (const capture of chapter.captures) {
-        for (const variant of ['annotated', 'raw'] as const) {
-          controls.signal?.throwIfAborted();
-          const shot = await verifiedCapture(run, capture, variant, 64 * 1024 * 1024);
-          await writeFile(
-            join(staging, variant === 'raw' ? capture.raw : capture.image),
-            shot.bytes,
-          );
-        }
-      }
+    const report = await stagePortableEvidence(run, staging, controls.signal, options.bundle);
     report.rebuiltAt = new Date().toISOString();
     // The hash identifies the original report without copying its machine-specific source paths.
     report.sourceReportSha256 = createHash('sha256').update(original).digest('hex');
@@ -119,7 +81,14 @@ export async function preparePages(
     await renderManual(report, staging);
     await writeFile(join(staging, '.nojekyll'), '');
     if (options.bundle) {
-      await bundle(staging, join(staging, 'handbook.zip'), controls);
+      await writeStagedArchive(
+        staging,
+        report,
+        Boolean(run.artifacts.pdf),
+        join(staging, 'handbook.zip'),
+        report.sourceReportSha256,
+        controls.signal,
+      );
       // A relative download remains valid for project subpaths and custom domains.
       const html = await readFile(join(staging, 'index.html'), 'utf8');
       await writeFile(

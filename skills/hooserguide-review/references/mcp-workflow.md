@@ -4,8 +4,8 @@
 
 - `hooserguide_status {limit?: 1..50}`: pinned config path, app origin, browser/profile, readiness metadata, active operation and recent runs. Does not load plugins or open the app. `unreadableRuns` counts unreadable entries within the requested recent window.
 - `hooserguide_steps {}`: exact step catalogue. Loads trusted local plugin code.
-- `hooserguide_validate {profile?, tagExpression?, scenario?}`: parse specs and check bindings without opening a browser. Loads plugins; does not verify UI selectors against the app.
-- `hooserguide_generate {profile?, pdf?, tagExpression?, scenario?, failFast?}`: execute workflows and export new evidence. May change app data. Use the profile and filters validated earlier. Reports record actual selection and skipped scenarios; validation includes planned built-in capture counts. Save the returned `runId`.
+- `hooserguide_validate {profile?, responsive?, tagExpression?, scenario?}`: parse specs and check bindings without opening a browser. Loads plugins; does not verify UI selectors against the app.
+- `hooserguide_generate {profile?, responsive?, pdf?, tagExpression?, scenario?, failFast?}`: execute workflows and export new evidence. May change app data. Use the profile and filters validated earlier. Reports record actual selection and skipped scenarios; validation includes planned built-in capture counts. Save the returned `runId`.
 
 ## Exact review and rebuild
 
@@ -24,7 +24,7 @@ Run IDs are directory basenames returned by the tools. Runs must be direct manag
 
 Check `isError` first. Domain failures return `status: "failed"` and `error: {code, message, hint, retryable}`. SDK argument-validation errors can contain only error text. Do not assume structured content is always present.
 
-`BUSY` is retryable after the active generate/rebuild finishes. Status and inspection of explicitly pinned completed runs remain available while it executes; default selection and plugin-loading tools wait until it finishes. Generation reports progress when requested by the client. Client cancellation interrupts browser waits, releases the lock when cleanup finishes, and prevents a successful export. PDF rendering can take time to finish before cancellation is observed. Cancellation does not roll back app actions.
+`BUSY` is retryable after the active generate/rebuild finishes. Status and inspection of explicitly pinned completed runs remain available while it executes; tools that use default run selection or load plugins return `BUSY` until it finishes. Generation reports progress when requested by the client. Client cancellation interrupts browser waits, releases the lock when cleanup finishes, and prevents a successful export. PDF rendering can take time to finish before cancellation is observed. Cancellation does not roll back app actions.
 
 `NO_RUN` needs generation or the correct output config. `CONFIG_ERROR` needs config/profile repair. `HASH_MISMATCH`, `INVALID_ARTIFACT` and `UNSAFE_PATH` require original evidence or regeneration; never suppress these failures. PNGs above 8 MiB require local artifact tools; reports/layout audits above 2 MiB and manuals above 64 MiB exceed MCP inspection limits.
 

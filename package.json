@@ -1,6 +1,6 @@
 {
   "name": "@openhoo/hooserguide",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "type": "module",
   "description": "Evidence-backed user manuals from Gherkin, Playwright and annotated screenshots",
   "bin": {
@@ -37,12 +37,12 @@
     "@cucumber/tag-expressions": "^11.0.1",
     "@formepdf/core": "^0.26.0",
     "@formepdf/react": "^0.26.0",
-    "@modelcontextprotocol/sdk": "^1.31.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "@playwright/test": "1.63.0",
     "fflate": "^0.8.3",
     "react": "^19.3.0",
     "sharp": "0.35.5",
-    "zod": "^4.6.5"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -81,10 +81,14 @@
     "NOTICE",
     "THIRD_PARTY_NOTICES.md",
     "templates",
-    "docs/gitlab.md",
-    "docs/responsive.md",
-    "docs/pages.md",
-    "docs/authoring.md",
+    "docs/*.md",
+    "docs/media/responsive-pdf.png",
+    "docs/media/alignment-review.png",
+    "docs/media/browser-qualification.png",
+    "docs/demo/screenshots/01-01.png",
+    "docs/demo/screenshots/01-03.png",
+    "CONTRIBUTING.md",
+    "CHANGELOG.md",
     "actions"
   ]
 }

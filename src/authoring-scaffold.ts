@@ -1,8 +1,10 @@
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config.js';
 import { loadRegistry } from './runner.js';
+import { classifyStep } from './steps.js';
+import { preflightScaffold } from './scaffold-paths.js';
 
 export const chapterTemplates = ['task', 'form', 'read-only'] as const;
 export type ChapterTemplate = (typeof chapterTemplates)[number];
@@ -57,6 +59,13 @@ export async function newChapter(
   return { feature: path, template: options.template ?? 'task', needsEditing: true };
 }
 
+export const editorFiles = {
+  workspace: 'hooserguide.code-workspace',
+  snippets: '.vscode/hooserguide.code-snippets',
+  configSchema: '.hooserguide/config.schema.json',
+  captureSchema: '.hooserguide/capture.schema.json',
+} as const;
+
 /** Standalone workspace avoids changing the consumer's existing editor settings/tasks. */
 export async function setupEditor(configPath: string) {
   const path = resolve(configPath),
@@ -79,7 +88,7 @@ export async function setupEditor(configPath: string) {
       body.push('  """text', '  ${1:Explain the action and its result.}', '  """');
     if (step.example === 'I fill the form:')
       body.push('  | selector | value |', '  | ${1:label=Name} | ${2:Demo} |');
-    if (step.example.startsWith('I capture '))
+    if (classifyStep(step.example) === 'capture')
       body.push(
         '  """json',
         '  {',
@@ -155,32 +164,21 @@ export async function setupEditor(configPath: string) {
   };
   const schemas = fileURLToPath(new URL('../schemas/', import.meta.url));
   const assets: [string, string][] = [
-    ['hooserguide.code-workspace', JSON.stringify(workspace, null, 2) + '\n'],
-    ['.vscode/hooserguide.code-snippets', JSON.stringify(snippets, null, 2) + '\n'],
-    [
-      '.hooserguide/config.schema.json',
-      await readFile(join(schemas, 'config.schema.json'), 'utf8'),
-    ],
-    [
-      '.hooserguide/capture.schema.json',
-      await readFile(join(schemas, 'capture.schema.json'), 'utf8'),
-    ],
+    [editorFiles.workspace, JSON.stringify(workspace, null, 2) + '\n'],
+    [editorFiles.snippets, JSON.stringify(snippets, null, 2) + '\n'],
+    [editorFiles.configSchema, await readFile(join(schemas, 'config.schema.json'), 'utf8')],
+    [editorFiles.captureSchema, await readFile(join(schemas, 'capture.schema.json'), 'utf8')],
   ];
-  for (const [name] of assets) {
-    if (
-      await access(join(root, name)).then(
-        () => true,
-        () => false,
-      )
-    )
-      throw new Error(`Refusing to overwrite ${join(root, name)}`);
-  }
+  await preflightScaffold(
+    root,
+    assets.map(([name]) => name),
+  );
   for (const [name, content] of assets) {
     await mkdir(dirname(join(root, name)), { recursive: true });
     await writeFile(join(root, name), content, { flag: 'wx' });
   }
   return {
-    workspace: join(root, 'hooserguide.code-workspace'),
+    workspace: join(root, editorFiles.workspace),
     files: assets.map(([name]) => join(root, name)),
     snippets: Object.keys(snippets).length,
   };

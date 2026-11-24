@@ -6,6 +6,7 @@ import { brandingSchema, documentSchema, manualSchema } from './config.js';
 import { reportSchema, requireSuccessfulEvidence } from './report.js';
 import { readRunArtifact, verifiedCapture } from './evidence.js';
 import { publishReport } from './artifacts.js';
+import { contained, prospectivePath } from './output-path.js';
 import type { Branding, DocumentMetadata, ManualOptions, RunReport } from './types.js';
 
 export interface BuildOptions {
@@ -38,10 +39,13 @@ export async function build(
   const report = reportSchema.parse(JSON.parse(reportBytes.toString('utf8'))) as RunReport;
   requireSuccessfulEvidence(report);
   const output = resolve(options.output ?? join(dirname(source), 'rebuilt'));
-  if (output === source) throw new Error('Build output must differ from the source run');
+  const checkOutput = (path: string) => {
+    if (contained(source, path))
+      throw new Error('Build output must differ from the source run and cannot be inside it');
+  };
+  checkOutput(await prospectivePath(output));
   await mkdir(output, { recursive: true });
-  if ((await realpath(output)) === source)
-    throw new Error('Build output must differ from the source run');
+  checkOutput(await realpath(output));
   const staging = await mkdtemp(join(output, '.build-'));
   try {
     await mkdir(join(staging, 'screenshots'));
@@ -60,12 +64,6 @@ export async function build(
             shot.bytes,
           );
         }
-        const overlay = `screenshots/${capture.id}.overlay.svg`;
-        const bytes = await readRunArtifact(source, overlay, 64 * 1024 * 1024).catch((error) => {
-          if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
-          throw error;
-        });
-        if (bytes) await writeFile(join(staging, overlay), bytes);
       }
     report.rebuiltAt = new Date().toISOString();
     report.sourceReportSha256 = sha256(reportBytes);

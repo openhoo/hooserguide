@@ -183,6 +183,15 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
     const latest = await client.callTool({ name: 'hooserguide_inspect_run', arguments: {} });
     assert.equal(latest.isError, false);
     assert.equal((latest.structuredContent as any).report.status, 'failed');
+    // Recover the newest successful evidence even when both original manuals are lost.
+    const missingExports = await Promise.all(
+      ['index.html', 'handbook.md'].map(async (name) => {
+        const path = join(directory, name);
+        const bytes = await readFile(path);
+        await rm(path);
+        return { path, bytes };
+      }),
+    );
     const rebuilt = await client.callTool({
       name: 'hooserguide_rebuild',
       arguments: { pdf: false },
@@ -192,6 +201,19 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
       (rebuilt.structuredContent as { directory: string }).directory,
       (generated.structuredContent as { directory: string }).directory,
     );
+    const pinnedRecovery = await client.callTool({
+      name: 'hooserguide_rebuild',
+      arguments: { runId, pdf: false },
+    });
+    assert.equal(pinnedRecovery.isError, false);
+    assert.equal(
+      (pinnedRecovery.structuredContent as any).generatedAt,
+      (generated.structuredContent as any).generatedAt,
+    );
+    for (const { path, bytes } of missingExports) {
+      await assert.rejects(readFile(path), { code: 'ENOENT' });
+      await writeFile(path, bytes);
+    }
     await client.close();
     const restarted = new Client({ name: 'restart-test', version: '1.0.0' });
     await restarted.connect(

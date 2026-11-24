@@ -300,12 +300,12 @@ test('long callouts paginate in landscape without losing content', async () => {
     const source = join(root, 'source');
     await cp('docs/demo', source, { recursive: true });
     const report = JSON.parse(await readFile(join(source, 'report.json'), 'utf8')) as RunReport;
-    report.chapters[0]!.callouts = [
-      {
-        kind: 'warning',
-        text: 'Review each setting before saving. '.repeat(160) + 'END OF WARNING',
-      },
-    ];
+    const warning = [
+      'BEGIN WARNING.',
+      ...Array.from({ length: 160 }, (_, i) => `Review setting ${i + 1} before saving.`),
+      'END OF WARNING.',
+    ].join(' ');
+    report.chapters[0]!.callouts = [{ kind: 'warning', text: warning }];
     await writeFile(join(source, 'report.json'), JSON.stringify(report));
     const result = await build(source, {
       output: join(root, 'out'),
@@ -318,7 +318,7 @@ test('long callouts paginate in landscape without losing content', async () => {
     });
     try {
       const pdf = await loading.promise;
-      let content = '';
+      const bodyPages: string[] = [];
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const viewport = page.getViewport({ scale: 0.2 });
@@ -334,20 +334,24 @@ test('long callouts paginate in landscape without losing content', async () => {
           `Missing dark background on overflow page ${i}`,
         );
         pdf.canvasFactory.destroy(canvas);
-        const pageText = (await page.getTextContent()).items
-          .map((item) => ('str' in item ? item.str : ''))
-          .join(' ');
-        assert.ok(
-          pageText.includes(`Page ${i} of ${pdf.numPages}`),
-          `Missing footer on overflow page ${i}`,
+        const text = (await page.getTextContent()).items.flatMap((item) =>
+          'str' in item && item.str.trim() ? [item.str] : [],
         );
-        content += pageText;
+        assert.deepEqual(
+          text.slice(-2),
+          [
+            `${report.branding?.name ?? 'hooserguide'} · ${report.title}`,
+            `Page ${i} of ${pdf.numPages}`,
+          ],
+          `Missing footer on page ${i}`,
+        );
+        // A sentence may span two pages. Check the footer separately so its
+        // title and page number do not interrupt the reconstructed body text.
+        bodyPages.push(text.slice(0, -2).join(' '));
       }
-      assert.match(content, /END OF WARNING/);
-      assert.equal(
-        content.replace(/\s+/g, ' ').match(/Review each setting before saving\./g)?.length,
-        160,
-      );
+      assert.ok(bodyPages.filter((page) => page.includes('before saving.')).length >= 2);
+      const body = bodyPages.join(' ').replace(/\s+/g, ' ');
+      assert.equal(body.match(/BEGIN WARNING\..*?END OF WARNING\./)?.[0], warning);
     } finally {
       await loading.destroy();
     }

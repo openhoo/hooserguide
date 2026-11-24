@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { z } from 'zod';
+import { parseTarget } from './targets.js';
 import { manualThemeNames } from './themes.js';
 import parseTagExpression from '@cucumber/tag-expressions';
 import type { BrowserProfile, Config } from './types.js';
@@ -123,7 +124,19 @@ export const skippedSchema = z
   .strict();
 
 export const targetSchema = z.union([
-  z.string().min(1),
+  z
+    .string()
+    .min(1)
+    .superRefine((value, ctx) => {
+      try {
+        parseTarget(value);
+      } catch (error) {
+        ctx.addIssue({
+          code: 'custom',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }),
   z.object({ css: z.string().min(1) }).strict(),
   z.object({ role: z.string().min(1), name: z.string() }).strict(),
   z.object({ label: z.string().min(1) }).strict(),

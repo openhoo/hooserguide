@@ -136,18 +136,25 @@ export async function captureScreenshot(
     await expect(locator).toBeVisible({ timeout: timeoutMs });
   }
   const masks = [...globalMasks, ...(spec.masks ?? [])].map((m) => target(page, m));
-  // Fail closed for misspelled privacy masks; multiple matches are intentional.
-  for (const mask of masks) await expect(mask).not.toHaveCount(0, { timeout: timeoutMs });
   const documentCapture = Boolean(spec.fullPage || focus);
   if (documentCapture)
     await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }));
-  else if (locators[0]) await locators[0].scrollIntoViewIfNeeded();
-  await page.evaluate(async () => {
-    await document.fonts.ready;
-    await new Promise<void>((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+  else if (locators[0]) await locators[0].scrollIntoViewIfNeeded({ timeout: timeoutMs });
+  // Font requests and animation frames can stall. Bound readiness checks just like screenshot().
+  const settle = async (frames: number) => {
+    const ready = await page.waitForFunction(
+      async (count) => {
+        await document.fonts.ready;
+        for (let i = 0; i < count; i++)
+          await new Promise<void>((done) => requestAnimationFrame(() => done()));
+        return true;
+      },
+      frames,
+      { timeout: timeoutMs },
     );
-  });
+    await ready.dispose();
+  };
+  await settle(2);
   // Pause before measuring: screenshot fast-forwarding would move Web Animations after boundingBox.
   const paused = await page.evaluateHandle(() =>
     document.getAnimations().filter((a) => {
@@ -156,14 +163,13 @@ export async function captureScreenshot(
       return true;
     }),
   );
-  const freeze = await page.addStyleTag({
-    content:
-      '*,*::before,*::after{animation-play-state:paused!important;caret-color:transparent!important}',
-  });
+  let freeze: Awaited<ReturnType<Page['addStyleTag']>> | undefined;
   try {
-    await page.evaluate(
-      () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())),
-    );
+    freeze = await page.addStyleTag({
+      content:
+        '*,*::before,*::after{animation-play-state:paused!important;caret-color:transparent!important}',
+    });
+    await settle(1);
     const visual = await page.evaluate(() => ({
       width: window.visualViewport?.width ?? innerWidth,
       height: window.visualViewport?.height ?? innerHeight,
@@ -173,7 +179,7 @@ export async function captureScreenshot(
     const scroll = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
     const marks: ResolvedMark[] = [];
     for (const [i, locator] of locators.entries()) {
-      const bounds = await locator.boundingBox();
+      const bounds = await locator.boundingBox({ timeout: timeoutMs });
       if (!bounds || bounds.width <= 0 || bounds.height <= 0)
         throw new Error('Annotation target has no visible bounds');
       marks.push({
@@ -185,8 +191,25 @@ export async function captureScreenshot(
         },
       });
     }
-    const focusBounds = focus ? await focus.boundingBox() : undefined;
+    const focusBounds = focus ? await focus.boundingBox({ timeout: timeoutMs }) : undefined;
+    // Scrolling or a re-render may change which elements match. Confirm every
+    // mask on the settled page and reject layout changes across the raster read.
+    for (const mask of masks) await expect(mask).not.toHaveCount(0, { timeout: timeoutMs });
+    const maskBounds = () =>
+      Promise.all(
+        masks.map((mask) =>
+          mask.evaluateAll((elements) =>
+            elements.map((element) => {
+              const { x, y, width, height } = element.getBoundingClientRect();
+              return [x, y, width, height];
+            }),
+          ),
+        ),
+      );
+    const before = await maskBounds();
+    if (before.some((bounds) => !bounds.length)) throw new Error('Privacy mask no longer matches');
     let raw = await page.screenshot({
+      timeout: timeoutMs,
       type: 'png',
       fullPage: documentCapture,
       scale: 'css',
@@ -195,6 +218,8 @@ export async function captureScreenshot(
       mask: masks,
       maskColor: '#111827',
     });
+    if (masks.length && JSON.stringify(before) !== JSON.stringify(await maskBounds()))
+      throw new Error('Privacy mask matches or positions changed during capture');
     let { width, height } = await sharp(raw).metadata();
     if (!width || !height) throw new Error('Screenshot dimensions unavailable');
     if (!documentCapture) {
@@ -270,12 +295,20 @@ export async function captureScreenshot(
       rawSha256: createHash('sha256').update(raw).digest('hex'),
     };
   } finally {
-    await freeze.evaluate((element) => element.parentNode?.removeChild(element));
-    await paused.evaluate((animations) =>
-      animations.forEach((a) => {
-        if (a.playState === 'paused') a.play();
-      }),
-    );
-    await paused.dispose();
+    try {
+      await freeze?.evaluate((element) => {
+        element.parentNode?.removeChild(element);
+      });
+    } finally {
+      try {
+        await paused.evaluate((animations) =>
+          animations.forEach((a) => {
+            if (a.playState === 'paused') a.play();
+          }),
+        );
+      } finally {
+        await Promise.all([paused.dispose(), freeze?.dispose()]);
+      }
+    }
   }
 }

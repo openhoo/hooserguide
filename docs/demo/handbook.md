@@ -2,7 +2,7 @@
 
 Guide version: 1.0
 Audience: Workspace members
-Generated: 2026-10-07
+Generated: 2026-11-24
 
 Create, organize and verify tasks in your HooTasks workspace.
 
@@ -13,7 +13,7 @@ Create, organize and verify tasks in your HooTasks workspace.
 
 ## 1. Create your first task
 
-HooTasks keeps your team's work organized. Create a task, verify the saved   result and adjust your workspace preferences with these short walkthroughs.
+Add a task and check that its title and priority are still in the list after you reload.
 
 ### Prerequisites
 
@@ -26,10 +26,7 @@ HooTasks keeps your team's work organized. Create a task, verify the saved   res
 
 ### Fill in the task details
 
-
-
 ![Fill in the task details](screenshots/01-01.png)
-
 
 A names your task. B controls its priority. Select Create task to save it.
 
@@ -39,10 +36,7 @@ A names your task. B controls its priority. Select Create task to save it.
 
 ### Check the saved task
 
-
-
 ![Check the saved task](screenshots/01-02.png)
-
 
 The task now appears in your workspace. The confirmation shows that the save completed.
 
@@ -51,10 +45,7 @@ The task now appears in your workspace. The confirmation shows that the save com
 
 ### Task form in detail
 
-
-
 ![Task form in detail](screenshots/01-03.png)
-
 
 A focused view keeps the form readable and assigns references automatically.
 
@@ -64,7 +55,7 @@ A focused view keeps the form readable and assigns references automatically.
 
 ## 2. Customize workspace notifications
 
-HooTasks keeps your team's work organized. Create a task, verify the saved   result and adjust your workspace preferences with these short walkthroughs.
+Choose whether to receive email notifications and save that choice for this browser session.
 
 > **Note:** Preferences are configured separately from individual tasks.
 
@@ -74,10 +65,7 @@ HooTasks keeps your team's work organized. Create a task, verify the saved   res
 
 ### Workspace preferences
 
-
-
 ![Workspace preferences](screenshots/02-01.png)
-
 
 Preferences are near the bottom of the workspace. Long screenshots stay readable across PDF pages.
 

@@ -20,13 +20,19 @@ const overlap = (a: Rectangle, b: Rectangle) =>
   Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) *
   Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
 
-/** Keep reference text readable even with a pale custom mark color. */
-export function badgeTextColor(color: string): '#142636' | '#ffffff' {
+function luminance(color: string) {
   const channels = [1, 3, 5]
     .map((i) => parseInt(color.slice(i, i + 2), 16) / 255)
     .map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
-  const luminance = channels[0]! * 0.2126 + channels[1]! * 0.7152 + channels[2]! * 0.0722;
-  return 1.05 / (luminance + 0.05) >= 4.5 ? '#ffffff' : '#142636';
+  return channels[0]! * 0.2126 + channels[1]! * 0.7152 + channels[2]! * 0.0722;
+}
+
+const navyLuminance = luminance('#142636');
+/** A midtone may be too light for white text and too dark for the usual navy. */
+export function badgeTextColor(color: string): '#142636' | '#ffffff' | '#000000' {
+  const background = luminance(color);
+  if (1.05 / (background + 0.05) >= 4.5) return '#ffffff';
+  return (background + 0.05) / (navyLuminance + 0.05) >= 4.5 ? '#142636' : '#000000';
 }
 
 /** Shared geometry for raster overlays and PDF page boundaries. */

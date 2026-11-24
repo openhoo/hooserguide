@@ -9,17 +9,16 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { checkSkill, compareSkillCopies, skillAudiences } from './check-skills.mjs';
 
 const root = await mkdtemp(join(tmpdir(), 'hooserguide-package-'));
-let tarball;
 try {
   await mkdir('dist', { recursive: true });
   await writeFile('dist/__stale-module.js', 'throw new Error(\"obsolete module must not ship\");');
   const pack = JSON.parse(
-    execFileSync('npm', ['pack', '--json'], {
+    execFileSync('npm', ['pack', '--json', '--pack-destination', root], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'inherit'],
     }),
   );
-  tarball = resolve(pack[0].filename);
+  const tarball = join(root, pack[0].filename);
   if (
     pack[0].files.some(
       (file) => file.path === 'dist/__stale-module.js' || file.path.startsWith('dist/mcp-runs.'),
@@ -34,6 +33,11 @@ try {
     cwd: root,
     stdio: ['ignore', 'pipe', 'inherit'],
   });
+  const installedPackage = join(root, 'node_modules/@openhoo/hooserguide');
+  const readme = await readFile(join(installedPackage, 'README.md'), 'utf8');
+  for (const [, href] of readme.matchAll(/\]\(([^ )]+)\)/g)) {
+    if (!/^(?:https?:|#)/.test(href)) await access(join(installedPackage, href.split('#')[0]));
+  }
   const binary = join(root, 'node_modules/.bin/hooserguide');
   const catalogue = JSON.parse(
     execFileSync(binary, ['steps', '--json'], { cwd: root, encoding: 'utf8' }),
@@ -187,13 +191,13 @@ try {
   await writeFile(join(root, 'component-out/stale.txt'), 'must stay outside the job upload');
   const manifestBefore = await readFile(join(root, 'package.json'));
   const lockBefore = await readFile(join(root, 'package-lock.json'));
+  // Run the published quickstart scenario through both CI adapters against the shipped app.
+  const feature = /```gherkin\r?\n([\s\S]+?)\r?\n```/.exec(readme)?.[1];
+  if (!feature) throw new Error('README quickstart scenario is missing');
+  await writeFile(join(root, 'docs/guide/features/get-started.feature'), feature + '\n');
   const app = spawn(
     process.execPath,
-    [
-      '--input-type=module',
-      '-e',
-      'import {createServer} from "node:http"; const server=createServer((_q,r)=>r.end("<h1>Welcome</h1>")); server.listen(0,"127.0.0.1",()=>console.log(server.address().port));',
-    ],
+    [resolve('scripts/gitlab-test-app.mjs'), '0', join(installedPackage, 'examples/app.html')],
     { stdio: ['ignore', 'pipe', 'inherit'] },
   );
   try {
@@ -370,5 +374,4 @@ try {
   );
 } finally {
   await rm(root, { recursive: true, force: true });
-  if (tarball) await rm(tarball, { force: true });
 }

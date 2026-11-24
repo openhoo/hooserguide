@@ -28,6 +28,8 @@ import {
   GuideError,
   managedRunIds,
   loadManagedRun,
+  managedRunDirectory,
+  readRunReport,
   summarizeRun,
   readRunArtifact,
   verifiedCapture,
@@ -146,16 +148,19 @@ export function createMcpServer(configPath: string) {
       );
     }
   }
-  async function select(runId?: string, successful = false) {
-    const c = await config();
-    if (runId) return loadManagedRun(c.output, runId);
-    for (const id of await managedRunIds(c.output)) {
+  async function selectManaged<T extends { report: { status: string; exportError?: string } }>(
+    output: string,
+    runId: string | undefined,
+    read: (output: string, id: string) => Promise<T>,
+    successful = false,
+  ) {
+    if (runId) return read(output, runId);
+    for (const id of await managedRunIds(output)) {
       try {
-        const r = await loadManagedRun(c.output, id);
+        const r = await read(output, id);
         if (!successful || (r.report.status === 'passed' && !r.report.exportError)) return r;
       } catch {
-        // Incomplete or unreadable newer outputs must not displace usable older evidence.
-        // Explicit runId requests still surface the precise artifact error.
+        // Skip unreadable candidates only for implicit selection.
         continue;
       }
     }
@@ -166,6 +171,9 @@ export function createMcpServer(configPath: string) {
         : 'No completed managed run is available.',
       'Generate a guide first, or configure the output directory containing existing runs.',
     );
+  }
+  async function select(runId?: string) {
+    return selectManaged((await config()).output, runId, loadManagedRun);
   }
   server.registerTool(
     'hooserguide_status',
@@ -614,7 +622,15 @@ export function createMcpServer(configPath: string) {
       active = { operation: 'rebuild', startedAt: new Date().toISOString() };
       try {
         const c = await config(),
-          source = await select(runId, true);
+          source = await selectManaged(
+            c.output,
+            runId,
+            async (output, id) => {
+              const directory = await managedRunDirectory(output, id);
+              return { directory, report: await readRunReport(directory) };
+            },
+            true,
+          );
         const r = await build(
           source.directory,
           {
@@ -712,7 +728,7 @@ export function createMcpServer(configPath: string) {
       try {
         if (active && !runId) throw busy();
         const c = await config(),
-          source = await select(runId, true);
+          source = await selectManaged(c.output, runId, loadManagedRun, true);
         const result = await bundle(
           source.directory,
           join(
@@ -787,7 +803,7 @@ export function createMcpServer(configPath: string) {
           resources = [];
         for (const id of (await managedRunIds(c.output)).slice(0, 50)) {
           try {
-            const r = await select(id);
+            const r = await loadManagedRun(c.output, id);
             for (const artifact of resourceArtifacts.options) {
               try {
                 await readRunArtifact(r.directory, artifact);

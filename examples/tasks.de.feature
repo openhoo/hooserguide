@@ -9,6 +9,8 @@ Feature: Mit HooTasks arbeiten
 
   @tasks
   Scenario: Die erste Aufgabe anlegen
+    Legen Sie eine Aufgabe an. Prüfen Sie nach dem Neuladen, ob Titel und Priorität weiterhin in der Liste stehen.
+
     And I add a prerequisite "Öffnen Sie Ihren Arbeitsbereich mit der Berechtigung, Aufgaben anzulegen."
     And I add a tip "Verwenden Sie einen kurzen Titel, der den nächsten Arbeitsschritt beschreibt."
     And I explain "Geben Sie einen eindeutigen Aufgabentitel ein und wählen Sie die Priorität."
@@ -55,8 +57,13 @@ Feature: Mit HooTasks arbeiten
       }
       """
 
+    When I reload the page
+    Then "testid=task-list" has text "Prepare the launch checklistHigh priority"
+
   @preferences
   Scenario: Benachrichtigungen anpassen
+    Legen Sie für diese Browsersitzung fest, ob Sie E-Mail-Benachrichtigungen erhalten möchten.
+
     And I add a note "Einstellungen werden getrennt von den einzelnen Aufgaben gespeichert."
     And I add a warning "Aktivieren Sie E-Mail-Benachrichtigungen nur für ein Konto, das Sie kontrollieren."
     When I scroll to "label=Email notifications"
@@ -76,3 +83,5 @@ Feature: Mit HooTasks arbeiten
         ]
       }
       """
+    When I reload the page
+    Then "label=Email notifications" is checked

@@ -68,7 +68,7 @@ export async function readRunArtifact(directory: string, path: string, maxBytes 
     await handle.close();
   }
 }
-export async function loadManagedRun(output: string, runId: string): Promise<RunResult> {
+export async function managedRunDirectory(output: string, runId: string): Promise<string> {
   runIdSchema.parse(runId);
   const root = await realpath(output),
     directory = await realpath(join(root, runId));
@@ -78,7 +78,10 @@ export async function loadManagedRun(output: string, runId: string): Promise<Run
       'Run resolves outside its managed location.',
       'Select a runId returned by hooserguide_status.',
     );
-  return loadRunDirectory(directory);
+  return directory;
+}
+export async function loadManagedRun(output: string, runId: string): Promise<RunResult> {
+  return loadRunDirectory(await managedRunDirectory(output, runId));
 }
 /** Load local run evidence with the same artifact containment gates as MCP. */
 export async function loadRunDirectory(path: string): Promise<RunResult> {
@@ -156,6 +159,11 @@ export function summarizeRun(result: RunResult) {
     })),
   };
 }
+// Only validated dimensions are retained. Identical bytes are common across renderers and rebuilds.
+// The fixed zero-length IEND chunk (including its CRC) closes a PNG datastream.
+const pngEnd = Buffer.from('0000000049454e44ae426082', 'hex');
+const decodedPngs = new Map<string, { width: number; height: number }>();
+
 export async function verifiedCapture(
   result: RunResult,
   capture: Capture,
@@ -165,23 +173,46 @@ export async function verifiedCapture(
   const path = variant === 'raw' ? capture.raw : capture.image;
   const bytes = await readRunArtifact(result.directory, path, maxBytes);
   const expected = variant === 'raw' ? capture.rawSha256 : capture.sha256;
-  if (expected && digest(bytes) !== expected)
+  const sha256 = digest(bytes);
+  if (expected && sha256 !== expected)
     throw new GuideError(
       'HASH_MISMATCH',
       'Screenshot differs from its execution report.',
       'Regenerate the guide or restore the original evidence; do not review this image as verified.',
     );
-  const meta = await sharp(bytes).metadata();
-  if (meta.format !== 'png' || meta.width !== capture.width || meta.height !== capture.height)
+  let dimensions = decodedPngs.get(sha256);
+  if (!dimensions) {
+    try {
+      // Pixel decoders may tolerate a missing final chunk even if they read all rows.
+      if (!bytes.subarray(-pngEnd.length).equals(pngEnd)) throw new Error('Missing PNG end chunk');
+      const image = sharp(bytes);
+      const meta = await image.metadata();
+      if (meta.format !== 'png' || meta.width !== capture.width || meta.height !== capture.height)
+        throw new Error('PNG format or dimensions differ');
+      // Metadata alone also succeeds for a PNG whose pixel data ends halfway through.
+      // A one-pixel output exercises the decoder without allocating a full-size JS buffer.
+      await image.resize(1, 1, { fit: 'fill' }).raw().toBuffer();
+      dimensions = { width: meta.width, height: meta.height };
+      if (decodedPngs.size >= 256) decodedPngs.delete(decodedPngs.keys().next().value!);
+      decodedPngs.set(sha256, dimensions);
+    } catch {
+      throw new GuideError(
+        'INVALID_ARTIFACT',
+        'Screenshot is not a complete PNG with the recorded dimensions.',
+        'Use original evidence or regenerate the guide.',
+      );
+    }
+  }
+  if (dimensions.width !== capture.width || dimensions.height !== capture.height)
     throw new GuideError(
       'INVALID_ARTIFACT',
-      'Screenshot dimensions or format differ from the report.',
+      'Screenshot dimensions differ from the report.',
       'Use original evidence or regenerate the guide.',
     );
   return {
     bytes,
     hashVerified: Boolean(expected),
-    sha256: digest(bytes),
+    sha256,
     path: join(result.directory, path),
   };
 }

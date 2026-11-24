@@ -64,3 +64,9 @@ Use `focus: "testid=panel"` and `padding: 40` for a cropped screenshot of one fo
 Mark kinds are `box`, `arrow` and `both`. Labels accept 1–4 letters or digits. Colors use `#RRGGBB`; optional `from: {x, y}` sets arrow origins in screenshot CSS pixels. `fullPage: true` captures long pages and splits them into readable PDF images. For viewport screenshots all targets must fit together; split the capture when they do not. Locators can be strings (`role=button:Save`, `label=Name`, `text=Done`, `testid=save`, `css=.save`) or JSON objects (`{"role":"button","name":"Save"}`).
 
 Gherkin Backgrounds, Scenario Outlines, Examples and language directives are compiled by the Cucumber parser. Built-in step text stays English even when Gherkin keywords are localized. Custom step modules export `register(registry)` and may use `context.page`, `context.target`, `context.capture`, `context.instruction` and the original `context.step`.
+
+Built-in chapters need a capture. Preflight checks selector shorthand across
+steps, form rows and captures; it does not prove that a native selector matches
+the app. A custom step can take a screenshot even if no built-in capture appears
+in the outline. Privacy masks must match after the page settles and stay in place
+while the browser takes each screenshot.

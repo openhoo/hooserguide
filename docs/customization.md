@@ -1,28 +1,19 @@
 # Customize, review and share your guide
 
+Choose what to capture before you run. After a passing run, you can [change the theme](#manual-themes), [compare it to an earlier run](#inspect-and-compare-evidence) or [make an offline ZIP](#share-a-portable-zip) without repeating the workflow. Run examples beside `hooserguide.config.json`; replace `RUN` with the directory printed by generation.
+
 ## Select workflows and stop on failure
 
-Use Cucumber tag expressions with `and`, `or`, `not` and parentheses. Tags inherited from Feature, Rule and Examples participate in selection. `tagExpression` overrides the legacy single `tag`; `scenario` adds a case-insensitive name substring filter. Filters are applied before step binding validation, so unrelated scenarios can remain outside your documentation run.
-
-```json
-{
-  "title": "Workspace guide",
-  "baseURL": "http://localhost:3000",
-  "features": ["features/*.feature"],
-  "tagExpression": "@manual and (@editor or @admin) and not @destructive",
-  "scenario": "settings",
-  "failFast": true
-}
-```
+Use tags to select a group of scenarios and `--scenario` to narrow it by a case-insensitive name substring. The following commands check and run the same selection:
 
 ```sh
-hooserguide validate --config hooserguide.config.json --tags '@manual and not @destructive' --scenario settings --json
-hooserguide run --config hooserguide.config.json --tags '@manual and not @destructive' --scenario settings --fail-fast --json
+npx hooserguide validate --tags '@manual and not @destructive' --scenario settings
+npx hooserguide run --tags '@manual and not @destructive' --scenario settings --fail-fast --json
 ```
 
-Validate and generate with the same profile and filters. Validation reports selected names, features, tags, step counts and built-in capture counts; it opens no browser and does not verify app selectors. Custom steps that capture images cannot be inferred from their text.
+Set `tagExpression`, `scenario` and `failFast` in the config for a standing selection. Cucumber expressions support `and`, `or`, `not` and parentheses, including tags inherited from Features, Rules and Examples. `tagExpression` takes precedence over the single `tag`. Unselected scenarios are excluded before binding validation.
 
-`--no-fail-fast` overrides an enabled config setting for one CLI run. Without `failFast`, independent scenarios continue after a failure. With it, later scenarios are recorded in `skippedScenarios` with reason `fail-fast`. Cancellation records unstarted scenarios as `cancelled`. Neither produces a successful handbook. Reports retain `selection` for coverage review; a passing filtered run verifies only that selection.
+By default, independent scenarios continue after one fails. With `--fail-fast`, the report lists subsequent executions in `skippedScenarios` with reason `fail-fast`; cancellation uses `cancelled`. Use `--no-fail-fast` to override the configured setting. A failure prevents handbook publication. The report's `selection` records which scenarios the run covered.
 
 ## Add user-facing guidance
 
@@ -34,7 +25,7 @@ And I add a warning "Check the changes before selecting Save."
 And I explain "Select Save and check the confirmation."
 ```
 
-Prerequisites are descriptions, not executable assertions. Assert the required state separately. Prerequisites and callouts appear as chapter guidance before the numbered instructions in HTML, Markdown and PDF. The original step order remains in `report.json`. Empty guidance is rejected. Prose is escaped rather than interpreted as HTML.
+Prerequisites and callouts appear before the numbered instructions in all three formats. Each entry needs text. They describe the task; use a separate assertion for any state the guide promises. The report preserves the original execution order.
 
 ## Configure document identity, language and PDF geometry
 
@@ -62,28 +53,41 @@ Prerequisites are descriptions, not executable assertions. Assert the required s
 }
 ```
 
-These are optional fields to add to a complete config. `language` sets the browser locale and document language. Guide labels use German for `de`/`de-*` and English otherwise. Scenario names, explanations and captions stay in the language you authored; UI content is not automatically translated. PDF page numbers and image continuation labels are localized too.
+These are optional fields in a complete config. `language` sets the browser locale and document language. Structural labels, including PDF page numbers, use German for `de` and its regional forms and English otherwise. Write scenario names, captions and instructions in the intended language yourself.
 
-| Setting                   | Default    | Behavior                                                                       |
-| ------------------------- | ---------- | ------------------------------------------------------------------------------ |
-| `document.version`        | omitted    | Handbook version shown in all three formats                                    |
-| `document.productVersion` | omitted    | Application version label                                                      |
-| `document.audience`       | omitted    | Intended readers                                                               |
-| `document.summary`        | omitted    | Cover/hero introduction                                                        |
-| `manual.pageSize`         | `A4`       | `A4` or `Letter`                                                               |
-| `manual.orientation`      | `portrait` | `portrait` or `landscape`                                                      |
-| `manual.margin`           | `48`       | PDF margins in points, between 24 and 72                                       |
-| `manual.contents`         | `true`     | PDF cover and Markdown table of contents; HTML navigation remains available    |
-| `manual.showGeneratedAt`  | `true`     | Show capture/rebuild dates in the document; report evidence retains timestamps |
+| Setting                                                     | Default      | Effect                                                                                                    |
+| ----------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------- |
+| `document.version`, `productVersion`, `audience`, `summary` | Omitted      | Guide version, application version, intended readers and introduction.                                    |
+| `manual.pageSize`, `orientation`                            | A4, portrait | Use A4 or Letter in portrait or landscape.                                                                |
+| `manual.margin`                                             | 48           | PDF margin in points, from 24 to 72.                                                                      |
+| `manual.contents`                                           | `true`       | Show a PDF/Markdown contents list. PDF chapter bookmarks and HTML navigation remain available either way. |
+| `manual.showGeneratedAt`                                    | `true`       | Show capture and rebuild dates in the document. The report keeps its timestamps either way.               |
 
-Long screenshots are sliced according to the chosen page geometry, preserving all pixels and annotation groups where space allows. The PDF audit includes actual page dimensions and margin in `pdf-layout.json`. PDF exports retain semantic headings and alternative text for screenshots, including screen labels and continuation parts, for readers that expose tagged PDF structure.
+For a new PDF from existing screenshots:
 
 ```sh
-hooserguide run --config hooserguide.config.json --page-size Letter --landscape --margin 36
-hooserguide build <run-directory> --orientation portrait --page-size A4
+RUN="output/hooserguide/run-…"
+npx hooserguide build "$RUN" --config hooserguide.config.json --page-size Letter --landscape --margin 36
 ```
 
-`--orientation portrait|landscape` is explicit; `--landscape` is a shortcut. Use one of them. CLI settings override config. Rebuild merges optional `document` and `manual` overrides with original settings and applies current config branding/metadata/layout. It uses original screenshots and capture time. With `--config`, rebuild respects that config's PDF setting; `--no-pdf` disables it explicitly.
+CLI settings override the config; use either `--orientation portrait|landscape` or `--landscape`. The [rebuild](advanced.md#rebuild-from-existing-evidence) preserves the capture time. Long screenshots can span pages; `pdf-layout.json` records page dimensions, slice ranges and warnings. The PDF contains headings, chapter links/bookmarks and image alternatives, including screen labels and continuation parts.
+
+## Manual themes
+
+Set `manual.theme` in the config, or test a different preset on an existing run: `npx hooserguide build "$RUN" --theme midnight`.
+
+| Theme                    | Appearance                   |
+| ------------------------ | ---------------------------- |
+| `professional` (default) | Light, slate and teal        |
+| `ocean`                  | Light, blue                  |
+| `forest`                 | Light, green                 |
+| `sand`                   | Light, warm paper and bronze |
+| `midnight`               | Dark, navy and sky blue      |
+| `graphite`               | Dark, charcoal and lavender  |
+
+The preset styles HTML and PDF. The HTML theme picker remembers a choice for the handbook path when browser storage is available. It changes the reader only; downloads keep the generated PDF theme. Browser printing uses a light palette. Without JavaScript, the configured theme and PDF download still work. Screenshots keep their original colors in every format, and Markdown has no theme styling.
+
+`branding.accentColor` preserves the exact color for decoration. Accent text uses it only when it reaches 4.5:1 contrast on every text surface; otherwise the preset supplies the text color. Built-in control borders and focus indicators target at least 3:1 contrast. For the TypeScript theme catalogue, import `manualThemeNames`, `manualThemes` and `resolveManualTheme`.
 
 ## Set screenshot defaults
 
@@ -102,36 +106,37 @@ hooserguide build <run-directory> --orientation portrait --page-size A4
 
 ## Use the offline HTML reader
 
-Open `index.html` directly or host the complete run directory. JavaScript adds a chapter search, annotation toggle and Print button without any remote dependency. Search matches all entered terms against chapter prose, prerequisites, callouts and captions. It hides nonmatching chapters and navigation items, announces the count and handles zero matches. Printing includes all chapters even when search is active. The annotation toggle switches between the masked original and annotated PNG and hides legends for originals. Printing preserves the chosen image variant. Both the Print button and native browser printing prepare offscreen screenshots for loading; the Print button also waits for image decoding. Long desktop contents lists scroll within the viewport, keeping every chapter reachable by keyboard.
+Open `index.html` with its sibling screenshots and downloads in place. Search matches all entered terms across chapter text, guidance and captions. **Show annotations** switches between the annotated and masked original images; legends are shown only for annotations. **Print** includes every chapter even during a search and keeps the chosen image variant. The print button waits for images to decode.
 
-Without JavaScript, the complete guide, navigation and downloads remain usable. The optional toolbar is hidden. Controls have labels, visible keyboard focus, responsive sizing and reduced-motion support.
+Without JavaScript, the full handbook, links and downloads remain available offline.
 
 ## Inspect and compare evidence
 
 ```sh
-hooserguide inspect <run-directory> --json
-hooserguide compare <before-run> <after-run> --json
+npx hooserguide inspect "$RUN" --json
+npx hooserguide compare "$BEFORE" "$RUN" --json
 ```
 
-`inspect` reads the report and verifies both PNG variants against recorded hashes, dimensions and format. `verifiedImages` counts images with stored matching hashes; `legacyRawWithoutHash` identifies original images from older reports. Its `status` is the inspected run's execution status, not a new browser check.
+Set `BEFORE` to the earlier run's directory. `inspect` reports the recorded execution status and checks the PNGs. `verifiedImages` counts images with matching stored hashes; `legacyRawWithoutHash` counts older originals without a recorded hash.
 
-`compare` verifies images before matching chapters by unique `(feature, title)` and captures by unique title within each chapter. Ambiguous titles fail with a repair hint; use distinct Scenario Outline names. It reports chapter additions/removals, prose changes, image changes, annotation-definition changes and metadata/order changes. Matching stored raw hashes establish integrity before decoded RGBA pixels are compared. Recompressing identical pixels does not count as a pixel change. Pixel comparison is limited to 32 megapixels per image. For legacy raw evidence, `rawHashesAvailable: false` and absent `pixelsChanged` mean that distinction is unverified. This is an exact evidence comparison, not a perceptual similarity or persistence check. Durations, run IDs and timestamps are excluded from ordinary differences.
+`compare` matches chapters by feature, scenario title and, for responsive runs, profile. Within a chapter it matches figures by title. Use distinct scenario and figure titles so each match is unambiguous.
 
-```ts
-import { inspectRun, compareRuns, bundle } from '@openhoo/hooserguide';
-const inspection = await inspectRun('output/guides/run-...');
-const comparison = await compareRuns('output/guides/run-before', 'output/guides/run-after');
-const archive = await bundle('output/guides/run-after', 'deliverables/user-guide.zip');
-```
+- Prose, tags, step text/status/errors, browser and profile metadata, figure order and annotation changes are reported. Timing and encoding-only differences are ignored.
+- Raw and annotated PNGs are decoded for an exact pixel comparison, limited to 32 megapixels per image. For legacy raw images, `rawHashesAvailable: false` and an absent `pixelsChanged` mean the raw change could not be verified.
+- An unchanged guide describes those two runs only. To check the current app, generate fresh evidence.
+
+The library equivalents are `inspectRun(directory)` and `compareRuns(beforeDirectory, afterDirectory)`.
 
 ## Share a portable ZIP
 
 ```sh
-hooserguide bundle <run-directory> --output deliverables/user-guide.zip --json
+npx hooserguide bundle "$RUN" --output deliverables/user-guide.zip --json
 ```
 
-ZIP packaging requires successful, intact evidence. Manuals are regenerated from verified screenshots and the sanitized report; existing HTML, Markdown, PDF and layout exports are not copied. Review the regenerated manuals before delivery. It includes HTML, Markdown, optional PDF, both masked screenshot variants, the report, optional PDF audit and `bundle-manifest.json`. Config, feature source files, plugins, overlays, cookies and login state are excluded. Local feature paths in the copied report are reduced to basenames; source files and the original report remain untouched. The manifest records the original report hash plus path, bytes and SHA-256 of every included artifact except the manifest itself.
+The source must be a passing run with intact evidence. Packaging regenerates the manuals from the verified screenshots and a report using feature basenames. It does not copy the previous exports or include executable plugins, config, feature files, SVG overlays, cookies or login state.
 
-The default destination is `<run-directory>.zip`. Existing files are never overwritten. Extract the full archive and open `index.html`; relative images and downloads keep working. Review screenshot and prose privacy before external delivery. Packaging verifies stored evidence, but does not discover unmasked personal data.
+The archive includes HTML, Markdown, both screenshot variants, the report and, if the run had a PDF, a PDF and layout audit. `bundle-manifest.json` lists the original report hash and the path, size and SHA-256 of each other file. Review the regenerated guide and both masked variants before delivery; integrity checks cannot discover personal data left visible.
 
-Limits: 64 MiB per manual/image, 2 MiB report/PDF audit, and 128 MiB total packaged artifacts. ZIP size and its hash are returned. The API accepts `{signal}` as its third argument; cancelled or failed writes remove their partial file. MCP writes unique bundles under the configured output's `bundles/` directory. Packaging itself does not publish externally.
+By default the archive is written beside the run as `<run-directory>.zip`. Existing ZIPs are preserved. Extract the whole archive and open `index.html`, or use [Pages](pages.md) for a hosted guide.
+
+Limits are 64 MiB per manual/image, 2 MiB for the report or PDF audit, and 128 MiB total artifacts. The CLI returns the ZIP size and hash. The API accepts `bundle(directory, destination, { signal })`; cancelled or failed writes remove the partial ZIP. MCP creates unique archives under `bundles/` in the configured output.

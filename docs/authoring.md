@@ -1,67 +1,25 @@
 # Write and iterate on a guide
 
-The authoring tools help you write a clear guide before executing application
-workflows. An outline is a plan. Only a successful `run` creates verified
-screenshots and a finished handbook.
+Write one scenario for one task a reader wants to finish. Describe the task in the reader's words, assert its outcome, and capture a screenshot that shows what success looks like. This page walks through editing, checking and running that scenario. For a ready-to-run example, see the [demo feature](../examples/tasks.feature).
 
 ## Start with an editor workspace
 
-```sh
-hooserguide init docs/user-guide --base-url http://localhost:3000 --skills --editor
-```
-
-Open `docs/user-guide/hooserguide.code-workspace` in VS Code or a compatible
-editor. Existing projects can run:
+With hooserguide [installed in your application project](../README.md#document-your-app), run:
 
 ```sh
-hooserguide editor --config docs/user-guide/hooserguide.config.json
+npx hooserguide init docs/user-guide --base-url http://localhost:3000 --editor
+cd docs/user-guide
 ```
 
-The workspace supplies:
+The remaining commands on this page run from this guide directory, beside `hooserguide.config.json`. Start your application at the configured URL before generation. For the first chapter, edit `features/get-started.feature`. Add `--skills` at initialization if an agent will author or review the guide.
 
-- Local configuration and capture JSON schemas for completion and validation.
-- `hg-` snippets for every documented built-in or trusted plugin step.
-- `hg-chapter-task`, `hg-chapter-form` and `hg-chapter-read-only` snippets.
-- Tasks for authoring lint, outline review, binding validation and generation.
-- A problem matcher that puts lint errors and warnings in the Problems panel.
+Open `hooserguide.code-workspace` in an editor with Gherkin support. It provides local JSON schemas, `hg-` step and chapter snippets, tasks for lint, outline, validate and run, and lint diagnostics in the Problems panel. The capture schema works in standalone `*.capture.json` drafts; copy the JSON into a scenario's capture docstring to use it.
 
-Use an editor with Gherkin language support for `.feature` snippet completion.
-Capture schemas apply to standalone `*.capture.json` drafts; capture docstrings
-inside Gherkin are checked by `lint` and `validate`. Copy the JSON into the capture
-docstring when finished. No separate JSON file is loaded by a capture step.
-
-Editor setup writes a dedicated workspace, a named snippet file and local schemas.
-It refuses to overwrite any of these generated files and preserves existing
-`.vscode/settings.json` and `.vscode/tasks.json`. Open the generated workspace to
-activate its tasks and settings. Tasks use the consumer's installed package via
-`npx --no-install hooserguide`; install hooserguide in the consumer project first.
-
-## Create chapters from task templates
-
-```sh
-hooserguide new "Change notification settings" --template form --config docs/user-guide/hooserguide.config.json
-hooserguide new "Find a report" --template read-only --config docs/user-guide/hooserguide.config.json
-hooserguide new "Create a project" --template task --config docs/user-guide/hooserguide.config.json
-```
-
-The title becomes the scenario name and a file slug. The default destination is
-the directory of the first configured feature pattern. `--output` chooses a
-different `.feature` file, relative to the config directory. Globbed directories
-require an explicit destination. The command does not change your config: ensure
-its `features` patterns select the new file.
-
-Templates contain `REPLACE_ME` introductions, prerequisites and exact selectors.
-Replace them using the actual application. Task and form templates include a
-reload and a saved-result assertion; read-only templates assert the page's visible
-state. Existing feature files are never overwritten. Templates are unfinished
-specifications, and lint reports their placeholder prose.
+An existing guide can run `npx hooserguide editor` beside its config. Setup creates dedicated workspace, snippet and schema files and preserves existing editor settings and tasks. The workspace runs the project's installed CLI.
 
 ## Write the reader's instructions alongside the workflow
 
-Use the Scenario description for that chapter's introduction. It overrides the
-Feature description for the generated chapter; chapters without their own prose
-inherit the Feature description. Backgrounds, Rules and Scenario Outlines retain
-their normal Gherkin execution semantics.
+Here is a chapter for an account settings page. Replace the path, accessible names and privacy selector with the ones in your application. The reload and final assertion verify that the display name survived the save.
 
 ```gherkin
 @manual
@@ -96,91 +54,55 @@ Feature: Account settings
       """
 ```
 
-`I explain:` accepts a nonempty plain-text docstring, optionally marked `text`.
-It creates one instruction, retaining line breaks in the report, HTML, Markdown
-and PDF. It
-does not interpret Markdown or execute content. Use several `I explain` steps for
-separate numbered instructions. Prerequisites and callouts remain descriptive;
-assertion steps verify application state.
+A Scenario description introduces that chapter; otherwise it inherits the Feature description. Backgrounds, Rules, Scenario Outlines and localized Gherkin keywords work normally. `I explain:` creates one plain-text instruction from its docstring, including line breaks. Use separate `I explain` steps for separately numbered instructions. A prerequisite describes what the reader needs; an assertion checks what the app did.
 
-Only `I explain:`, `I capture "..."` and `I fill the form:` accept attached
-arguments: a text docstring, a JSON object docstring and a selector/value table,
-respectively. Other built-in steps reject attached docstrings or tables before
-any browser actions. Malformed navigation/assertion URLs and element counts
-outside the safe integer range also fail this preflight. Trusted plugins validate
-their own argument syntax.
+Use the [step and selector reference](reference.md#built-in-step-phrases) for exact phrases and allowed arguments, and the [focused capture example](advanced.md#capture-a-specific-panel) for cropping and labels.
+
+## Create chapters from task templates
+
+```sh
+npx hooserguide new "Change notification settings" --template form
+```
+
+Choose `task` for a general saved change, `form` for a table of inputs or `read-only` for a lookup. Replace the generated `REPLACE_ME` prose and selectors before running. The title becomes the scenario name and filename slug. The editor has the same three templates as `hg-chapter-…` snippets.
+
+By default, the file goes in the directory of the first feature pattern. If that directory contains a glob, specify a filename with `--output features/example.feature`. Output paths are relative to the config. Existing files are preserved; make sure the config's `features` pattern includes the new file.
 
 ## Get all authoring feedback at once
 
 ```sh
-hooserguide lint --config docs/user-guide/hooserguide.config.json
-hooserguide lint --config docs/user-guide/hooserguide.config.json --strict --json
-hooserguide steps --search capture
-hooserguide steps --config docs/user-guide/hooserguide.config.json --search upload --json
+npx hooserguide steps --search capture
+npx hooserguide lint
 ```
 
-Lint continues across files, chapters and steps. It reports errors for Gherkin
-syntax, undefined/ambiguous bindings, malformed quoted arguments, form tables,
-unexpected attached arguments, malformed URLs, capture options, empty multiline
-instructions, missing screenshots and empty
-selections. Undefined steps include up to three similar documented phrases.
-Suggestions are examples; adapt their selectors to the actual app.
+`steps` searches examples, descriptions and patterns. Supply `--config hooserguide.config.json` to include trusted plugin steps. `lint` reads the configured files without running a browser. It reports all selected chapters' errors and warnings together, with a filename, line, column, diagnostic code and repair hint.
 
-Editorial warnings flag missing instructions, introductions, outcome assertions,
-figure descriptions, duplicate selected chapter titles and unfinished placeholder
-prose. They help with writing quality; they cannot prove that a workflow persists
-data, that an assertion is appropriate, or that all private information is masked.
-Custom bindings registered under `Then` count as potential outcome assertions.
-Plugins own validation of their own arguments. A chapter with custom steps and
-no built-in captures receives a warning because plugins may capture screenshots.
-Planned capture counts include built-in capture steps only.
+| Result                                                 | What to do                                                                                                                 |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| Unknown or ambiguous step                              | Check the suggested phrases or register the intended plugin.                                                               |
+| Invalid selector shorthand, argument, table or capture | Fix its syntax at the reported line. Native selectors can only be checked against the app when it runs.                    |
+| No selected chapter or no screenshot                   | Check filters and add a capture. A custom step may supply a screenshot; lint warns when it cannot tell.                    |
+| Editorial warning                                      | Check for missing instructions, introductions, outcomes, figure descriptions, duplicate titles or unfinished placeholders. |
 
-Each diagnostic includes `source`, `line`, `column`, `severity`, stable `code`,
-message and repair hint. Background steps point to their original lines. Outline
-chapters point to their Examples row, while step diagnostics point to the step
-definition. Parsing errors can report their line with a default column of 1.
-
-Lint exits 1 for errors; `--strict` also exits 1 for editorial warnings. Completed
-lint results go to stdout, including failing `--json` results. Config/plugin errors
-use the CLI's existing stderr error contract. `valid` means no authoring errors;
-it can remain true when a strict review fails due to warnings. No browser is
-launched. Configured plugins are trusted code and execute during registration.
+For CI, `npx hooserguide lint --strict --json` exits 1 on warnings as well as errors. The JSON `valid` flag means zero errors. Completed reviews go to stdout even when invalid; config or plugin exceptions go to stderr. Background diagnostics point to their source steps; Outline chapters point to their Examples row. A parse error may use column 1.
 
 ## Review the planned guide before execution
 
-```sh
-hooserguide outline --config docs/user-guide/hooserguide.config.json
-hooserguide outline --config docs/user-guide/hooserguide.config.json --json
-hooserguide lint --config docs/user-guide/hooserguide.config.json --profiles desktop,tablet,mobile
-hooserguide outline --config docs/user-guide/hooserguide.config.json --tags "@manual and not @draft" --scenario "settings"
-```
-
-The outline shows introductions, instructions, prerequisites, figure descriptions,
-annotation/mask counts, source locations and excluded chapters. It reports
-planned executions and captures across selected profiles. JSON includes
-`executed: false`, selection, totals, chapters and diagnostics. Excluded chapters
-are listed but do not receive step/editorial diagnostics; Gherkin syntax must
-still parse in every configured file. A missing-file pattern remains an error.
-
-Default output is Markdown on stdout, so you can save a draft with shell
-redirection. Invalid plans still produce the outline and exit 1. The authoring
-outline is never accepted as a successful handbook or execution report.
-
-Then validate and run the same selection:
+After saving the example, use the same scenario filter for each command:
 
 ```sh
-hooserguide validate --config docs/user-guide/hooserguide.config.json --scenario "settings"
-hooserguide run --config docs/user-guide/hooserguide.config.json --scenario "settings"
+npx hooserguide outline --scenario "Change your display name"
+npx hooserguide validate --scenario "Change your display name"
+npx hooserguide run --scenario "Change your display name" --json
 ```
+
+The outline shows prose, figures, mask counts, excluded chapters and planned executions. Its default output is Markdown; `--json` includes `executed: false`, the selection, totals and diagnostics. Counts cover built-in captures only. All configured files must exist and parse, even when their scenarios are excluded. An invalid outline still prints and exits 1.
+
+`validate` checks selected steps and arguments. Only `run` opens the app and performs the actions; use a test account and data you can change. Open the HTML or PDF path returned by a passing run and inspect both screenshot variants. See [selection and fail-fast](customization.md#select-workflows-and-stop-on-failure) for tag filters and [responsive guides](responsive.md) for screen profiles.
 
 ## Agent and library interfaces
 
-MCP exposes `hooserguide_lint` and `hooserguide_outline` with `profile`, `responsive`,
-`tagExpression`, `scenario` and optional `strict`. Both return a structured `review`
-with the same authoring report as the CLI. Check `isError` and `status`; a strict
-warning review has `status: failed` while `review.valid` can be true.
-`hooserguide_steps` accepts an optional case-insensitive `search` substring.
-MCP authoring tools do not write files or open the application.
+MCP exposes `hooserguide_lint`, `hooserguide_outline` and searchable `hooserguide_steps`. Authoring reviews accept profile and scenario/tag selections; their structured results distinguish `status` from `review.valid` when strict warnings fail. They do not write files or run steps, but configured plugin registration executes trusted local code. See the [MCP and library guide](integration.md).
 
 ```ts
 import { loadConfig, lint, formatOutline, newChapter } from '@openhoo/hooserguide';
@@ -190,5 +112,4 @@ console.log(formatOutline(review));
 await newChapter('hooserguide.config.json', 'Find a report', { template: 'read-only' });
 ```
 
-The package also exports `formatDiagnostics`, `suggestSteps`, `chapterTemplate`,
-`chapterTemplates`, `setupEditor`, and the authoring report/diagnostic types.
+The package also exports `formatDiagnostics`, `suggestSteps`, `chapterTemplate`, `chapterTemplates`, `setupEditor` and the authoring report types.

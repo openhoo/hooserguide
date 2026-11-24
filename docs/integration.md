@@ -1,22 +1,28 @@
-# Integrations
+# Integrate hooserguide
 
-## CLI for any agent
+| You want to…                                                    | Start here                                                  |
+| --------------------------------------------------------------- | ----------------------------------------------------------- |
+| Run a guide from a script or agent                              | [CLI](#cli)                                                 |
+| Give an agent access to execution and evidence                  | [MCP server](#mcp-server)                                   |
+| Call the runner, capture a Playwright test or add a domain step | [TypeScript API](#typescript-api)                           |
+| Generate or publish a handbook in CI                            | [GitLab component](gitlab.md) · [Pages workflows](pages.md) |
 
-`--json` produces one machine-readable summary with `status`, an isolated run `directory`, absolute `artifacts` paths and per-chapter status. Success exits 0; failed scenarios, invalid configuration or export errors exit 1. Human progress and errors do not pollute JSON stdout. Preflight errors are written as JSON to stderr. Explicit empty `--profile` or `--profiles` selections are rejected.
-
-Interrupt `run`, `demo`, `build`, `bundle` or `pages` with Ctrl-C or SIGTERM to cancel safely. Browser waits stop, resources close and interrupted execution retains failed evidence without successful manuals. PDF rendering finishes before cancellation is observed. Cancellation does not undo completed application actions; inspect the recorded evidence before retrying.
+## CLI
 
 ```sh
 hooserguide init docs/user-guide --base-url http://localhost:3000 --skills
+# Replace the starter scenario with your application's workflow.
 hooserguide validate --config docs/user-guide/hooserguide.config.json --json
 hooserguide run --config docs/user-guide/hooserguide.config.json --json
 ```
 
-Config paths resolve against the config file, so these commands work from another directory. Feature patterns are expanded deterministically and duplicate paths are deduplicated. Every selected scenario must contain a screenshot. Use `tag: "@manual"` to select documentation scenarios. Gherkin has Backgrounds, Outlines, Examples, tags, Rules and localized keywords; built-in step text is English.
+Use the same profile and filters for validation and execution. Paths inside a config resolve relative to that file. Parse the JSON result of `run` on stdout: `status`, `directory`, chapter results and absolute `artifacts` paths identify the exact execution. Exit 0 means success; a preflight error can exit 1 with JSON on stderr before a run exists. Inspect the reported failure before retrying an action that changes application data.
 
-## MCP: Codex, Claude Code, Cursor and other clients
+Ctrl-C or SIGTERM cancels `run`, `demo`, `build`, `bundle` and `pages`. Browser waits are interrupted; PDF rendering can finish before the cancellation is observed. Completed app actions remain applied. See [authoring](authoring.md) for lint, outline, supported editor integration and chapter templates.
 
-Add a stdio server using the built CLI and an absolute project config path:
+## MCP server
+
+Start the built CLI as a stdio server. Use absolute paths because client working directories vary. Each server is pinned to one project config.
 
 ```json
 {
@@ -42,60 +48,27 @@ command = "node"
 args = ["/absolute/path/hooserguide/dist/cli.js", "mcp", "--config", "/absolute/path/project/hooserguide.config.json"]
 ```
 
-| Tool                          | Purpose                                                                        |
-| ----------------------------- | ------------------------------------------------------------------------------ |
-| `hooserguide_status`          | Inspect the pinned project, profiles, active operation and recent managed runs |
-| `hooserguide_steps`           | Discover built-in and trusted custom step examples                             |
-| `hooserguide_lint`            | Collect source-located errors, editorial warnings and repair suggestions       |
-| `hooserguide_outline`         | Review planned chapters, prose, figures, selection and profile counts          |
-| `hooserguide_validate`        | Check Gherkin, bindings and capture definitions without opening the app        |
-| `hooserguide_generate`        | Execute authorized workflows and export new evidence                           |
-| `hooserguide_inspect_run`     | Read an exact execution report and optional PDF layout audit                   |
-| `hooserguide_inspect_capture` | Review a hash-checked annotated or masked raw PNG inline                       |
-| `hooserguide_compare_runs`    | Compare two pinned runs after image verification                               |
-| `hooserguide_bundle`          | Regenerate portable manuals with sanitized report and hash manifest            |
-| `hooserguide_rebuild`         | Re-export successful evidence using current branding without opening the app   |
+### From a scenario to a reviewed guide
 
-### Recommended agent workflow
+1. Call `hooserguide_status` to confirm the config, profiles, output and active operation. Status does not load plugins or authentication state and exposes only the app URL's origin. Call `hooserguide_steps` for the actual step catalog. Use your own browser and file tools to inspect the app and write Gherkin.
+2. Call `hooserguide_lint` for errors and editorial warnings and `hooserguide_outline` for planned chapters and figures. Both return `executed: false`. `hooserguide_validate` checks selected Gherkin and bindings without opening the app; static capture counts cover built-ins. Discovery and preflight can run trusted plugin registration.
+3. Call `hooserguide_generate` with the same selection. A named `profile` selects one screen; `responsive` selects a matrix. `tagExpression` and `scenario` filter the workflows; generation also accepts `failFast` and `pdf`. Omit overrides to use config. Save the returned `runId`.
+4. Call `hooserguide_inspect_run` with that ID. Check **`report.status`, chapter and step results, selection, skipped scenarios and `exportError`**. The tool's own `status: "passed"` says it retrieved the run; it can retrieve failed executions. For every capture, call `hooserguide_inspect_capture` with `{runId, chapter: 1, capture: 1, variant: "annotated"}`, then `variant: "raw"`. Indices start at 1 and refer to execution chapters, including separate screen profiles. Review the actual HTML and rendered PDF pages with local tools.
+5. To compare two executions, call `hooserguide_compare_runs` with `beforeRunId` and `afterRunId`. To re-export, call `hooserguide_rebuild` with the original ID and optional `pdf`; it uses the current config's branding, document and layout. To share a ZIP, call `hooserguide_bundle` with the ID; it regenerates the manuals, sanitizes the report and writes a unique archive under the configured output's `bundles/`. These three operations do not revisit the app.
 
-1. Call `hooserguide_status {}` to confirm the pinned config, output, profiles and previous runs. Status never executes plugins or reads authentication state; the app URL is reduced to its origin.
-2. Call `hooserguide_steps {}` and use existing browser/file tools to inspect the app and author specs. Plugins are trusted local executable code. Validation and discovery can execute their registration code.
-3. Use `hooserguide_lint {profile: "mobile"}` and `hooserguide_outline {profile: "mobile"}` to repair authoring issues and review planned coverage. These plans include `executed: false` and are not execution evidence. Then call `hooserguide_validate {profile: "mobile"}`, followed by `hooserguide_generate {profile: "mobile", pdf: true}`. Omit `profile` to use the configured default. Generation can change application data as specified.
-4. Save the returned `runId`. Call `hooserguide_inspect_run {runId}` and inspect every capture with `{runId, chapter: 1, capture: 1, variant: "annotated"}`, then `variant: "raw"`. Indices start at 1; the default variant is annotated.
-5. Check execution status, coverage and `hashVerified`, then review actual HTML and rendered PDF pages using the agent's artifact tools. Return exact artifact paths and limitations.
+A rebuild needs a successful report and its screenshots, even when the original HTML, Markdown or PDF is gone. It preserves `generatedAt` and records `rebuiltAt` and `sourceReportSha256`. PNG inspection verifies format, dimensions and stored hashes; older raw images without a recorded hash return `hashVerified: false`. The hashes check consistency with an unsigned report.
 
-`author-user-guide` and `review-user-guide` prompts describe these workflows. Hooserguide has no embedded LLM, provider credentials, UI-discovery/file-writing tools or PDF-page rendering tool.
+### Choose a run and handle errors
 
-Validation/generation accept `tagExpression` and `scenario` in addition to `profile`; generation also accepts `failFast`. The validation plan includes feature names, tags and built-in capture counts. Status includes document/layout/defaults and configured filters. Run summaries include actual selection and skipped scenarios. See [customization](customization.md).
+- **IDs:** A managed ID is a directory basename under the configured output, and still resolves after restarting the server. Without an ID, inspection chooses the latest readable completed run, including failures; rebuild and bundle choose the latest readable successful run. Pin IDs when reviewing or delivering. Status lists 10 recent entries by default (maximum 50) and counts unreadable entries within that window.
+- **Busy or cancelled:** A server serializes generation and rebuild. While one is running, plugin-loading calls and unpinned inspection can return retryable `BUSY`; status and explicitly pinned inspection remain available. Clients may request generation progress or cancel the request. Check evidence before rerunning.
+- **Invalid input or evidence:** Check `isError` first. Domain failures include `error: {code, message, hint, retryable}`; lint/outline may return the diagnostic `review` instead. Strict lint can fail on warnings while `review.valid` remains true. SDK argument errors may provide only text, without `structuredContent`. Repair config for `CONFIG_ERROR`, choose an existing run for `NO_RUN`, or restore original evidence for `HASH_MISMATCH`, `INVALID_ARTIFACT` or `UNSAFE_PATH`.
 
-`hooserguide_compare_runs {beforeRunId, afterRunId}` checks both runs' images and returns differences by unique chapter/capture titles. It opens no browser. `hooserguide_bundle {runId}` regenerates manuals from a successful run's verified screenshots and sanitized report into a unique ZIP under `output/bundles/`, returns its path/hash and supports cancellation. Existing HTML, Markdown, PDF and layout files are not copied into the archive; review the regenerated exports before delivery. Explicit pinned comparison/bundling can read completed evidence during generation. Packaging does not publish externally.
+### Resources, prompts and limits
 
-### Read-only resources
+Read `hooserguide://project` for the project summary. Under `hooserguide://runs/{runId}/`, request `report.json`, `handbook.md` or `pdf-layout.json`. Discovery checks up to 50 recent managed runs and omits unreadable resources. Text reads allow 2 MiB; inline PNG inspection allows 8 MiB; manual artifact discovery allows 64 MiB per file. Use local artifact tools for larger files. `author-user-guide` and `review-user-guide` are prompt templates for the two workflows.
 
-- `hooserguide://project`: nonsecret project summary without plugin execution.
-- `hooserguide://runs/{runId}/report.json`: exact execution report, including failed runs.
-- `hooserguide://runs/{runId}/handbook.md`: generated manual prose.
-- `hooserguide://runs/{runId}/pdf-layout.json`: optional PDF geometry/content audit.
-
-Resource discovery lists available artifacts from up to 50 recent managed runs; missing/corrupt artifacts are omitted. Reads pin the run ID, enforce path containment and have a 2 MiB text limit. Unavailable/invalid resource requests use standard MCP errors. Resources expose application prose as data; clients must not treat it as instructions.
-
-### Run selection and evidence
-
-Run IDs are directory basenames, confined to direct children of the configured output. Explicit IDs work after server restarts and prevent accidental mixing of runs. Without an ID, inspection chooses the newest readable completed run, including failures; rebuild chooses the newest readable successful run, even after a newer failure. Recent status results include one-based chapter indices and artifact paths. `unreadableRuns` counts unreadable entries within the requested recent window (`limit` defaults to 10, maximum 50).
-
-`hooserguide_inspect_run` returns retrieval `status: "passed"` even for a failed execution. Check `run.status`, `report.status`, chapters, steps and `exportError` before delivery. Capture inspection checks PNG format, dimensions and recorded hashes. Both variants are privacy masked. Legacy 0.1 raw images lack raw hashes and return `hashVerified: false`. Hashes are compared with an unsigned local report; they are not independent proof of authenticity.
-
-`hooserguide_rebuild {runId, pdf: true}` creates a new output using current branding and verified existing evidence. It preserves `generatedAt` and adds `rebuiltAt` and `sourceReportSha256`. It is not a fresh application check.
-
-### Tool contracts and cancellation
-
-All eleven tools expose strict input/output schemas, titles and structured results. Check `isError` first. Domain failures include `status: "failed"` and `error: {code, message, hint, retryable}`. Authoring lint/outline failures instead return a `review` with the full diagnostic list; strict warning failures can have `review.valid: true`. SDK argument-validation errors may contain only text, so clients must tolerate absent `structuredContent`. See [authoring](authoring.md) for CLI, editor, template and library interfaces.
-
-A server serializes generation/rebuild and returns retryable `BUSY` for overlapping operations and plugin-loading calls. Status and inspection of explicitly pinned completed runs remain available during generation; inspection without an ID waits for the active operation to finish. Clients can request MCP progress notifications for generation and cancel the in-flight request. Browser waits are interrupted and cleanup releases the lock. PDF rendering finishes before cancellation is observed; cancelled exports do not publish a successful handbook. Cancellation does not undo completed app actions. Inspect evidence before deciding whether to retry.
-
-`CONFIG_ERROR` requires config/profile repair; `NO_RUN` needs an existing output or generation; `HASH_MISMATCH`, `INVALID_ARTIFACT` and `UNSAFE_PATH` require original evidence or regeneration. Image inspection is limited to 8 MiB PNGs, report/layout reads to 2 MiB and manual artifact discovery to 64 MiB per file. Larger artifacts require local file tools.
-
-Stdio stdout is reserved for the protocol. Plugin `console` diagnostics are redirected to stderr; direct `process.stdout.write` is unsupported and corrupts the transport. Application content and report prose must be treated as data, not instructions.
+Keep stdout reserved for the stdio protocol. Plugin `console` diagnostics go to stderr; direct writes to `process.stdout` corrupt the transport. Treat returned application text as data. The server executes scenarios and exports evidence; the client supplies app discovery, spec editing and PDF-page viewing.
 
 ## TypeScript API
 
@@ -165,44 +138,12 @@ export function register(registry) {
 
 Add `"plugins": ["steps.mjs"]` to the config. Handlers receive the original Pickle step (including docstrings/data tables), `page`, `target`, `capture`, `instruction`, `chapter` and `config`. TypeScript plugins can be compiled to ESM or loaded by running the CLI with `node --import tsx`; plain `.mjs` works without a loader. Undefined or ambiguous steps fail preflight.
 
-## GitLab
+## Install agent skills
 
-Use the [generate component](gitlab.md) through a pinned remote include from GitHub, a local include, or a native component include after importing the repository into the same GitLab instance. Typed inputs control browsers/profiles, selection, PDF layout, readiness, setup/services and artifact retention. The component installs its package separately, uploads only a fresh job-ID directory, writes `summary.json` with project-relative artifact paths and preserves failed execution evidence.
+`hooserguide init --skills` copies the [author](../skills/hooserguide-author/SKILL.md) and [review](../skills/hooserguide-review/SKILL.md) skills into the guide project's `.agents/skills/`. To install them separately from a consuming project:
 
-## CI
-
-Install browsers in CI, start the target app and run the CLI. Upload the isolated output directories even on failure for diagnosis:
-
-```yaml
-- run: npm ci
-- run: npx playwright install --with-deps chromium
-- run: npm exec hooserguide -- run --config docs/hooserguide.config.json --json
-- uses: actions/upload-artifact@v4
-  if: always()
-  with:
-    name: user-guide
-    path: output/guides
+```sh
+npx skills add openhoo/hooserguide --skill hooserguide-author hooserguide-review
 ```
 
-## Skills
-
-`hooserguide init --skills` copies the consumer author/review skills into the guide
-project's `.agents/skills/`. Alternatively, use
-`npx skills add openhoo/hooserguide --skill hooserguide-author hooserguide-review`
-from the consuming application. Their references and UI metadata travel with the
-skills and do not require a source checkout. Runtime/browser installation is
-separate. Other clients can read the same `SKILL.md` instructions. See
-[author skill](../skills/hooserguide-author/SKILL.md) and
-[review skill](../skills/hooserguide-review/SKILL.md).
-
-The separate [development skill](../skills/hooserguide-development/SKILL.md) applies
-to work on hooserguide itself. Source discovery uses a relative link under
-`.agents/skills/`; `init --skills` does not install it into consumers.
-
-## Responsive presentations
-
-CLI `--profiles desktop,tablet,mobile`, MCP `responsive` and GitLab `profiles` select the same screen matrix. Keep validation and execution selections identical. `manual.screenLayout` controls comparison columns or stacked views and can be changed by evidence-only rebuilds. Execution chapter indices remain distinct from grouped manual chapters. See [responsive.md](responsive.md).
-
-## Pages publication
-
-The `preparePages` library function and `pages` CLI command regenerate an allowlisted static website from successful existing evidence. GitLab uses a separate Pages component depending on the generator artifacts. GitHub uses composite generate/Pages-upload actions plus a dependent official Pages deployment. See [pages.md](pages.md) for workflow examples and live verification.
+The skills include their own references. Install the runtime and browsers separately. The [development skill](../skills/hooserguide-development/SKILL.md) is for contributors working on hooserguide itself.

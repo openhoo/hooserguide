@@ -1,8 +1,9 @@
-import { mkdir, writeFile, access, cp } from 'node:fs/promises';
+import { mkdir, writeFile, cp } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveConfig } from './config.js';
-import { setupEditor } from './authoring-scaffold.js';
+import { editorFiles, setupEditor } from './authoring-scaffold.js';
+import { preflightScaffold } from './scaffold-paths.js';
 
 export const starterFeature = `@manual
 Feature: Your application
@@ -32,35 +33,13 @@ export async function init(
   const root = resolve(directory);
   const paths = ['hooserguide.config.json', 'features/get-started.feature'];
   resolveConfig({ title: 'New guide', baseURL, features: ['features/*.feature'] });
-  if (skills) {
-    for (const name of ['hooserguide-author', 'hooserguide-review']) {
-      const destination = join(root, '.agents', 'skills', name);
-      if (
-        await access(destination).then(
-          () => true,
-          () => false,
-        )
-      )
-        throw new Error(`Skill already exists: ${destination}`);
-    }
-  }
-  for (const path of [
-    ...paths,
-    ...(editor
-      ? [
-          'hooserguide.code-workspace',
-          '.vscode/hooserguide.code-snippets',
-          '.hooserguide/config.schema.json',
-          '.hooserguide/capture.schema.json',
-        ]
-      : []),
-  ]) {
-    const exists = await access(join(root, path)).then(
-      () => true,
-      () => false,
-    );
-    if (exists) throw new Error(`Refusing to overwrite ${join(root, path)}`);
-  }
+  const names = skills ? ['hooserguide-author', 'hooserguide-review'] : [];
+  await preflightScaffold(
+    root,
+    names.map((name) => join('.agents', 'skills', name)),
+    'Skill already exists: ',
+  );
+  await preflightScaffold(root, [...paths, ...(editor ? Object.values(editorFiles) : [])]);
   await mkdir(join(root, 'features'), { recursive: true });
   await writeFile(
     join(root, paths[0]!),
@@ -91,15 +70,8 @@ export async function init(
   await writeFile(join(root, paths[1]!), starterFeature, { flag: 'wx' });
   if (skills) {
     const source = fileURLToPath(new URL('../skills/', import.meta.url));
-    for (const name of ['hooserguide-author', 'hooserguide-review']) {
+    for (const name of names) {
       const destination = join(root, '.agents', 'skills', name);
-      if (
-        await access(destination).then(
-          () => true,
-          () => false,
-        )
-      )
-        throw new Error(`Skill already exists: ${destination}`);
       await cp(join(source, name), destination, {
         recursive: true,
         errorOnExist: true,
