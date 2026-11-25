@@ -110,6 +110,35 @@ export async function setupEditor(configPath: string) {
       description: step.description ?? 'Trusted custom guide step',
     };
   }
+  snippets['Capture: Lettered arrow'] = {
+    prefix: 'hg-capture-lettered-arrow',
+    scope: 'gherkin,feature',
+    body: [
+      'And I capture "${1:Settings}"',
+      '  """json',
+      '  {',
+      '    "description": "${2:Describe the verified result.}",',
+      '    "marks": [',
+      '      {',
+      '        "target": "${3:role=button:Save}",',
+      '        "kind": "arrow",',
+      '        "label": "${4:A}",',
+      '        "caption": "${5:Save your changes.}",',
+      '        "leader": {',
+      '          "side": "${6|auto,left,right,top,bottom|}",',
+      '          "length": ${7:72},',
+      '          "width": ${8|1,2,3.5|},',
+      '          "headSize": ${9:6},',
+      '          "head": "${10|open,filled|}"',
+      '        }',
+      '      }',
+      '    ]',
+      '  }',
+      '  """',
+    ],
+    description:
+      'Capture with a lettered arrow and a matching caption. Choose side, width and tip.',
+  };
   for (const template of chapterTemplates)
     snippets[`Chapter: ${template}`] = {
       prefix: `hg-chapter-${template}`,

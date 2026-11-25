@@ -15,6 +15,8 @@ The remaining commands on this page run from this guide directory, beside `hoose
 
 Open `hooserguide.code-workspace` in an editor with Gherkin support. It provides local JSON schemas, `hg-` step and chapter snippets, tasks for lint, outline, validate and run, and lint diagnostics in the Problems panel. The capture schema works in standalone `*.capture.json` drafts; copy the JSON into a scenario's capture docstring to use it.
 
+In a `.feature` file, choose `hg-capture-lettered-arrow` to insert a letter badge with a matching caption and a fine, open arrow. Tab through the side, length, stroke width and tip options. See the [arrow settings](reference.md#connect-a-reference-badge-to-a-control).
+
 An existing guide can run `npx hooserguide editor` beside its config. Setup creates dedicated workspace, snippet and schema files and preserves existing editor settings and tasks. The workspace runs the project's installed CLI.
 
 ## Write the reader's instructions alongside the workflow

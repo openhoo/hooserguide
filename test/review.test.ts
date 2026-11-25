@@ -91,6 +91,21 @@ test('PDF slices cover every pixel and keep annotation groups together when spac
     tail.every((s) => s.height >= 300),
     'Tiny continuation page',
   );
+  // An ideal cut at y=300 would touch the painted top of this 6px outline.
+  const wideOutline = {
+    ...capture,
+    height: 600,
+    marks: [
+      {
+        target: 'button',
+        kind: 'both',
+        label: 'A',
+        bounds: { x: 70, y: 308, width: 40, height: 18 },
+        leader: { side: 'bottom', width: 6 },
+      },
+    ],
+  } satisfies Capture;
+  assert.ok(planImageSlices(wideOutline, 302)[0]!.height < 300, 'Cut above the outline stroke');
 });
 
 test('PDF long captions and instructions paginate without lost text or off-page rendering', async () => {

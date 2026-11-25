@@ -166,13 +166,16 @@ export function assertReportIntegrity(report: RunReport): void {
         title: capture.title,
         marks: capture.marks.map(({ bounds: _bounds, ...mark }) => mark),
       });
-      for (const mark of capture.marks)
+      for (const mark of capture.marks) {
+        if (mark.leader && !mark.label)
+          throw new Error('A lettered leader is missing its reference label in the evidence');
         if (
           mark.bounds.x + mark.bounds.width > capture.width + 1 ||
           mark.bounds.y + mark.bounds.height > capture.height + 1 ||
           (mark.from && (mark.from.x >= capture.width || mark.from.y >= capture.height))
         )
           throw new Error('Annotation lies outside the evidence screenshot');
+      }
     }
   }
   if (

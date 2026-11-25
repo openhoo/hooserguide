@@ -132,26 +132,56 @@ And I capture "Settings"
     "marks": [
       {
         "target": { "role": "button", "name": "Save" },
-        "kind": "both",
+        "kind": "arrow",
         "label": "A",
         "caption": "Save your changes.",
-        "color": "#e11d48"
+        "color": "#e11d48",
+        "leader": { "side": "auto", "length": 72 }
       }
     ]
   }
   """
 ```
 
-| Option                           | Behavior                                                                                                                                                                                                                                                                                                      |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `marks[].kind`, `color`          | `box` (default), `arrow` or `both`. Colors use six-digit hex codes.                                                                                                                                                                                                                                           |
-| `label`, `caption`, `autoLabels` | Labels contain 1–4 ASCII letters or digits and must be unique per capture. Captions become legends. Captioned marks get numbers by default; choose `"letters"` or `"numbers"` to label all marks automatically. Explicit labels take precedence. Older captions without labels remain unchanged when rebuilt. |
-| `marks[].from`                   | Optional arrow origin, such as `{"x":64,"y":72}`, within the final screenshot. Automatic origins try to avoid other marked controls.                                                                                                                                                                          |
-| `fullPage`                       | Default `false`: scroll the first mark into view and require all marks to fit. Use `true` to capture the document from its origin. Viewport crops on zoomed mobile pages account for the visual viewport.                                                                                                     |
-| `focus`, `padding`               | Crop around one visible element with 24 CSS pixels of padding by default (0–500 allowed). Marks must fit in the crop. See the [focused capture example](advanced.md#capture-a-specific-panel).                                                                                                                |
-| `masks`                          | Mask these targets in addition to the global config masks. Original and annotated PNGs come from the same masked image.                                                                                                                                                                                       |
+| Option                           | Behavior                                                                                                                                                                                                                                                                                                                                    |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `marks[].kind`, `color`          | `box` (default), `arrow` or `both`. Colors use six-digit hex codes.                                                                                                                                                                                                                                                                         |
+| `label`, `caption`, `autoLabels` | Labels contain 1–4 ASCII letters or digits and must be unique per capture. Captions become legends. Captioned marks get numbers by default, while marks with `leader` get letters. Choose `"letters"` or `"numbers"` to set automatic labels; explicit labels take precedence. Older captions without labels remain unchanged when rebuilt. |
+| `marks[].leader`                 | Connect a reference badge to its target with a configurable arrow. With `leader`, omitted `kind` means `arrow`; use `both` to add an outline.                                                                                                                                                                                               |
+| `marks[].from`                   | Optional arrow origin in screenshot CSS pixels. With `leader`, sets the exact badge center.                                                                                                                                                                                                                                                 |
+| `fullPage`                       | Default `false`: scroll the first mark into view and require all marks to fit. Use `true` to capture the document from its origin. Viewport crops on zoomed mobile pages account for the visual viewport.                                                                                                                                   |
+| `focus`, `padding`               | Crop around one visible element with 24 CSS pixels of padding by default (0–500 allowed). Marks must fit in the crop. See the [focused capture example](advanced.md#capture-a-specific-panel).                                                                                                                                              |
+| `masks`                          | Mask these targets in addition to the global config masks. Original and annotated PNGs come from the same masked image.                                                                                                                                                                                                                     |
 
 Each privacy selector must match after the page settles. If its match count or bounds change while the browser takes the screenshot, neither image is saved. Review both variants for any private information your masks did not cover. Font and animation-frame waits honor `timeoutMs`. Motion is paused for measuring; previously paused animations stay paused. Boxes, arrows and labels are drawn onto the captured image.
+
+### Connect a reference badge to a control
+
+Place the badge in clear space and point its arrow at the control. The badge
+keeps the same letter as the legend. Use this for compact icons and controls
+whose labels or state would be hard to read with an outline.
+In the [editor workspace](authoring.md), type `hg-capture-lettered-arrow`
+to start with a fine, open arrow.
+
+- `side`: relative to the target. `auto` (default) tries several sides; choose `left`, `right`, `top` or `bottom` to fix the side.
+- `length`: from the badge rim to the arrow tip in screenshot CSS pixels (12–2000, default `72`). Leave at least 2 pixels of shaft beyond the head.
+- `width`: shaft width in CSS pixels (0.5–6, default `2`); `kind: "both"` uses the same width for the outline.
+- `headSize`: arrowhead length in CSS pixels (4–24, default `9`).
+- `head`: `"filled"` (default) or `"open"` for an outline tip.
+- An exact `from: {"x":64,"y":72}` sets the badge center in the final screenshot. Do not combine it with `leader.side` or `leader.length`.
+
+| Style    | `width` | `headSize` | `head`     |
+| -------- | ------: | ---------: | ---------- |
+| Fine     |       1 |          6 | `"open"`   |
+| Standard |       2 |          9 | `"filled"` |
+| Bold     |     3.5 |         12 | `"filled"` |
+
+![The same A badge points to the Save button with a fine open, standard filled or bold filled arrow.](media/letter-leaders.png)
+
+Automatic placement checks marked targets, badges and other extended arrows.
+Check unmarked text and icons in the annotated screenshot against the masked
+original. If the arrow cannot fit, try another side, shorten it, increase focus
+padding or split the capture. Check the rendered PDF at normal reading size.
 
 ## Authoring tools
 

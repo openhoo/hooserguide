@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0 — 2026-11-25
+
+- Set `marks[].leader` to place a reference letter beside its control and draw an arrow from the badge rim to the target. Choose the side or exact badge center, length, stroke width, and an open or filled tip. Existing marks keep their appearance.
+- Keep extended arrows and badges clear of marked controls. When a requested arrow or optional outline cannot fit, capture reports how to make room.
+- Use the `hg-capture-lettered-arrow` editor snippet to start with a fine, open arrow. The [capture reference](docs/reference.md#connect-a-reference-badge-to-a-control) compares three styles on the same screenshot; the author and review skills cover placement and PDF legibility.
+
 ## 0.8.4 — 2026-11-24
 
 - Reject missing captures and malformed selector shorthand before execution. Bound capture waits and recheck masks after scrolling and across the screenshot.

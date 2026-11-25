@@ -23,7 +23,7 @@ Require `report.status` and all chapters/steps to pass, with no `exportError`. A
 
 Inspect both `annotated` and masked `raw` captures using one-based chapter/capture indices. Require `hashVerified` for each current capture. Legacy 0.1 raw images have no stored raw hash; disclose that limitation. Hashes detect changes against an unsigned report, not independent authenticity.
 
-Read [visual-review.md](references/visual-review.md) for alignment, reference, privacy, HTML and PDF checks. Review all captures and rendered PDF content pages. `pdf-layout.json` warnings and text extraction supplement visual inspection. They do not establish correct layout.
+Read [visual-review.md](references/visual-review.md) for alignment, reference, privacy, HTML and PDF checks. Review all captures and rendered PDF content pages. For a lettered arrow, follow the line from its badge to the control: the letter, tip and control state should all be readable. `pdf-layout.json` warnings and text extraction supplement visual inspection. They do not establish correct layout.
 
 Read [customization.md](references/customization.md) for document versions/audience, localized labels, PDF geometry, capture-default precedence, comparison and ZIP manifests. Check that layout options match actual PDF page dimensions, search handles matching/empty results, the raw toggle hides annotation legends and printing includes all chapters. A label translation does not translate authored prose.
 

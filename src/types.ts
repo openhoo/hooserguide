@@ -8,13 +8,26 @@ export type Target =
   | { label: string }
   | { text: string }
   | { testId: string };
+/** Connect a reference badge to its target. Distances are in screenshot CSS pixels. */
+export interface LetterLeader {
+  /** Side of the target on which to place the badge. Defaults to auto. */
+  side?: 'auto' | 'left' | 'right' | 'top' | 'bottom';
+  /** Distance from the badge rim to the arrow tip. Defaults to 72. */
+  length?: number;
+  /** Shaft width (also used for an open head). Defaults to 2. */
+  width?: number;
+  /** Length of the arrowhead. Defaults to 9. */
+  headSize?: number;
+  head?: 'open' | 'filled';
+}
 export interface Mark {
   target: Target;
   kind?: 'box' | 'arrow' | 'both';
   label?: string;
   caption?: string;
   color?: string;
-  /** Arrow origin in screenshot CSS pixels. Default: automatically placed. */
+  leader?: LetterLeader;
+  /** Arrow origin in screenshot CSS pixels; with leader, the exact badge center. */
   from?: { x: number; y: number };
 }
 export interface CaptureSpec {

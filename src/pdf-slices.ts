@@ -1,4 +1,5 @@
 import { layoutAnnotations } from './annotations.js';
+import { leaderExtent } from './leader.js';
 import type { Capture } from './types.js';
 
 export interface ImageSlice {
@@ -10,10 +11,15 @@ export interface ImageSlice {
 export function planImageSlices(capture: Capture, maxHeight: number): ImageSlice[] {
   const limit = Math.max(1, Math.floor(maxHeight));
   const layouts = layoutAnnotations(capture.width, capture.height, capture.marks);
-  const ranges = layouts.map((l) => {
-    const ys = [l.box.y - 3, l.box.y + l.box.height + 3];
+  const ranges = layouts.map((l, i) => {
+    const pad =
+      capture.marks[i]?.kind === 'both' && l.arrow && 'head' in l.arrow ? l.arrow.width / 2 + 1 : 3;
+    const ys = [l.box.y - pad, l.box.y + l.box.height + pad];
     if (l.badge) ys.push(l.badge.y - 3, l.badge.y + l.badge.height + 3);
-    if (l.arrow)
+    if (l.arrow && 'head' in l.arrow) {
+      const extent = leaderExtent(l.arrow);
+      ys.push(extent.y, extent.y + extent.height);
+    } else if (l.arrow)
       ys.push(l.arrow.from.y - 5, l.arrow.from.y + 5, l.arrow.to.y - 5, l.arrow.to.y + 5);
     return {
       start: Math.max(0, Math.floor(Math.min(...ys))),

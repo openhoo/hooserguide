@@ -20,7 +20,7 @@ Use GitLab 17.10+ with Pages enabled. Add the deploy stage to your existing pipe
 stages: [test, deploy]
 
 include:
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.4/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.9.0/templates/generate/template.yml
     inputs:
       job-name: user-guide
       config: docs/user-guide/hooserguide.config.json
@@ -30,7 +30,7 @@ include:
       before-script:
         - npm ci
         - npm run start > /tmp/app.log 2>&1 &
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.4/templates/pages/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.9.0/templates/pages/template.yml
     inputs:
       generate-job: user-guide
       source: output/user-guide
@@ -44,11 +44,11 @@ The `generate-job` name must match the upstream job; `source` must match its art
 | `generate-job`, `source` | `hooserguide`, `output/hooserguide`                    | Job whose artifacts to download and the root containing its summary.       |
 | `output`                 | `public`                                               | Fresh relative directory to publish.                                       |
 | `job-name`, `stage`      | `hooserguide-pages`, `deploy`                          | Unique job name and an existing stage.                                     |
-| `package`, `image`       | `github:openhoo/hooserguide#0.8.4`, `node:22-bookworm` | Isolated Node.js runtime; publishing existing evidence needs no browser.   |
+| `package`, `image`       | `github:openhoo/hooserguide#0.9.0`, `node:22-bookworm` | Isolated Node.js runtime; publishing existing evidence needs no browser.   |
 | `rules`, `runner-tags`   | default branch, `[]`                                   | Keep deploy rules compatible with generation and select runners if needed. |
 | `artifacts-expire-in`    | `1 week`                                               | CI artifact retention. Pages deployment uses `expire_in: never`.           |
 
-A mirror on the same GitLab instance can use `component: $CI_SERVER_FQDN/your-namespace/hooserguide/pages@0.8.4`. See the [generation inputs](gitlab.md#inputs) and [Pages template](../templates/pages/template.yml).
+A mirror on the same GitLab instance can use `component: $CI_SERVER_FQDN/your-namespace/hooserguide/pages@0.9.0`. See the [generation inputs](gitlab.md#inputs) and [Pages template](../templates/pages/template.yml).
 
 ## GitHub Pages
 
@@ -78,14 +78,14 @@ jobs:
           node-version: '22'
       - run: npm ci
       - run: npm run start > /tmp/app.log 2>&1 &
-      - uses: openhoo/hooserguide/actions/generate@0.8.4
+      - uses: openhoo/hooserguide/actions/generate@0.9.0
         id: guide
         with:
           config: docs/user-guide/hooserguide.config.json
           profiles: desktop,tablet,mobile
           wait-url: http://127.0.0.1:3000/health
       - uses: actions/configure-pages@v5
-      - uses: openhoo/hooserguide/actions/pages@0.8.4
+      - uses: openhoo/hooserguide/actions/pages@0.9.0
         with:
           run-directory: ${{ steps.guide.outputs.directory }}
 
@@ -105,7 +105,7 @@ jobs:
 
 **Generation.** The [generate action](../actions/generate/action.yml) supports the workflow, selection, layout, readiness and package inputs in the [GitLab generation reference](gitlab.md#inputs). Its output root defaults to `output/hooserguide-github`, and `install-browsers` defaults to `'true'`. Pass booleans as strings. The action installs hooserguide separately from your app; use `install-browsers: 'false'` only if the matching engine and system dependencies are installed. Choose a unique `output` on persistent runners. On success, `directory` gives the exact run and `summary` gives the summary JSON path. To retain failure evidence, upload the dedicated generation root as an ordinary CI artifact.
 
-**Publication.** The [Pages action](../actions/pages/action.yml) accepts `run-directory` (required), `output` (default `_hooserguide-pages`), `package` (default `github:openhoo/hooserguide#0.8.4`) and `artifact-name` (default `github-pages`). Its `directory` output identifies the prepared site. If you change the artifact name, give the same name to `deploy-pages`. To publish an existing CI run, extract it inside the workspace and pass its exact directory.
+**Publication.** The [Pages action](../actions/pages/action.yml) accepts `run-directory` (required), `output` (default `_hooserguide-pages`), `package` (default `github:openhoo/hooserguide#0.9.0`) and `artifact-name` (default `github-pages`). Its `directory` output identifies the prepared site. If you change the artifact name, give the same name to `deploy-pages`. To publish an existing CI run, extract it inside the workspace and pass its exact directory.
 
 ## Verify deployment
 

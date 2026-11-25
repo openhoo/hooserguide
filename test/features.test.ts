@@ -31,6 +31,19 @@ test('automatic labels skip explicit references and crop conflicts fail prefligh
     }).map((m) => m.label),
     ['A', 'B', 'C'],
   );
+  assert.deepEqual(
+    assignLabels({
+      title: 'Mixed references',
+      marks: [
+        { target: 'a', caption: 'First control' },
+        { target: 'b', leader: {} },
+        { target: 'c', label: 'A' },
+        { target: 'd', caption: 'Next control' },
+        { target: 'e', caption: 'Next arrow', leader: {} },
+      ],
+    }).map((m) => m.label),
+    ['1', 'B', 'A', '2', 'C'],
+  );
   const many = assignLabels({
     title: 'Many',
     autoLabels: 'letters',

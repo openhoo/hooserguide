@@ -27,7 +27,7 @@ Use `hooserguide new "Task title" --template task|form|read-only --config <confi
 
 Before validation, run `hooserguide lint --config <config> --json` or `hooserguide_lint` for all source-located errors, writing warnings and suggested repairs. Review `hooserguide outline` or `hooserguide_outline` for planned prose, figures, selection and excluded chapters. Keep the same profile and filters throughout. A plan has `executed: false`; it is never application evidence. Strict review can fail on warnings while `valid` remains true. See [authoring-tools.md](references/authoring-tools.md) for editor/template workflows and diagnostic boundaries.
 
-Read [authoring.md](references/authoring.md) for config fields, Gherkin examples, privacy masks, references, focus crops and custom steps. Keep credentials out of specs and use environment-fill steps or ignored storage state. Apply masks to both screenshot variants; missing mask targets fail closed.
+Read [authoring.md](references/authoring.md) for config fields, Gherkin examples, privacy masks, references, focus crops and custom steps. If a badge covers the control, use the lettered arrow example there to move the badge into clear space and choose its line width. Keep credentials out of specs and use environment-fill steps or ignored storage state. Apply masks to both screenshot variants; missing mask targets fail closed.
 
 Validate, then generate with the **same profile and filters**. CLI: `hooserguide validate --config <config> --profile <name> --json`, then `hooserguide run` with matching flags. Omit the profile flag when using the default. MCP: `hooserguide_validate`, then `hooserguide_generate`. Check `isError` and structured status; repair failures before delivery.
 

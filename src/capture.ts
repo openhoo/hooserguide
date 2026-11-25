@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { targetSchema } from './config.js';
 import { target } from './steps.js';
 import { layoutAnnotations, badgeTextColor } from './annotations.js';
+import { leaderDefaults, leaderOutlineRadius } from './leader.js';
 import type { CaptureSpec, Capture, ResolvedMark, Target } from './types.js';
 
 export const escapeXml = (value: string) =>
@@ -39,6 +40,40 @@ export const captureSchema = z
               .string()
               .regex(/^#[0-9a-f]{6}$/i)
               .optional(),
+            leader: z
+              .object({
+                side: z
+                  .enum(['auto', 'left', 'right', 'top', 'bottom'])
+                  .optional()
+                  .describe('Side of the target for the reference badge. The default is auto.'),
+                length: z
+                  .number()
+                  .min(12)
+                  .max(2000)
+                  .optional()
+                  .describe('Distance from badge rim to arrow tip in CSS pixels (default 72).'),
+                width: z
+                  .number()
+                  .min(0.5)
+                  .max(6)
+                  .optional()
+                  .describe('Stroke width in CSS pixels (default 2). Use 1 for a fine line.'),
+                headSize: z
+                  .number()
+                  .min(4)
+                  .max(24)
+                  .optional()
+                  .describe('Length of the arrowhead in CSS pixels (default 9).'),
+                head: z
+                  .enum(['open', 'filled'])
+                  .optional()
+                  .describe('Open outline or filled arrowhead. The default is filled.'),
+              })
+              .strict()
+              .optional()
+              .describe(
+                'Connect a reference badge to its target. With from, the badge center is fixed; omit side and length.',
+              ),
             from: z
               .object({ x: z.number().nonnegative(), y: z.number().nonnegative() })
               .strict()
@@ -57,11 +92,30 @@ export function validateCapture(spec: CaptureSpec): void {
   const labels = (spec.marks ?? []).flatMap((m) => (m.label ? [m.label] : []));
   if (new Set(labels).size !== labels.length)
     throw new Error('Reference labels must be unique within a capture');
+  for (const [i, mark] of (spec.marks ?? []).entries()) {
+    const leader = mark.leader;
+    if (!leader) continue;
+    if (mark.kind === 'box')
+      throw new Error(
+        `Mark ${i + 1}: use kind "both" for a box with a lettered arrow, or omit kind for just the arrow`,
+      );
+    if (mark.from && (leader.side !== undefined || leader.length !== undefined))
+      throw new Error(
+        `Mark ${i + 1}: from sets the badge center; omit leader.side and leader.length when using from`,
+      );
+    if (
+      !mark.from &&
+      (leader.length ?? leaderDefaults.length) < (leader.headSize ?? leaderDefaults.headSize) + 2
+    )
+      throw new Error(
+        `Mark ${i + 1}: leader.length must leave at least 2 pixels of shaft beyond the arrowhead`,
+      );
+  }
 }
 
 export function assignLabels(spec: CaptureSpec): NonNullable<CaptureSpec['marks']> {
   const used = new Set((spec.marks ?? []).flatMap((m) => (m.label ? [m.label] : [])));
-  let next = 1;
+  const next = { numbers: 1, letters: 1 };
   const letters = (index: number) => {
     let label = '';
     while (index > 0) {
@@ -72,11 +126,13 @@ export function assignLabels(spec: CaptureSpec): NonNullable<CaptureSpec['marks'
     return label;
   };
   return (spec.marks ?? []).map((mark) => {
-    const mode = spec.autoLabels ?? (mark.caption ? 'numbers' : undefined);
+    const mode =
+      spec.autoLabels ?? (mark.leader ? 'letters' : mark.caption ? 'numbers' : undefined);
     if (!mode || mark.label) return { ...mark };
     let label: string;
     do {
-      label = mode === 'numbers' ? String(next++) : letters(next++);
+      const index = next[mode]++;
+      label = mode === 'numbers' ? String(index) : letters(index);
     } while (used.has(label));
     if (label.length > 4) throw new Error('Too many automatic reference labels');
     used.add(label);
@@ -92,11 +148,27 @@ export function overlay(width: number, height: number, marks: ResolvedMark[]): s
       const color = m.color ?? '#e11d48';
       const { box, badge, arrow } = layouts[i]!;
       const parts: string[] = [];
-      if ((m.kind ?? 'box') !== 'arrow')
+      if ((m.kind ?? (m.leader ? 'arrow' : 'box')) !== 'arrow')
         parts.push(
-          `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="6" fill="none" stroke="${color}" stroke-width="3"/>`,
+          `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="${m.leader ? leaderOutlineRadius : 6}" fill="none" stroke="${color}" stroke-width="${arrow && 'head' in arrow ? arrow.width : 3}"/>`,
         );
-      if (arrow)
+      if (arrow && 'head' in arrow) {
+        const { from, to, base, left, right, head, width: weight } = arrow;
+        // Overlap a filled head slightly so antialiasing cannot leave a seam at its base.
+        const end =
+          head === 'open'
+            ? to
+            : { x: base.x + (to.x - base.x) * 0.1, y: base.y + (to.y - base.y) * 0.1 };
+        parts.push(
+          `<path d="M${from.x},${from.y} L${end.x},${end.y}" stroke="${color}" stroke-width="${weight}" fill="none"/>`,
+        );
+        const v = `M${left.x},${left.y} L${to.x},${to.y} L${right.x},${right.y}`;
+        parts.push(
+          head === 'open'
+            ? `<path d="${v}" fill="none" stroke="${color}" stroke-width="${weight}" stroke-linecap="round" stroke-linejoin="round"/>`
+            : `<path d="${v} Z" fill="${color}"/>`,
+        );
+      } else if (arrow)
         parts.push(
           `<defs><marker id="arrow-${i}" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10 Z" fill="${color}"/></marker></defs><path d="M${arrow.from.x},${arrow.from.y} L${arrow.to.x},${arrow.to.y}" stroke="${color}" stroke-width="3" fill="none" marker-end="url(#arrow-${i})"/>`,
         );

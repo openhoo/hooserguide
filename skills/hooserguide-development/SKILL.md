@@ -18,7 +18,7 @@ Agents using the tool in another application should use `hooserguide-author` or
 | Writing tools and editor assets       | `src/authoring.ts`, `src/authoring-scaffold.ts`                                       | `test/authoring.test.ts`, consumer install                                  |
 | Gherkin, built-in steps and preflight | `src/gherkin.ts`, `src/steps.ts`, `src/preflight.ts`, `src/runner.ts`                 | Background/Outline/plugin and preflight tests                               |
 | Config, profiles, layouts and schemas | `src/config.ts`, `src/types.ts`, `scripts/build-assets.mjs`                           | Config rejection tests; rebuild generated schemas                           |
-| Capture, labels and geometry          | `src/capture.ts`, `src/annotations.ts`, `src/pdf-slices.ts`                           | Real PNG pixels, high DPI/scroll/focus, both masked variants                |
+| Capture, labels and geometry          | `src/capture.ts`, `src/annotations.ts`, `src/leader.ts`, `src/pdf-slices.ts`          | Real PNG pixels, high DPI/scroll/focus, both masked variants                |
 | HTML, prose, themes and PDF           | `src/render.ts`, `src/viewer.ts`, `src/themes.ts`, `src/pdf.tsx`                      | Browser behavior plus rendered PDF review                                   |
 | Evidence and re-exports               | `src/report.ts`, `src/evidence.ts`, `src/build.ts`, `src/compare.ts`, `src/bundle.ts` | Tampering, containment, failed-state and legacy tests                       |
 | MCP                                   | `src/mcp.ts`                                                                          | Actual stdio clients, strict schemas, cancellation and pinned run selection |

@@ -1,4 +1,5 @@
 import type { ResolvedMark } from './types.js';
+import { layoutLeader, layoutLeaderOutline, type LeaderArrow } from './leader.js';
 
 export interface Rectangle {
   x: number;
@@ -13,7 +14,7 @@ export interface Point {
 export interface AnnotationLayout {
   box: Rectangle;
   badge?: Rectangle;
-  arrow?: { from: Point; to: Point };
+  arrow?: { from: Point; to: Point } | LeaderArrow;
 }
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 const overlap = (a: Rectangle, b: Rectangle) =>
@@ -42,8 +43,10 @@ export function layoutAnnotations(
   marks: ResolvedMark[],
 ): AnnotationLayout[] {
   const placed: Rectangle[] = [];
-  return marks.map((mark) => {
+  const layouts: AnnotationLayout[] = marks.map((mark) => {
     const b = mark.bounds;
+    // Lay out the existing annotations before reserving space for new leaders.
+    if (mark.leader) return { box: b };
     let left = 5,
       right = 5,
       above = 5,
@@ -142,4 +145,35 @@ export function layoutAnnotations(
     }
     return { box, badge: mark.label ? badge : undefined, arrow };
   });
+  const bounds = marks.map((mark) => mark.bounds);
+  const outlines = new Map<number, Rectangle[]>();
+  for (const [i, mark] of marks.entries()) {
+    if (!mark.leader || mark.kind !== 'both') continue;
+    const blocked = [...bounds.filter((_, j) => i !== j), ...[...outlines.values()].flat()];
+    const { box, bands } = layoutLeaderOutline(width, height, mark, blocked, placed);
+    layouts[i] = { box };
+    outlines.set(i, bands);
+  }
+  // Give exact badge centers and requested sides first choice of the usable space.
+  const priority = (mark: ResolvedMark) =>
+    mark.from ? 0 : mark.leader?.side && mark.leader.side !== 'auto' ? 1 : 2;
+  const leaders = [...marks.entries()]
+    .filter(([, mark]) => mark.leader)
+    .sort(([, a], [, b]) => priority(a) - priority(b));
+  const otherLeaders: LeaderArrow[] = [];
+  for (const [i, mark] of leaders) {
+    const { badge, arrow } = layoutLeader({
+      width,
+      height,
+      mark,
+      blocked: [...bounds, ...[...outlines].flatMap(([j, bands]) => (i === j ? [] : bands))],
+      badges: placed,
+      badgeObstacles: outlines.get(i),
+      otherLeaders,
+    });
+    layouts[i] = { ...layouts[i]!, badge, arrow };
+    placed.push(badge);
+    otherLeaders.push(arrow);
+  }
+  return layouts;
 }

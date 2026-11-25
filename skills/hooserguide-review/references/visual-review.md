@@ -6,7 +6,14 @@ Open annotated PNGs and compare them with the masked `.raw.png` originals. If us
 
 For focused screenshots check the crop includes the intended region and references remain correctly positioned. Automatic references must be unique, skip explicit labels and agree with every legend. Check that per-mark colors match their legend entries.
 
-Confirm each box surrounds the intended control, each arrow reaches its target and every letter/number agrees with the prose legend. Check references near screenshot edges, on scaled mobile pages and after animation changes. Captioned marks receive painted numeric references; legacy captures without labels must not acquire invented references in their legends. Inspect the exact slice ranges in `pdf-layout.json`; very tall groups may still span pages. Labels and captions should stay readable without hiding essential state.
+Confirm each box surrounds and each arrow points to the intended control. Each reference must agree with the prose and legend. Check references near screenshot edges, on scaled mobile pages and after animation changes. Marks with `leader` get letters by default; other captioned marks get numbers. Legacy captures without labels must not acquire invented references in their legends. Inspect the exact slice ranges in `pdf-layout.json`; very tall groups may still span pages.
+
+At normal reading size, follow each `leader` arrow from the badge rim to the
+intended control. Check the masked original to confirm the tip and shaft leave
+the target icon, text or state readable and do not cross a nearby control.
+Verify that the head is easy to see and the same letter appears in the legend
+on the rendered PDF page. If crowded, try a different side, length or stroke
+width, or increase focus padding and check the new capture at every profile.
 
 Look for personal data in both original and annotated files. Config `masks` and capture `masks` affect both. Missing selectors fail closed, but the absence of a mask does not prove the app contains no private data. Avoid dumping private screenshot text or credentials into reports.
 

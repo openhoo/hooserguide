@@ -36,6 +36,14 @@ test('preflight rejects ignored attachments, malformed URLs and impossible count
       ['And I open "http://["', /Invalid URL/],
       ['Then the URL is "http://["', /Invalid URL/],
       ['Then "css=.item" has count 9007199254740992', /safe non-negative integers/],
+      [
+        'And I capture "Button"\n   """json\n   {"marks":[{"target":"button","from":{"x":32,"y":40},"leader":{"length":96}}]}\n   """',
+        /from sets the badge center/,
+      ],
+      [
+        'And I capture "Button"\n   """json\n   {"marks":[{"target":"button","leader":{"length":12,"headSize":20}}]}\n   """',
+        /pixels of shaft/,
+      ],
     ] as const;
     for (const [step, error] of cases) {
       await writeFile(

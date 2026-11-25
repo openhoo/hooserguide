@@ -41,11 +41,11 @@ Feature: Account settings
     And I capture "Saved settings"
       """json
       {
-        "description": "Reference A identifies the name field; 1 shows the confirmation.",
+        "description": "Reference A identifies the name field; B shows the confirmation.",
         "masks": ["testid=email"],
         "marks": [
           {"target":"label=Display name","kind":"box","label":"A","caption":"Your display name."},
-          {"target":"role=status:Save result","kind":"both","label":"1","caption":"The save completed."}
+          {"target":"role=status:Save result","label":"B","caption":"The save completed.","leader":{"side":"auto","length":72}}
         ]
       }
       """
@@ -59,9 +59,22 @@ abbreviated credentials. Check the selector, input state and variable availabili
 without printing the value. The step does not automatically mask a filled input;
 configure screenshot masks wherever that value remains visible.
 
-Use `focus: "testid=panel"` and `padding: 40` for a cropped screenshot of one form or dialog. `padding` defaults to 24; marks must fit inside the crop and arrow origins are crop-relative. Focus and fullPage cannot be combined. `autoLabels: "letters"` or `"numbers"` fills missing references while preserving explicit ones; duplicate references fail. Captioned marks without labels receive numeric references even without `autoLabels`. If badges crowd the screenshot, use more focus padding or split the capture.
+Use `focus: "testid=panel"` and `padding: 40` for a cropped screenshot of one form or dialog. `padding` defaults to 24; marks must fit inside the crop and arrow origins are crop-relative. Focus and fullPage cannot be combined. `autoLabels: "letters"` or `"numbers"` fills missing references while preserving explicit ones; duplicate references fail. Without `autoLabels`, marks with `leader` get letters and other captioned marks get numbers. If badges crowd the screenshot, use more focus padding or split the capture.
 
 Mark kinds are `box`, `arrow` and `both`. Labels accept 1–4 letters or digits. Colors use `#RRGGBB`; optional `from: {x, y}` sets arrow origins in screenshot CSS pixels. `fullPage: true` captures long pages and splits them into readable PDF images. For viewport screenshots all targets must fit together; split the capture when they do not. Locators can be strings (`role=button:Save`, `label=Name`, `text=Done`, `testid=save`, `css=.save`) or JSON objects (`{"role":"button","name":"Save"}`).
+
+For a compact icon or a status with text, use `leader` to connect the letter
+badge to its target. Keep the same reference in the caption legend and prose.
+With `leader`, omit `kind` or use `arrow` for the arrow alone; use `both` only
+if an outline helps. Choose `left`, `right`, `top` or `bottom` to fix the
+badge side relative to the target, or `auto` to try several. `length` measures
+from the badge rim to the tip in screenshot CSS pixels (default `72`). Start
+with `width: 2`, `headSize: 9`, `head: "filled"`; try `width: 1`, `headSize: 6`,
+`head: "open"` for a finer arrow or `width: 3.5`, `headSize: 12`, `head: "filled"`
+for a bolder one. Use `from` for an exact badge center, without `leader.side`
+or `leader.length`. If placement fails, use a clear side, shorten the arrow,
+increase focus padding or split the capture. Check each profile in the
+annotated image and rendered PDF at normal reading size.
 
 Gherkin Backgrounds, Scenario Outlines, Examples and language directives are compiled by the Cucumber parser. Built-in step text stays English even when Gherkin keywords are localized. Custom step modules export `register(registry)` and may use `context.page`, `context.target`, `context.capture`, `context.instruction` and the original `context.step`.
 

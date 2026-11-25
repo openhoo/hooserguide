@@ -1,6 +1,6 @@
 {
   "name": "@openhoo/hooserguide",
-  "version": "0.8.4",
+  "version": "0.9.0",
   "type": "module",
   "description": "Evidence-backed user manuals from Gherkin, Playwright and annotated screenshots",
   "bin": {
@@ -84,6 +84,7 @@
     "docs/*.md",
     "docs/media/responsive-pdf.png",
     "docs/media/alignment-review.png",
+    "docs/media/letter-leaders.png",
     "docs/media/browser-qualification.png",
     "docs/demo/screenshots/01-01.png",
     "docs/demo/screenshots/01-03.png",

@@ -160,21 +160,38 @@ test('editor setup and chapter templates work in a consumer project and preserve
     assert.equal(workspace.tasks.tasks[0].args[2], 'lint');
     const snippets = JSON.parse(
       await readFile(join(root, '.vscode/hooserguide.code-snippets'), 'utf8'),
-    );
+    ) as Record<string, { prefix: string; body: string[] }>;
     assert.equal(
-      Object.values(snippets).filter((item: any) => item.prefix.startsWith('hg-chapter')).length,
+      Object.values(snippets).filter((item) => item.prefix.startsWith('hg-chapter')).length,
       3,
     );
-    const capture: any = Object.values(snippets).find((item: any) =>
-      item.body[0].includes('I capture '),
+    const capture = Object.values(snippets).find(
+      (item) => item.body[0]?.includes('I capture ') && !item.body.join('\n').includes('"leader"'),
     );
-    const expanded = capture.body.join('\n').replace(/\$\{\d+:([^}]*)\}/g, '$1');
+    const lettered = Object.values(snippets).find(
+      (item) => item.prefix === 'hg-capture-lettered-arrow',
+    );
+    assert.ok(capture);
+    assert.ok(lettered);
     const snippetFile = join(root, 'features/snippet.feature');
-    await writeFile(
-      snippetFile,
-      'Feature: Snippet\n Scenario: Capture\n  ' + expanded.split('\n').join('\n  ') + '\n',
-    );
-    await validate({ ...config(root), features: [snippetFile] });
+    for (const [snippet, alternative] of [
+      [capture, false],
+      [lettered, false],
+      [lettered, true],
+    ] as const) {
+      const expanded = snippet.body
+        .join('\n')
+        .replace(/\$\{\d+:([^}]*)\}/g, '$1')
+        .replace(/\$\{\d+\|([^|]+)\|\}/g, (_match, values: string) => {
+          const choices = values.split(',');
+          return alternative ? choices.at(-1)! : choices[0]!;
+        });
+      await writeFile(
+        snippetFile,
+        'Feature: Snippet\n Scenario: Capture\n  ' + expanded.split('\n').join('\n  ') + '\n',
+      );
+      await validate({ ...config(root), features: [snippetFile] });
+    }
     for (const template of ['task', 'form', 'read-only'] as const) {
       const created = await newChapter(project.config, `${template} chapter`, { template });
       assert.equal((await parseFeature(created.feature)).pickles.length, 1);

@@ -10,7 +10,7 @@ For GitLab 17.0+, include the pinned template in your pipeline. Change the confi
 stages: [test]
 
 include:
-  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.8.4/templates/generate/template.yml
+  - remote: https://raw.githubusercontent.com/openhoo/hooserguide/0.9.0/templates/generate/template.yml
     inputs:
       config: docs/user-guide/hooserguide.config.json
       base-url: http://127.0.0.1:3000
@@ -22,7 +22,7 @@ include:
 
 For a running test deployment, omit `before-script`. With a GitLab service container, use its service alias in both URLs. Keep credentials in protected CI variables or ignored storage state; workflows execute real application actions. The default image contains the matching browsers, and the job installs hooserguide in a temporary directory separate from your application's dependencies.
 
-**Other include forms:** If the tagged project lives on the same GitLab instance, use `component: $CI_SERVER_FQDN/your-namespace/hooserguide/generate@0.8.4`. If the template lives in your checkout, use `local: /templates/generate/template.yml`. The inputs are the same. Publishing a component in the CI/CD Catalog is a separate GitLab release step.
+**Other include forms:** If the tagged project lives on the same GitLab instance, use `component: $CI_SERVER_FQDN/your-namespace/hooserguide/generate@0.9.0`. If the template lives in your checkout, use `local: /templates/generate/template.yml`. The inputs are the same. Publishing a component in the CI/CD Catalog is a separate GitLab release step.
 
 ## Select an engine and workflows
 
@@ -64,7 +64,7 @@ Defaults below match the [generation template](../templates/generate/template.ym
 | `pdf`, `bundle`, `fail-fast`         | `true`, `true`, `false`                               | Export PDF, create a portable ZIP, or stop after the first failing scenario.                                   |
 | `page-size`, `orientation`, `margin` | `config`, `config`, `0`                               | Override with `A4` or `Letter`, `portrait` or `landscape`, and 24–72 points. Zero keeps the configured margin. |
 | `wait-url`, `wait-timeout`           | empty, `60`                                           | Optional HTTP readiness check; 2xx/3xx is ready. Timeout: 1–300 seconds.                                       |
-| `package`                            | `github:openhoo/hooserguide#0.8.4`                    | Isolated package source; relative `file:` paths resolve from the checkout.                                     |
+| `package`                            | `github:openhoo/hooserguide#0.9.0`                    | Isolated package source; relative `file:` paths resolve from the checkout.                                     |
 | `image`, `install-browsers`          | `mcr.microsoft.com/playwright:v1.63.0-noble`, `false` | With a custom Node.js 22+ Linux image, install the matching selected browser and its system dependencies.      |
 | `before-script`, `services`          | `[]`, `[]`                                            | Trusted app setup commands and service containers.                                                             |
 | `needs`, `rules`, `runner-tags`      | `[]`, `[{when: on_success}]`, `[]`                    | Job dependencies, execution rules and runner selection. Empty `needs` permits an immediate start.              |

@@ -278,6 +278,50 @@
             "type": "string",
             "pattern": "^#[0-9a-f]{6}$"
           },
+          "leader": {
+            "description": "Connect a reference badge to its target. With from, the badge center is fixed; omit side and length.",
+            "type": "object",
+            "properties": {
+              "side": {
+                "description": "Side of the target for the reference badge. The default is auto.",
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "left",
+                  "right",
+                  "top",
+                  "bottom"
+                ]
+              },
+              "length": {
+                "description": "Distance from badge rim to arrow tip in CSS pixels (default 72).",
+                "type": "number",
+                "minimum": 12,
+                "maximum": 2000
+              },
+              "width": {
+                "description": "Stroke width in CSS pixels (default 2). Use 1 for a fine line.",
+                "type": "number",
+                "minimum": 0.5,
+                "maximum": 6
+              },
+              "headSize": {
+                "description": "Length of the arrowhead in CSS pixels (default 9).",
+                "type": "number",
+                "minimum": 4,
+                "maximum": 24
+              },
+              "head": {
+                "description": "Open outline or filled arrowhead. The default is filled.",
+                "type": "string",
+                "enum": [
+                  "open",
+                  "filled"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
           "from": {
             "type": "object",
             "properties": {
