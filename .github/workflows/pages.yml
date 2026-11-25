@@ -48,9 +48,14 @@ jobs:
           retention-days: 7
       - uses: actions/configure-pages@v5
       - uses: ./actions/pages
+        id: site
         with:
           package: file:${{ github.workspace }}
           run-directory: ${{ steps.guide.outputs.directory }}
+      - name: Audit the handbook before deployment
+        env:
+          SITE_DIRECTORY: ${{ steps.site.outputs.directory }}
+        run: node dist/cli.js audit "$SITE_DIRECTORY" --strict
 
   deploy:
     runs-on: ubuntu-latest
