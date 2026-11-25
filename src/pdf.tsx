@@ -1,5 +1,6 @@
 import { verifyReportImages, readRunArtifact } from './evidence.js';
 import { reportSchema, requireSuccessfulEvidence } from './report.js';
+import { createHash } from 'node:crypto';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Fragment, type ReactNode } from 'react';
@@ -243,16 +244,26 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
     for (const variant of chapter.variants) {
       for (const [j, capture] of variant.captures.entries()) {
         const image = await readRunArtifact(directory, capture.image, 64 * 1024 * 1024);
-        // Long screenshots are split into readable page-sized images, without shrinking or cropping content away.
-        // Preserve the captured CSS size (96 px per 72 pt), including single-profile focus crops.
-        const imageWidth = Math.min(pageWidth, capture.width * 0.75);
+        // Never enlarge a screenshot past its captured CSS size (96 px per 72 pt).
+        const preferredWidth = Math.min(pageWidth, capture.width * 0.75);
         // Leave space for the heading and footer; only reserve caption/legend space when used.
         // Forme can flow unusually long authored prose to subsequent pages.
-        const hasLegend = capture.marks.some((mark) => mark.label || mark.caption);
-        const reserve = 120 + (capture.description ? 36 : 0) + (hasLegend ? 36 : 0);
+        const legendRows = capture.marks.filter((mark) => mark.label || mark.caption).length;
+        const reserve = 120 + (capture.description ? 36 : 0) + (legendRows ? 36 : 0);
         const imageBudget = Math.min(460, geometry.contentHeight - reserve);
-        const maxSliceHeight = Math.max(1, Math.floor((imageBudget * capture.width) / imageWidth));
-        const slices = planImageSlices(capture, maxSliceHeight);
+        // Keep the whole interface and its marks together if they fit with at most
+        // 12% additional reduction. Longer captures retain their full preferred width.
+        const preferredHeight = (capture.height * preferredWidth) / capture.width;
+        const fitBudget = Math.min(
+          imageBudget,
+          geometry.contentHeight - reserve - Math.max(0, legendRows - 1) * 16,
+        );
+        const fitScale = fitBudget / preferredHeight;
+        const fitWholeFigure = preferredHeight > imageBudget && fitScale >= 0.88;
+        const imageWidth = fitWholeFigure ? preferredWidth * fitScale : preferredWidth;
+        const slices = fitWholeFigure
+          ? [{ top: 0, height: capture.height }]
+          : planImageSlices(capture, (imageBudget * capture.width) / imageWidth);
         const total = slices.length;
         figures.push({ id: capture.id, slices });
         for (const [slice, { top, height }] of slices.entries()) {
@@ -305,7 +316,15 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
                     m.bounds.y + m.bounds.height > top,
                 )
                 .map((m, n) => (
-                  <Text key={n} variant="sm" style={{ marginTop: n === 0 ? 16 : 0 }}>
+                  <Text
+                    key={n}
+                    variant="sm"
+                    style={
+                      fitWholeFigure
+                        ? { marginTop: n === 0 ? 10 : 0, marginBottom: 2 }
+                        : { marginTop: n === 0 ? 16 : 0 }
+                    }
+                  >
                     {m.label ? (
                       <Strong
                         style={{
@@ -342,6 +361,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
     JSON.stringify(
       {
         pages: result.layout.pages.length,
+        pdfSha256: createHash('sha256').update(result.pdf).digest('hex'),
         warnings: result.warnings,
         figures,
         page: { ...geometry.size, margin: geometry.margin },

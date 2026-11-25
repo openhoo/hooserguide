@@ -17,6 +17,8 @@ Feature: Mit HooTasks arbeiten
     And I capture "Aufgabendetails ausfüllen"
       """json
       {
+        "focus": "css=.grid > .card:first-child",
+        "padding": 18,
         "description": "A bezeichnet den Titel, B die Priorität. Wählen Sie Create task zum Speichern.",
         "marks": [
           { "target": "label=Task title", "kind": "box", "label": "A", "caption": "Geben Sie der Aufgabe einen aussagekräftigen Titel." },
@@ -46,9 +48,9 @@ Feature: Mit HooTasks arbeiten
       """json
       {
         "focus": "css=.grid > .card:first-child",
-        "padding": 40,
+        "padding": 18,
         "autoLabels": "letters",
-        "description": "Die Detailansicht hält das Formular lesbar und vergibt Referenzen automatisch.",
+        "description": "Nach dem Speichern mit Create task erscheint unter der Schaltfläche die Bestätigung (C).",
         "marks": [
           { "target": "label=Task title", "kind": "box", "caption": "Der Aufgabentitel." },
           { "target": "label=Priority", "kind": "both", "color": "#2563eb", "caption": "Die gewählte Priorität." },
@@ -59,6 +61,7 @@ Feature: Mit HooTasks arbeiten
 
     When I reload the page
     Then "testid=task-list" has text "Prepare the launch checklistHigh priority"
+    And I explain "Laden Sie die Seite neu. Prüfen Sie unter Upcoming tasks, ob Titel und Priorität Ihrer Aufgabe unverändert sind."
 
   @preferences
   Scenario: Benachrichtigungen anpassen
@@ -71,15 +74,17 @@ Feature: Mit HooTasks arbeiten
     Then "label=Email notifications" is checked
     And I click "role=button:Save preferences"
     Then "role=status:Preferences result" has text "Preferences saved."
-    And I explain "Öffnen Sie Workspace preferences, aktivieren Sie Email notifications und wählen Sie Save preferences."
+    And I explain "Scrollen Sie unter die Aufgabenliste zu Workspace preferences. Aktivieren Sie Email notifications und wählen Sie Save preferences."
+    And I explain "Unter der Schaltfläche erscheint die Meldung „Preferences saved.“"
     And I capture "Einstellungen des Arbeitsbereichs"
       """json
       {
-        "fullPage": true,
-        "description": "Die Einstellungen befinden sich unten im Arbeitsbereich. Lange Screenshots bleiben über mehrere PDF-Seiten lesbar.",
+        "focus": "css=.preferences",
+        "padding": 24,
+        "description": "Wählen Sie unter Workspace preferences die Option Email notifications (A) und dann Save preferences (B).",
         "marks": [
           { "target": "label=Email notifications", "kind": "box", "label": "A", "caption": "Schalten Sie Benachrichtigungen ein oder aus." },
-          { "target": "role=button:Save preferences", "kind": "both", "label": "B", "caption": "Speichern Sie Ihre Einstellungen." }
+          { "target": "role=button:Save preferences", "kind": "box", "label": "B", "caption": "Speichern Sie Ihre Einstellungen." }
         ]
       }
       """

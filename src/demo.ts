@@ -31,17 +31,16 @@ export async function demo(
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('Demo server failed to start');
+  const german = overrides.language?.toLowerCase().split('-')[0] === 'de';
   try {
     return await run(
       {
-        title: 'HooTasks — User guide',
+        title: german ? 'HooTasks — Benutzerhandbuch' : 'HooTasks — User guide',
         baseURL: `http://127.0.0.1:${address.port}`,
         features: [
           fileURLToPath(
             new URL(
-              overrides.language?.split('-')[0] === 'de'
-                ? '../examples/tasks.de.feature'
-                : '../examples/tasks.feature',
+              german ? '../examples/tasks.de.feature' : '../examples/tasks.feature',
               import.meta.url,
             ),
           ),
@@ -52,8 +51,10 @@ export async function demo(
         tag: '@manual',
         document: {
           version: '1.0',
-          audience: 'Workspace members',
-          summary: 'Create, organize and verify tasks in your HooTasks workspace.',
+          audience: german ? 'Teammitglieder' : 'Workspace members',
+          summary: german
+            ? 'Legen Sie Aufgaben an, prüfen Sie die gespeicherte Priorität und passen Sie Ihre Benachrichtigungen an.'
+            : 'Create, organize and verify tasks in your HooTasks workspace.',
         },
         ...overrides,
       },

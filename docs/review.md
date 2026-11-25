@@ -2,6 +2,33 @@
 
 Use this page to reproduce the checks behind the example handbooks or understand what previous reviews covered. For reviewing a particular application, start with the [review skill](../skills/hooserguide-review/SKILL.md) and the exact run ID.
 
+## Audit an existing run
+
+```sh
+hooserguide audit <run-directory>
+hooserguide audit <run-directory> --strict --json
+```
+
+The audit is read-only and works offline. It verifies both PNG variants against the execution report, then inspects the reader text, recorded steps and optional PDF layout record. Every finding has a stable code, a suggested repair and, where applicable, one-based execution chapter/capture/mark indices. Responsive results identify the profile. New reports also point to the source scenario or capture step; check the recorded source digest if the file has changed. Use `hooserguide_audit {runId, strict}` over MCP or `auditRun(directory)` from TypeScript.
+
+| Finding                                       | What to do                                                                                                                                                                                                                                                                              |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DRAFT_COPY`, `SELECTOR_COPY`, `EMPTY_LEGEND` | Read the named field in the delivered guide. Replace draft text or selector syntax with the visible control name, and give each badge a useful caption. Keep literal terms when they are the subject of the guide.                                                                      |
+| `UNCHECKED_ACTION`, `MISSING_OUTCOME`         | Check what the scenario promises. A successful click proves the click ran; if the guide promises persistence, assert the state after reopening or reloading. Custom steps may have their own assertions.                                                                                |
+| `REPEATED_FIGURE`                             | Compare the two named captures within the same execution chapter. Byte-identical annotated images can be intentional.                                                                                                                                                                   |
+| `PDF_UNMARKED_SLICE`, `PDF_SPLIT_TARGET`      | Open the continuation pages. An extra page may give useful context; if it only shows another panel, focus the capture on the area the reader needs.                                                                                                                                     |
+| PDF file or layout errors                     | Restore matching artifacts or rebuild. Slice metadata must cover each image once, with no gaps or overlaps. New layout records include a PDF digest so the audit can detect a swapped PDF. For legacy records, `pdfHashVerified` is false. The page count comes from the layout record. |
+
+Errors fail the command. Warnings fail only in strict mode. A missing or changed screenshot stops the audit rather than returning a misleading clean result. Legacy raw images without a stored digest are counted separately. A failed run remains failed. `visualReview: "required"` applies even with zero findings: the audit does not interpret screenshot pixels, prove a mask hid all private information, judge the visual result, or establish that an assertion supports a reader claim.
+
+For example, the preferences figure in the HooTasks demo used to start with a whole PDF page of unrelated task controls. A focused screenshot now shows the checkbox, save button and confirmation together. Reading the numbered instructions separately also revealed that they omitted the reload check even though the scenario performed it. That second issue required a reader's judgment.
+
+## November 25, 2026: reader review
+
+Reviewing the English A4 and German Letter landscape guides found three defects that a successful browser run did not catch: an arrow crossed the notification label, the instructions omitted a reload check the scenario actually made, and the first page of the preferences figure contained only unrelated controls. Replacing the arrow with a box, naming the reload check and cropping to the preferences panel addressed those defects.
+
+A separate landscape check found that a figure could fit in a single image slice while two of its three legend entries flowed onto another physical page. The renderer now reserves space for the additional entries when scaling a figure to fit. The English example went from eight pages to seven and the German example from twelve to eight. The longer saved-task screenshot still spans two landscape pages. Both guides retain four figures and the two tested workflows.
+
 ## November 24, 2026: authoring through offline delivery
 
 | Area                         | What was checked                                                                                                                                                                                                                                                                                                                             |

@@ -1,7 +1,14 @@
 import { expect } from '@playwright/test';
 import { parseTarget } from './targets.js';
 import { dirname, resolve } from 'node:path';
-import type { StepHandler, StepContext, Target, CaptureSpec, StepDocumentation } from './types.js';
+import type {
+  StepHandler,
+  StepContext,
+  Target,
+  CaptureSpec,
+  StepDocumentation,
+  ExecutionStepKind,
+} from './types.js';
 
 export class StepRegistry {
   private bindings: { pattern: RegExp; handler: StepHandler; documentation?: StepDocumentation }[] =
@@ -319,4 +326,18 @@ export function classifyStep(text: string): 'builtin' | 'capture' | 'custom' {
   } catch {
     return 'custom';
   }
+}
+
+/** Describe the executed binding, independent of the author's Given/When/Then keyword. */
+export function executionStepKind(text: string): ExecutionStepKind {
+  const binding = classifyStep(text);
+  if (binding !== 'builtin') return binding;
+  if (
+    text.startsWith('"') ||
+    text.startsWith('the URL is ') ||
+    text.startsWith('the page title is ')
+  )
+    return 'assertion';
+  if (text.startsWith('I explain') || text.startsWith('I add a ')) return 'guidance';
+  return 'action';
 }

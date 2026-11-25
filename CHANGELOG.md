@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.0 — 2026-11-25
+
+- Audit a generated run from the CLI, TypeScript or a pinned MCP call. Findings locate unchecked actions, draft copy, empty legends, repeated figures and PDF slice problems. Strict mode can fail CI on warnings.
+- New reports identify the feature file digest, scenario or Examples row, executed step locations and kinds, and the step that produced each figure. Rebuilds retain the recorded locations.
+- Keep a nearly fitting PDF figure on one page with up to 12% additional scaling. Larger captures still split at their intended size. Each new PDF layout record includes the digest of its PDF.
+- Inspect an offline HTML figure at actual size with its caption and active annotation view. Keyboard users can pan, close the inspector with Escape and return to the figure.
+- The author and review skills now distinguish confirmed defects from issues that need a visual check, trace claims to assertions, and explain how to repair and recheck a finding. The English and German demos show the preferences controls together and walk the reader through verifying the saved result.
+
 ## 0.9.0 — 2026-11-25
 
 - Set `marks[].leader` to place a reference letter beside its control and draw an arrow from the badge rim to the target. Choose the side or exact badge center, length, stroke width, and an open or filled tip. Existing marks keep their appearance.

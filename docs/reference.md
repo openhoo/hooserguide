@@ -191,6 +191,20 @@ See the [authoring guide](authoring.md) for editor setup, chapter templates, lin
 
 Each execution writes a separate run directory. Read `report.json` for the exact selection, browser, profile, viewport, chapter and step results, durations, errors and screenshots. Captures include relative PNG paths, dimensions, annotation bounds and image hashes. Feature paths are absolute in a local run. The [report schema](../schemas/report.schema.json) is version 1.
 
+To find the source of a figure, look up `chapter.steps[capture.step - 1]`. Its
+`location.line` and `location.column` point into `chapter.source`. For a Scenario
+Outline, the chapter location points to the Examples row and the step location
+points to its shared definition. Background steps retain their own locations.
+Before editing the cited line, compare the feature file's SHA-256 with
+`chapter.sourceSha256`: the lines describe the file at execution time. A rebuild
+keeps those original locations and digest. Older reports have no source trace.
+
+Each traced step records its binding `kind`: `action`, `assertion`, `guidance`,
+`capture` or `custom`. Use the executed step text to judge what an assertion
+proved. A custom handler can take several figures in one step, including a
+diagnostic figure before a failure. The supplied feature digest does not cover
+plugin code or identify the application version.
+
 | Result          | What to open                                                                                                            |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Passed          | `index.html`, `handbook.md` or `handbook.pdf` (when PDF export is enabled). Keep the screenshots beside them.           |

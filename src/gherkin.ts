@@ -1,10 +1,26 @@
 import { generateMessages } from '@cucumber/gherkin';
 import { IdGenerator, SourceMediaType } from '@cucumber/messages';
 import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import type { SourceLocation } from './types.js';
+
+/** A step points to its definition; an Outline chapter points to its concrete Examples row. */
+export function sourceLocation(
+  nodes: ReadonlyMap<string, SourceLocation>,
+  ids: readonly string[],
+  exampleRow = false,
+): SourceLocation {
+  for (const id of exampleRow ? [...ids].reverse() : ids) {
+    const node = nodes.get(id);
+    if (node) return { line: node.line, column: node.column };
+  }
+  throw new Error('No Gherkin source location found for the compiled scenario or step');
+}
 
 export async function parseFeature(path: string) {
+  const bytes = await readFile(path);
   const messages = generateMessages(
-    await readFile(path, 'utf8'),
+    bytes.toString('utf8'),
     path,
     SourceMediaType.TEXT_X_CUCUMBER_GHERKIN_PLAIN,
     {
@@ -39,6 +55,7 @@ export async function parseFeature(path: string) {
   visit(feature);
   return {
     feature: feature.name,
+    sourceSha256: createHash('sha256').update(bytes).digest('hex'),
     description: feature.description.trim(),
     pickles: messages.flatMap((m) => (m.pickle ? [m.pickle] : [])),
     nodes,

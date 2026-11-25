@@ -70,7 +70,7 @@ RUN="output/hooserguide/run-…"
 npx hooserguide build "$RUN" --config hooserguide.config.json --page-size Letter --landscape --margin 36
 ```
 
-CLI settings override the config; use either `--orientation portrait|landscape` or `--landscape`. The [rebuild](advanced.md#rebuild-from-existing-evidence) preserves the capture time. Long screenshots can span pages; `pdf-layout.json` records page dimensions, slice ranges and warnings. The PDF contains headings, chapter links/bookmarks and image alternatives, including screen labels and continuation parts.
+CLI settings override the config; use either `--orientation portrait|landscape` or `--landscape`. The [rebuild](advanced.md#rebuild-from-existing-evidence) preserves the capture time. A screenshot that almost fits can shrink by up to 12% from its planned print width to keep the controls and legend together. Taller images retain that width and span pages. `pdf-layout.json` records page dimensions, slice ranges, warnings and the PDF digest. The PDF contains headings, chapter links/bookmarks and image alternatives, including screen labels and continuation parts.
 
 ## Manual themes
 

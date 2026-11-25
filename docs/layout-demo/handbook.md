@@ -2,7 +2,7 @@
 
 Handbuchversion: 1.0
 Zielgruppe: Teammitglieder
-Erstellt: 2026-11-24
+Erstellt: 2026-11-25
 
 Aufgaben anlegen, organisieren und Ergebnisse prüfen.
 
@@ -23,6 +23,7 @@ Legen Sie eine Aufgabe an. Prüfen Sie nach dem Neuladen, ob Titel und Prioritä
 
 1. Geben Sie einen eindeutigen Aufgabentitel ein und wählen Sie die Priorität.
 2. Wählen Sie Create task. Prüfen Sie, ob die Aufgabe in der Liste und eine Bestätigung erscheinen.
+3. Laden Sie die Seite neu. Prüfen Sie unter Upcoming tasks, ob Titel und Priorität Ihrer Aufgabe unverändert sind.
 
 ### Aufgabendetails ausfüllen
 
@@ -47,7 +48,7 @@ Die Aufgabe erscheint im Arbeitsbereich. Die Bestätigung zeigt den erfolgreiche
 
 ![Aufgabenformular im Detail](screenshots/01-03.png)
 
-Die Detailansicht hält das Formular lesbar und vergibt Referenzen automatisch.
+Nach dem Speichern mit Create task erscheint unter der Schaltfläche die Bestätigung \(C\).
 
 - **A**: Der Aufgabentitel.
 - **B**: Die gewählte Priorität.
@@ -61,13 +62,14 @@ Legen Sie für diese Browsersitzung fest, ob Sie E-Mail-Benachrichtigungen erhal
 
 > **Warnung:** Aktivieren Sie E-Mail-Benachrichtigungen nur für ein Konto, das Sie kontrollieren.
 
-1. Öffnen Sie Workspace preferences, aktivieren Sie Email notifications und wählen Sie Save preferences.
+1. Scrollen Sie unter die Aufgabenliste zu Workspace preferences. Aktivieren Sie Email notifications und wählen Sie Save preferences.
+2. Unter der Schaltfläche erscheint die Meldung „Preferences saved.“
 
 ### Einstellungen des Arbeitsbereichs
 
 ![Einstellungen des Arbeitsbereichs](screenshots/02-01.png)
 
-Die Einstellungen befinden sich unten im Arbeitsbereich. Lange Screenshots bleiben über mehrere PDF-Seiten lesbar.
+Wählen Sie unter Workspace preferences die Option Email notifications \(A\) und dann Save preferences \(B\).
 
 - **A**: Schalten Sie Benachrichtigungen ein oder aus.
 - **B**: Speichern Sie Ihre Einstellungen.

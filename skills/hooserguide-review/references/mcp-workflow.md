@@ -10,6 +10,7 @@
 ## Exact review and rebuild
 
 - `hooserguide_inspect_run {runId?}`: report and optional PDF layout audit. Retrieval `status` is separate from `run.status` and `report.status`. Report retrieval validates structure and success consistency; use `inspect_capture` for image verification. Contradictory success records, duplicate screenshot IDs/paths, duplicate labels and out-of-image annotations are rejected.
+- `hooserguide_audit {runId, strict?}`: review an existing run for evidence and editorial issues without opening the application. Strict mode also fails on warnings and returns the findings in `structuredContent.audit`. Use one-based finding locations to inspect the affected chapter or figure. An empty finding list cannot establish visual quality, privacy or application behavior.
 - `hooserguide_inspect_capture {runId?, chapter: 1, capture: 1, variant?: "annotated" | "raw"}`: verified PNG inline, capture metadata, digest and `hashVerified`. Default variant is annotated. Both variants are privacy masked. Review each against the prose and legend.
 - `hooserguide_rebuild {runId?, pdf?}`: re-export successful original evidence with current config branding, document metadata and PDF layout. Save its new runId and inspect the new exports. It never opens the app.
 

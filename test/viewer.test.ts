@@ -25,6 +25,7 @@ test('long contents remain scrollable inside the desktop viewport and expand on 
       report.chapters.push({
         ...chapter,
         title: `Chapter ${index + 1}: Manage your workspace`,
+        steps: chapter.steps.slice(0, capture.step),
         captures: [{ ...capture, id: `chapter-${index}`, image, raw }],
       });
     }
@@ -85,6 +86,88 @@ test('native printing primes every lazy screenshot even when search hides its ch
       0,
       'Printing must preserve the search query',
     );
+  } finally {
+    await browser.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('an offline reader can inspect and pan the selected screenshot, then return to the same figure', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'hooserguide-inspector-'));
+  const browser = await chromium.launch();
+  try {
+    await cp('docs/demo', root, { recursive: true });
+    const report = JSON.parse(await readFile(join(root, 'report.json'), 'utf8')) as RunReport;
+    report.language = 'de';
+    const shot = report.chapters[0]!.captures[0]!;
+    await renderManual(report, root);
+    const url = pathToFileURL(join(root, 'index.html')).href;
+    const page = await browser.newPage({ viewport: { width: 360, height: 640 } });
+    await page.goto(url);
+    await page.getByRole('searchbox').fill('Bild öffnen');
+    assert.equal(
+      await page.locator('main > section:visible').count(),
+      0,
+      'Reader controls should not count as chapter content',
+    );
+    await page.getByRole('searchbox').fill('');
+    const link = page.getByRole('link', { name: 'Bild öffnen: ' + shot.title, exact: true });
+    await link.focus();
+    await page.keyboard.press('Enter');
+    const dialog = page.getByRole('dialog', { name: shot.title });
+    await dialog.waitFor();
+    const close = dialog.getByRole('button', { name: 'Schließen' });
+    assert.equal(await close.evaluate((el) => el === document.activeElement), true);
+    const image = dialog.getByRole('img', { name: shot.title });
+    await image.evaluate((el) => (el as HTMLImageElement).decode());
+    assert.equal(await image.getAttribute('src'), new URL(shot.image, url).href);
+    assert.equal(await dialog.getByText(shot.description!, { exact: true }).isVisible(), true);
+    assert.equal(
+      await dialog.getByText(shot.marks[0]!.caption!, { exact: false }).isVisible(),
+      true,
+    );
+    const area = dialog.getByRole('region', { name: 'Bildschirmaufnahme' });
+    assert.equal(
+      await area.evaluate(
+        (el) => el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight,
+      ),
+      true,
+    );
+    await dialog.getByRole('button', { name: 'Originalgröße anzeigen' }).click();
+    assert.equal((await image.boundingBox())!.width, shot.width);
+    assert.equal((await image.boundingBox())!.height, shot.height);
+    await area.focus();
+    await page.keyboard.press('ArrowRight');
+    await page.waitForFunction(() => document.querySelector('.inspector-canvas')!.scrollLeft > 0);
+    assert.equal(
+      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+      true,
+    );
+    await dialog.getByRole('button', { name: 'Bild einpassen' }).click();
+    assert.equal(await area.evaluate((el) => el.scrollLeft), 0);
+    await page.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'hidden' });
+    assert.equal(await link.evaluate((el) => el === document.activeElement), true);
+    assert.equal(page.url(), url);
+
+    await page.getByRole('button', { name: 'Annotationen anzeigen' }).click();
+    await link.click();
+    await dialog.waitFor();
+    assert.equal(await image.getAttribute('src'), new URL(shot.raw, url).href);
+    assert.equal(await dialog.locator('.legend').count(), 0);
+    await page.emulateMedia({ media: 'print' });
+    assert.equal(await page.locator('#figure-inspector').isVisible(), false);
+    assert.equal(await page.locator('main > section:visible').count(), report.chapters.length);
+    await page.emulateMedia({ media: 'screen' });
+    await close.click();
+    assert.equal(await link.evaluate((el) => el === document.activeElement), true);
+
+    const withoutScript = await browser.newPage({ javaScriptEnabled: false });
+    await withoutScript.goto(url);
+    await withoutScript
+      .getByRole('link', { name: 'Bild öffnen: ' + shot.title, exact: true })
+      .click();
+    await withoutScript.waitForURL(new URL(shot.image, url).href);
   } finally {
     await browser.close();
     await rm(root, { recursive: true, force: true });

@@ -11,9 +11,9 @@ And I capture "Task form in detail"
   """json
   {
     "focus": "css=.grid > .card:first-child",
-    "padding": 40,
+    "padding": 18,
     "autoLabels": "letters",
-    "description": "A focused view keeps the form readable and assigns references automatically.",
+    "description": "After you select Create task, look below the button for the save confirmation (C).",
     "marks": [
       { "target": "label=Task title", "kind": "box", "caption": "Your task title." },
       { "target": "label=Priority", "kind": "both", "color": "#2563eb", "caption": "The selected priority." },

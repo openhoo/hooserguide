@@ -1,5 +1,6 @@
 {
-  "pages": 8,
+  "pages": 7,
+  "pdfSha256": "4eb76698fb4c7fe759f0b0db5dd43234562b031a88cf30fa707506c9e1df2a2e",
   "warnings": [],
   "figures": [
     {
@@ -25,7 +26,7 @@
       "slices": [
         {
           "top": 0,
-          "height": 519
+          "height": 475
         }
       ]
     },
@@ -34,11 +35,7 @@
       "slices": [
         {
           "top": 0,
-          "height": 743
-        },
-        {
-          "top": 743,
-          "height": 743
+          "height": 341
         }
       ]
     }

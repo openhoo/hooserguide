@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "runStatus": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    },
+    "visualReview": {
+      "type": "string",
+      "const": "required"
+    },
+    "chapters": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "captures": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "verifiedImages": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "legacyRawWithoutHash": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "pdf": {
+      "type": "boolean"
+    },
+    "pdfHashVerified": {
+      "type": "boolean"
+    },
+    "layoutPages": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "errors": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "warnings": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "chapter": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "capture": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "mark": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "step": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "source": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "profile": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "RUN_FAILED",
+              "LEGACY_RAW",
+              "DRAFT_COPY",
+              "SELECTOR_COPY",
+              "MISSING_OUTCOME",
+              "UNCHECKED_ACTION",
+              "NO_INSTRUCTION",
+              "EMPTY_LEGEND",
+              "REPEATED_FIGURE",
+              "PDF_FILE_MISSING",
+              "PDF_FILE_INVALID",
+              "PDF_HASH_MISMATCH",
+              "PDF_LAYOUT_MISSING",
+              "PDF_LAYOUT_INVALID",
+              "PDF_RENDER_WARNING",
+              "PDF_UNMARKED_SLICE",
+              "PDF_SPLIT_TARGET"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "severity",
+          "message",
+          "hint"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "runId",
+    "runStatus",
+    "visualReview",
+    "chapters",
+    "captures",
+    "verifiedImages",
+    "legacyRawWithoutHash",
+    "pdf",
+    "pdfHashVerified",
+    "errors",
+    "warnings",
+    "findings"
+  ],
+  "additionalProperties": false
+}

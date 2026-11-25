@@ -38,6 +38,8 @@ own validation of their custom arguments.
 argument and capture errors across files, plus editorial warnings about missing
 prose/outcomes/descriptions, duplicates and placeholders. Feedback includes source,
 line, column, severity, code, hint and optional similar step suggestions.
+For a placeholder, selector in reader copy, or an empty legend, edit the named caption, figure description or instruction rather than the selector that drives the browser. An assertion before the last save interaction only proves the earlier state. Confirm that the corresponding result is asserted afterward; custom steps can perform checks that lint cannot recognize.
+
 Background diagnostics retain original lines. Outline chapters reference their
 Examples row; step diagnostics reference their definitions.
 

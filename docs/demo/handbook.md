@@ -2,7 +2,7 @@
 
 Guide version: 1.0
 Audience: Workspace members
-Generated: 2026-11-24
+Generated: 2026-11-25
 
 Create, organize and verify tasks in your HooTasks workspace.
 
@@ -23,6 +23,7 @@ Add a task and check that its title and priority are still in the list after you
 
 1. Enter a clear task title and choose its priority.
 2. Select Create task. Check that the task appears in the list and that a confirmation is shown.
+3. Reload the page. Under Upcoming tasks, check that your task still shows the title and priority you chose.
 
 ### Fill in the task details
 
@@ -47,7 +48,7 @@ The task now appears in your workspace. The confirmation shows that the save com
 
 ![Task form in detail](screenshots/01-03.png)
 
-A focused view keeps the form readable and assigns references automatically.
+After you select Create task, look below the button for the save confirmation \(C\).
 
 - **A**: Your task title.
 - **B**: The selected priority.
@@ -61,13 +62,14 @@ Choose whether to receive email notifications and save that choice for this brow
 
 > **Warning:** Enable email notifications only for an account you control.
 
-1. Open Workspace preferences, enable Email notifications and select Save preferences.
+1. Scroll below the task list to Workspace preferences. Select Email notifications, then Save preferences.
+2. Look for the message “Preferences saved.” below the button.
 
 ### Workspace preferences
 
 ![Workspace preferences](screenshots/02-01.png)
 
-Preferences are near the bottom of the workspace. Long screenshots stay readable across PDF pages.
+Under Workspace preferences, select Email notifications \(A\), then Save preferences \(B\).
 
 - **A**: Turn notifications on or off.
 - **B**: Save your preferences.

@@ -4,8 +4,14 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import parseTagExpression from '@cucumber/tag-expressions';
 import { applyCaptureDefaults } from './manual.js';
-import { parseFeature } from './gherkin.js';
-import { builtinSteps, classifyStep, target, type StepRegistry } from './steps.js';
+import { parseFeature, sourceLocation } from './gherkin.js';
+import {
+  builtinSteps,
+  classifyStep,
+  executionStepKind,
+  target,
+  type StepRegistry,
+} from './steps.js';
 import { captureScreenshot } from './capture.js';
 import { validateStepArguments } from './preflight.js';
 import { resolveConfig, selectProfile } from './config.js';
@@ -190,6 +196,8 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
         feature: s.feature,
         description: s.description,
         source: s.source,
+        sourceSha256: s.sourceSha256,
+        location: sourceLocation(s.nodes, s.pickle.astNodeIds, true),
         tags: s.pickle.tags.map((t) => t.name),
         status: 'passed',
         instructions: [],
@@ -214,7 +222,11 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
         const page = await context.newPage();
         page.setDefaultTimeout(config.timeoutMs ?? 10000);
         page.setDefaultNavigationTimeout(config.timeoutMs ?? 10000);
-        for (const step of s.pickle.steps) {
+        for (const [index, step] of s.pickle.steps.entries()) {
+          const trace = {
+            location: sourceLocation(s.nodes, step.astNodeIds),
+            kind: executionStepKind(step.text),
+          };
           const started = performance.now();
           try {
             if (options.signal?.aborted) throw new Error('Run cancelled');
@@ -235,12 +247,14 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
                   config.masks,
                   config.timeoutMs,
                 );
+                capture.step = index + 1;
                 chapter.captures.push(capture);
                 return capture;
               },
             });
             chapter.steps.push({
               text: step.text,
+              ...trace,
               status: 'passed',
               durationMs: Math.round(performance.now() - started),
             });
@@ -252,6 +266,7 @@ export async function run(input: Config, options: RunOptions = {}): Promise<RunR
                 : String(error);
             chapter.steps.push({
               text: step.text,
+              ...trace,
               status: 'failed',
               error: message,
               durationMs: Math.round(performance.now() - started),

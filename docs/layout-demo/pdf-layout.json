@@ -1,5 +1,6 @@
 {
-  "pages": 12,
+  "pages": 8,
+  "pdfSha256": "0ff2c4646d7fffdc41a83f8378ad17fe880ae338751ab47d38348ddab3e57061",
   "warnings": [],
   "figures": [
     {
@@ -7,11 +8,7 @@
       "slices": [
         {
           "top": 0,
-          "height": 427
-        },
-        {
-          "top": 427,
-          "height": 473
+          "height": 475
         }
       ]
     },
@@ -33,11 +30,7 @@
       "slices": [
         {
           "top": 0,
-          "height": 184
-        },
-        {
-          "top": 184,
-          "height": 335
+          "height": 475
         }
       ]
     },
@@ -46,15 +39,7 @@
       "slices": [
         {
           "top": 0,
-          "height": 496
-        },
-        {
-          "top": 496,
-          "height": 495
-        },
-        {
-          "top": 991,
-          "height": 495
+          "height": 341
         }
       ]
     }

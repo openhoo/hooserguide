@@ -1,35 +1,41 @@
-# Visual review reference
+# Inspect screenshots and final formats
 
-## Inspect real visuals
+## Read each picture twice
 
-Open annotated PNGs and compare them with the masked `.raw.png` originals. If using MCP, `hooserguide_inspect_capture` returns either variant (`annotated` or `raw`) with verified metadata; pin `runId` for one-based chapter/capture indices.
+Use the pinned run and, for MCP, the one-based **execution** chapter and capture indices. Open the masked original and the annotated image at the same scale. Start at the size a reader actually gets in HTML or on a PDF page; zoom in to diagnose a problem. For each figure:
 
-For focused screenshots check the crop includes the intended region and references remain correctly positioned. Automatic references must be unique, skip explicit labels and agree with every legend. Check that per-mark colors match their legend entries.
+| Inspect           | Failure to look for                                                                                                                                                                                            | Useful repair                                                                                                                                                                                                       |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Raw state         | A spinner, stale toast, browser/dev overlay, open menu, hover tooltip or sticky header obscures the target; the frame shows the previous or next action.                                                       | Capture after an assertion for the intended state, dismiss an unrelated overlay, or change the capture point. Keep a toast or menu if it is the outcome being taught.                                               |
+| Framing           | The focused crop cuts off the panel title that distinguishes two similar controls; a full-page screen leaves the only relevant text too small to read.                                                         | Include enough surrounding context to orient the reader. Use a focused detail or separate overview when it helps; compare at the same delivery size after recapture.                                                |
+| References        | A badge sits on the value the reader needs, a box surrounds two controls, or an arrowhead lands on an adjacent row. Dark app colors swallow the arrowhead; at a narrow viewport a badge extends past the crop. | Trace each badge to its control and back to its legend. Compare the unobscured raw state. Move the leader side, adjust its length/stroke or color, increase crop padding, or split competing marks.                 |
+| Legends and prose | The caption mentions B but the relevant mark is A; an arrow appears red but its legend swatch is blue; labels make sense only by color.                                                                        | Check letters/numbers, colors and exact UI words in both display and print. Automatic labels must be unique in the capture and avoid explicit labels. Legacy unlabelled marks must not acquire invented references. |
+| Privacy           | Masked form text reappears in the header, list, toast or another profile; a mask hides the chosen value needed to follow the lesson.                                                                           | Check both variants at each actual viewport. Use safe representative data or mask all affected surfaces while preserving enough context for the task. See [reader-review.md](reader-review.md) for non-image leaks. |
 
-Confirm each box surrounds and each arrow points to the intended control. Each reference must agree with the prose and legend. Check references near screenshot edges, on scaled mobile pages and after animation changes. Marks with `leader` get letters by default; other captioned marks get numbers. Legacy captures without labels must not acquire invented references in their legends. Inspect the exact slice ranges in `pdf-layout.json`; very tall groups may still span pages.
+## Follow the HTML as a reader
 
-At normal reading size, follow each `leader` arrow from the badge rim to the
-intended control. Check the masked original to confirm the tip and shaft leave
-the target icon, text or state readable and do not cross a nearby control.
-Verify that the head is easy to see and the same letter appears in the legend
-on the rendered PDF page. If crowded, try a different side, length or stroke
-width, or increase focus padding and check the new capture at every profile.
+Open the actual delivered HTML at desktop and narrow widths. Tab from the top through reader controls and chapter navigation to the last chapter. Check visible focus, long labels, overflow, and whether a narrow image link opens a legible full-size view. Search for a match and then a term with no matches. Switch to original screenshots and verify the images **and image links** show the masked raw variant and annotation legends disappear.
 
-Look for personal data in both original and annotated files. Config `masks` and capture `masks` affect both. Missing selectors fail closed, but the absence of a mask does not prove the app contains no private data. Avoid dumping private screenshot text or credentials into reports.
+In readers with **Open image**, test the figure at fit and actual size. Tab to the image area, pan with arrow keys, then press Escape. Check that focus returns to the figure you opened and that its caption, profile and visible legend still match the chosen raw or annotated image.
 
-Open the generated HTML at desktop and narrow widths. Check chapter navigation, focus, image sizing and escaped prose. Render the PDF to images with available PDF tooling, inspect its cover and all content pages, and verify screenshot slices preserve the full content at readable scale. Do not treat extracted text as evidence of correct layout.
+Check the theme picker and PDF download before the title: the theme persists on reload when storage is available, controls remain readable and print uses a light palette. Use the download and verify its bytes match the reviewed PDF; a visible link does not prove delivery. Without JavaScript the complete guide and PDF download should remain available, the interactive picker hidden. A guide intentionally exported without PDF should omit the download.
 
-Check chapter-specific introductions and multiline instructions against the
-authored task. HTML, Markdown and PDF should preserve paragraph breaks in
-multiline instructions. Compare actual rendered prose rather than only the report.
+Try both native browser print and the Print button with an active search: all chapters, including offscreen screenshots, should appear. Browser printing and the downloadable PDF are separate outputs.
 
-Find the theme selector and PDF download before the guide title. Verify the
-selected theme is readable, survives reload when storage is available and switches
-to light colors for printing. A reader theme change does not change the PDF file.
-Without JavaScript, the PDF download remains available and the theme picker is
-hidden. When no PDF was generated, the guide must not offer a broken PDF link.
-Use the session's browser download tools to save the real file, confirm it is a
-PDF and compare it with the exact reviewed export. A visible button or successful
-navigation alone does not establish a working download.
+## Walk every PDF page
 
-For PDF accessibility, inspect the tagged structure as well as the rendered pages: headings should expose H1-H6 roles and screenshot figures should retain their titles, screen labels and continuation parts as alternative text. These checks do not establish full PDF/UA conformance. For long guides, confirm that the desktop contents list scrolls inside the viewport and its final link is reachable by keyboard. Check native browser printing as well as the Print button, including chapters hidden by search.
+Render the delivered PDF, including its cover, contents and continuation pages. For example, from the run directory use Poppler to render a private local copy:
+
+```sh
+review_dir=$(mktemp -d)
+pdftoppm -scale-to 1600 -png handbook.pdf "$review_dir/page"
+```
+
+Open the pages in page order. A contact sheet finds suspicious pages quickly; inspect full pages at reading size. Use `pdf-layout.json` slice ranges and warnings to locate possible seams. On newer exports, the audit checks the PDF against that record’s digest (`pdfHashVerified`). Check both files belong together before interpreting any reported page count. A figure with one recorded slice can still overflow: inspect the following physical page for orphaned legend rows. In a landscape guide the screenshot and entry A fit, but entries B and C moved to an otherwise empty page even though the slice audit passed.
+
+- Check the first and last line of each page. Look for clipped accents, headings stranded above a footer, unexpected empty pages, missing instructions, overlapping footer content, and legends separated from their figure without a readable reference.
+- For scroll captures, compare each slice's top and bottom with the next page and the original. Look for omitted or repeated controls and a badge, tip or target split across a seam. A very tall annotation group may need a separate focused capture even when all pixels are present.
+- Read the smallest meaningful control and verify the letter-to-control mapping at ordinary viewing size. For responsive layouts check the screen label and see whether a detail page resolves a small overview. Mark a problem only if the reader loses information or orientation.
+- Check that contents entries, links and figure continuation labels lead to the intended chapter, profile and page. Check page dimensions against requested geometry. For accessibility requests inspect heading roles in the tag tree and figure alternatives for titles, screen labels and continuation parts. These checks alone cannot establish PDF/UA conformance.
+
+Report which figures, profiles and physical pages were inspected. If a renderer or a requested artifact is unavailable, record precisely what remains unverified.

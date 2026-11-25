@@ -22,6 +22,9 @@ const rectangle = z
   })
   .strict();
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
+const location = z
+  .object({ line: z.number().int().positive(), column: z.number().int().positive() })
+  .strict();
 const screenshot = z.string().regex(/^screenshots\/[A-Za-z0-9_-]+(?:\.raw)?\.png$/);
 export const reportSchema = z
   .object({
@@ -50,6 +53,8 @@ export const reportSchema = z
             title: z.string(),
             feature: z.string(),
             source: z.string(),
+            sourceSha256: hash.optional(),
+            location: location.optional(),
             tags: z.array(z.string()),
             description: z.string(),
             status: z.enum(['passed', 'failed']),
@@ -61,6 +66,8 @@ export const reportSchema = z
               z
                 .object({
                   text: z.string(),
+                  kind: z.enum(['action', 'assertion', 'guidance', 'capture', 'custom']).optional(),
+                  location: location.optional(),
                   status: z.enum(['passed', 'failed']),
                   error: z.string().optional(),
                   durationMs: z.number().nonnegative().optional(),
@@ -71,6 +78,7 @@ export const reportSchema = z
               z
                 .object({
                   id: z.string().regex(/^[A-Za-z0-9_-]+$/),
+                  step: z.number().int().positive().optional(),
                   title: z.string().min(1),
                   description: z.string().optional(),
                   image: screenshot,
@@ -148,6 +156,43 @@ export function assertReportIntegrity(report: RunReport): void {
   const ids = new Set<string>(),
     paths = new Set<string>();
   for (const chapter of report.chapters) {
+    const traced =
+      chapter.sourceSha256 !== undefined ||
+      chapter.location !== undefined ||
+      chapter.steps.some((s) => s.location !== undefined || s.kind !== undefined) ||
+      chapter.captures.some((c) => c.step !== undefined);
+    if (traced) {
+      if (
+        !chapter.sourceSha256 ||
+        !chapter.location ||
+        chapter.steps.some((s) => !s.location || !s.kind)
+      )
+        throw new Error('Incomplete source trace: missing feature digest or source location');
+      const figures = new Map<number, string[]>();
+      let previous = 0;
+      for (const capture of chapter.captures) {
+        const index = capture.step;
+        if (!index || !Number.isSafeInteger(index) || index < previous || !chapter.steps[index - 1])
+          throw new Error('Invalid source trace: figures must reference executed steps in order');
+        const titles = figures.get(index) ?? [];
+        titles.push(capture.title);
+        figures.set(index, titles);
+        previous = index;
+      }
+      for (const [index, step] of chapter.steps.entries()) {
+        const titles = figures.get(index + 1) ?? [];
+        if (step.kind !== 'capture' && step.kind !== 'custom' && titles.length)
+          throw new Error('Invalid source trace: a figure references a non-capture built-in step');
+        if (
+          step.kind === 'capture' &&
+          step.status === 'passed' &&
+          (titles.length !== 1 || titles[0] !== JSON.parse(step.text.slice('I capture '.length)))
+        )
+          throw new Error(
+            'Invalid source trace: a completed capture step must produce its named figure',
+          );
+      }
+    }
     for (const capture of chapter.captures) {
       if (
         capture.crop &&

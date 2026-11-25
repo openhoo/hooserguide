@@ -46,9 +46,9 @@ Feature: Work with HooTasks
       """json
       {
         "focus": "css=.grid > .card:first-child",
-        "padding": 40,
+        "padding": 18,
         "autoLabels": "letters",
-        "description": "A focused view keeps the form readable and assigns references automatically.",
+        "description": "After you select Create task, look below the button for the save confirmation (C).",
         "marks": [
           { "target": "label=Task title", "kind": "box", "caption": "Your task title." },
           { "target": "label=Priority", "kind": "both", "color": "#2563eb", "caption": "The selected priority." },
@@ -59,6 +59,7 @@ Feature: Work with HooTasks
 
     When I reload the page
     Then "testid=task-list" has text "Prepare the launch checklistHigh priority"
+    And I explain "Reload the page. Under Upcoming tasks, check that your task still shows the title and priority you chose."
 
   @preferences
   Scenario: Customize workspace notifications
@@ -71,15 +72,17 @@ Feature: Work with HooTasks
     Then "label=Email notifications" is checked
     And I click "role=button:Save preferences"
     Then "role=status:Preferences result" has text "Preferences saved."
-    And I explain "Open Workspace preferences, enable Email notifications and select Save preferences."
+    And I explain "Scroll below the task list to Workspace preferences. Select Email notifications, then Save preferences."
+    And I explain "Look for the message “Preferences saved.” below the button."
     And I capture "Workspace preferences"
       """json
       {
-        "fullPage": true,
-        "description": "Preferences are near the bottom of the workspace. Long screenshots stay readable across PDF pages.",
+        "focus": "css=.preferences",
+        "padding": 24,
+        "description": "Under Workspace preferences, select Email notifications (A), then Save preferences (B).",
         "marks": [
           { "target": "label=Email notifications", "kind": "box", "label": "A", "caption": "Turn notifications on or off." },
-          { "target": "role=button:Save preferences", "kind": "both", "label": "B", "caption": "Save your preferences." }
+          { "target": "role=button:Save preferences", "kind": "box", "label": "B", "caption": "Save your preferences." }
         ]
       }
       """

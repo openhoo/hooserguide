@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "title": "HooTasks — Benutzerhandbuch",
   "language": "de-DE",
-  "generatedAt": "2026-11-24T07:25:25.064Z",
+  "generatedAt": "2026-11-25T07:59:27.341Z",
   "status": "passed",
   "browser": "chromium",
   "viewport": {
@@ -29,6 +29,11 @@
       "feature": "Mit HooTasks arbeiten",
       "description": "Legen Sie eine Aufgabe an. Prüfen Sie nach dem Neuladen, ob Titel und Priorität weiterhin in der Liste stehen.",
       "source": "examples/tasks.de.feature",
+      "sourceSha256": "126101f7d3392eada9969c73b4cd2994fa6e08999185822f61be2927fd8513c5",
+      "location": {
+        "line": 11,
+        "column": 3
+      },
       "tags": [
         "@manual",
         "@tasks"
@@ -36,7 +41,8 @@
       "status": "passed",
       "instructions": [
         "Geben Sie einen eindeutigen Aufgabentitel ein und wählen Sie die Priorität.",
-        "Wählen Sie Create task. Prüfen Sie, ob die Aufgabe in der Liste und eine Bestätigung erscheinen."
+        "Wählen Sie Create task. Prüfen Sie, ob die Aufgabe in der Liste und eine Bestätigung erscheinen.",
+        "Laden Sie die Seite neu. Prüfen Sie unter Upcoming tasks, ob Titel und Priorität Ihrer Aufgabe unverändert sind."
       ],
       "captures": [
         {
@@ -45,8 +51,8 @@
           "description": "A bezeichnet den Titel, B die Priorität. Wählen Sie Create task zum Speichern.",
           "image": "screenshots/01-01.png",
           "raw": "screenshots/01-01.raw.png",
-          "width": 1280,
-          "height": 900,
+          "width": 532,
+          "height": 475,
           "marks": [
             {
               "target": "label=Task title",
@@ -54,8 +60,8 @@
               "label": "A",
               "caption": "Geben Sie der Aufgabe einen aussagekräftigen Titel.",
               "bounds": {
-                "x": 159,
-                "y": 435.5625,
+                "x": 47,
+                "y": 170.5625,
                 "width": 438,
                 "height": 50
               }
@@ -66,8 +72,8 @@
               "label": "B",
               "caption": "Wählen Sie eine passende Priorität für Ihr Team.",
               "bounds": {
-                "x": 159,
-                "y": 535.5625,
+                "x": 47,
+                "y": 270.5625,
                 "width": 438,
                 "height": 46
               }
@@ -78,15 +84,22 @@
               "label": "1",
               "caption": "Speichern Sie die neue Aufgabe.",
               "bounds": {
-                "x": 159,
-                "y": 605.5625,
+                "x": 47,
+                "y": 340.5625,
                 "width": 117.59375,
                 "height": 43
               }
             }
           ],
-          "sha256": "b06df522128e2c52e9854ed69ac4d74475ade482e164cd4bb9ca7ff557afdb54",
-          "rawSha256": "321a554118cc0bce0103563916818c687e9207069669114edece197409373615"
+          "crop": {
+            "x": 112,
+            "y": 265,
+            "width": 532,
+            "height": 475
+          },
+          "sha256": "f1991e23090800168c6a316c68b9452e49147ce6674fa8ab1d8909f9cc554c1e",
+          "rawSha256": "6b9146c333fb13a9a421aad8ac4ebb839efe163530e6772046a671b25d24cd85",
+          "step": 6
         },
         {
           "id": "01-02",
@@ -123,16 +136,17 @@
             }
           ],
           "sha256": "2cf73baffb46e6c5948965dcaff66a84953b904ab4022d335ae50b13c782e7ad",
-          "rawSha256": "f6855007275bc39159a145bdc4b3805043a7890caf5fbee6eee89fda724bf218"
+          "rawSha256": "f6855007275bc39159a145bdc4b3805043a7890caf5fbee6eee89fda724bf218",
+          "step": 13
         },
         {
           "id": "01-03",
           "title": "Aufgabenformular im Detail",
-          "description": "Die Detailansicht hält das Formular lesbar und vergibt Referenzen automatisch.",
+          "description": "Nach dem Speichern mit Create task erscheint unter der Schaltfläche die Bestätigung (C).",
           "image": "screenshots/01-03.png",
           "raw": "screenshots/01-03.raw.png",
-          "width": 576,
-          "height": 519,
+          "width": 532,
+          "height": 475,
           "marks": [
             {
               "target": "label=Task title",
@@ -140,8 +154,8 @@
               "caption": "Der Aufgabentitel.",
               "label": "A",
               "bounds": {
-                "x": 69,
-                "y": 192.5625,
+                "x": 47,
+                "y": 170.5625,
                 "width": 438,
                 "height": 50
               }
@@ -153,8 +167,8 @@
               "caption": "Die gewählte Priorität.",
               "label": "B",
               "bounds": {
-                "x": 69,
-                "y": 292.5625,
+                "x": 47,
+                "y": 270.5625,
                 "width": 438,
                 "height": 46
               }
@@ -165,103 +179,194 @@
               "caption": "Die Speicherbestätigung.",
               "label": "C",
               "bounds": {
-                "x": 69,
-                "y": 425.5625,
+                "x": 47,
+                "y": 403.5625,
                 "width": 158.640625,
                 "height": 24
               }
             }
           ],
           "crop": {
-            "x": 90,
-            "y": 243,
-            "width": 576,
-            "height": 519
+            "x": 112,
+            "y": 265,
+            "width": 532,
+            "height": 475
           },
-          "sha256": "4302ed5510ff41503da13a2b851d26cd7adfba10cfa61368986649be123da7aa",
-          "rawSha256": "eaf40b62fa59adcda78ed1117f479f4658906423dbe62601f288b15faca64346"
+          "sha256": "5595828d47a180c0f09de96c80743622d3b9e04802be4f0849029a8eb133d8c8",
+          "rawSha256": "903ee4675f9ec72013af71b4dc18459d4d9e26e9535248d5bf7a52bd128613f8",
+          "step": 14
         }
       ],
       "steps": [
         {
           "text": "I open \"/\"",
+          "location": {
+            "line": 7,
+            "column": 5
+          },
+          "kind": "action",
           "status": "passed",
-          "durationMs": 8
+          "durationMs": 7
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
+          "location": {
+            "line": 8,
+            "column": 5
+          },
+          "kind": "assertion",
           "status": "passed",
           "durationMs": 12
         },
         {
           "text": "I add a prerequisite \"Öffnen Sie Ihren Arbeitsbereich mit der Berechtigung, Aufgaben anzulegen.\"",
+          "location": {
+            "line": 14,
+            "column": 5
+          },
+          "kind": "guidance",
           "status": "passed",
           "durationMs": 0
         },
         {
           "text": "I add a tip \"Verwenden Sie einen kurzen Titel, der den nächsten Arbeitsschritt beschreibt.\"",
+          "location": {
+            "line": 15,
+            "column": 5
+          },
+          "kind": "guidance",
           "status": "passed",
           "durationMs": 0
         },
         {
           "text": "I explain \"Geben Sie einen eindeutigen Aufgabentitel ein und wählen Sie die Priorität.\"",
+          "location": {
+            "line": 16,
+            "column": 5
+          },
+          "kind": "guidance",
           "status": "passed",
           "durationMs": 0
         },
         {
           "text": "I capture \"Aufgabendetails ausfüllen\"",
+          "location": {
+            "line": 17,
+            "column": 5
+          },
+          "kind": "capture",
           "status": "passed",
-          "durationMs": 168
+          "durationMs": 119
         },
         {
           "text": "I fill \"label=Task title\" with \"Prepare the launch checklist\"",
+          "location": {
+            "line": 30,
+            "column": 5
+          },
+          "kind": "action",
           "status": "passed",
-          "durationMs": 6
+          "durationMs": 7
         },
         {
           "text": "I select \"high\" in \"label=Priority\"",
+          "location": {
+            "line": 31,
+            "column": 5
+          },
+          "kind": "action",
           "status": "passed",
-          "durationMs": 1
+          "durationMs": 2
         },
         {
           "text": "I click \"role=button:Create task\"",
+          "location": {
+            "line": 32,
+            "column": 5
+          },
+          "kind": "action",
           "status": "passed",
-          "durationMs": 33
+          "durationMs": 30
         },
         {
           "text": "\"role=status:Task result\" has text \"Task created successfully.\"",
+          "location": {
+            "line": 33,
+            "column": 5
+          },
+          "kind": "assertion",
           "status": "passed",
           "durationMs": 1
         },
         {
           "text": "\"testid=task-list\" has text \"Prepare the launch checklistHigh priority\"",
+          "location": {
+            "line": 34,
+            "column": 5
+          },
+          "kind": "assertion",
           "status": "passed",
           "durationMs": 1
         },
         {
           "text": "I explain \"Wählen Sie Create task. Prüfen Sie, ob die Aufgabe in der Liste und eine Bestätigung erscheinen.\"",
+          "location": {
+            "line": 35,
+            "column": 5
+          },
+          "kind": "guidance",
           "status": "passed",
           "durationMs": 0
         },
         {
           "text": "I capture \"Gespeicherte Aufgabe prüfen\"",
+          "location": {
+            "line": 36,
+            "column": 5
+          },
+          "kind": "capture",
           "status": "passed",
           "durationMs": 120
         },
         {
           "text": "I capture \"Aufgabenformular im Detail\"",
+          "location": {
+            "line": 47,
+            "column": 5
+          },
+          "kind": "capture",
           "status": "passed",
-          "durationMs": 146
+          "durationMs": 150
         },
         {
           "text": "I reload the page",
+          "location": {
+            "line": 62,
+            "column": 5
+          },
+          "kind": "action",
           "status": "passed",
-          "durationMs": 4
+          "durationMs": 5
         },
         {
           "text": "\"testid=task-list\" has text \"Prepare the launch checklistHigh priority\"",
+          "location": {
+            "line": 63,
+            "column": 5
+          },
+          "kind": "assertion",
           "status": "passed",
-          "durationMs": 7
+          "durationMs": 8
+        },
+        {
+          "text": "I explain \"Laden Sie die Seite neu. Prüfen Sie unter Upcoming tasks, ob Titel und Priorität Ihrer Aufgabe unverändert sind.\"",
+          "location": {
+            "line": 64,
+            "column": 5
+          },
+          "kind": "guidance",
+          "status": "passed",
+          "durationMs": 0
         }
       ],
       "prerequisites": [
@@ -279,23 +384,29 @@
       "feature": "Mit HooTasks arbeiten",
       "description": "Legen Sie für diese Browsersitzung fest, ob Sie E-Mail-Benachrichtigungen erhalten möchten.",
       "source": "examples/tasks.de.feature",
+      "sourceSha256": "126101f7d3392eada9969c73b4cd2994fa6e08999185822f61be2927fd8513c5",
+      "location": {
+        "line": 67,
+        "column": 3
+      },
       "tags": [
         "@manual",
         "@preferences"
       ],
       "status": "passed",
       "instructions": [
-        "Öffnen Sie Workspace preferences, aktivieren Sie Email notifications und wählen Sie Save preferences."
+        "Scrollen Sie unter die Aufgabenliste zu Workspace preferences. Aktivieren Sie Email notifications und wählen Sie Save preferences.",
+        "Unter der Schaltfläche erscheint die Meldung „Preferences saved.“"
       ],
       "captures": [
         {
           "id": "02-01",
           "title": "Einstellungen des Arbeitsbereichs",
-          "description": "Die Einstellungen befinden sich unten im Arbeitsbereich. Lange Screenshots bleiben über mehrere PDF-Seiten lesbar.",
+          "description": "Wählen Sie unter Workspace preferences die Option Email notifications (A) und dann Save preferences (B).",
           "image": "screenshots/02-01.png",
           "raw": "screenshots/02-01.raw.png",
-          "width": 1280,
-          "height": 1486,
+          "width": 728,
+          "height": 341,
           "marks": [
             {
               "target": "label=Email notifications",
@@ -303,92 +414,174 @@
               "label": "A",
               "caption": "Schalten Sie Benachrichtigungen ein oder aus.",
               "bounds": {
-                "x": 163,
-                "y": 1178.9375,
+                "x": 57,
+                "y": 148.9375,
                 "width": 19,
                 "height": 19
               }
             },
             {
               "target": "role=button:Save preferences",
-              "kind": "both",
+              "kind": "box",
               "label": "B",
               "caption": "Speichern Sie Ihre Einstellungen.",
               "bounds": {
-                "x": 159,
-                "y": 1230.9375,
+                "x": 53,
+                "y": 200.9375,
                 "width": 157.234375,
                 "height": 43
               }
             }
           ],
-          "sha256": "bd6af8d259c78e9902d81513e8d4757b5f0e8c029b6e43c66e01f80f49fbc2bc",
-          "rawSha256": "17db28a0b497be30dff2ec3a9af9631fa24b4e416f0f46b7da031d417ea01704"
+          "crop": {
+            "x": 106,
+            "y": 1030,
+            "width": 728,
+            "height": 341
+          },
+          "sha256": "a7312c8f373e215db6398763f2ee8469c35c6a1efbe0e9d850a192833883bef7",
+          "rawSha256": "4feb3751d1fef3f8ca7ff54ccfc0a64228eea4e8de2c4d88fee294b33c88a43c",
+          "step": 12
         }
       ],
       "steps": [
         {
           "text": "I open \"/\"",
+          "location": {
+            "line": 7,
+            "column": 5
+          },
+          "kind": "action",
           "status": "passed",
           "durationMs": 5
         },
         {
           "text": "\"role=heading:Your workspace, in focus.\" is visible",
+          "location": {
+            "line": 8,
+            "column": 5
+          },
+          "kind": "assertion",
           "status": "passed",
           "durationMs": 12
         },
         {
           "text": "I add a note \"Einstellungen werden getrennt von den einzelnen Aufgaben gespeichert.\"",
+          "location": {
+            "line": 70,
+            "column": 5
+          },
+          "kind": "guidance",
           "status": "passed",
           "durationMs": 0
         },
         {
           "text": "I add a warning \"Aktivieren Sie E-Mail-Benachrichtigungen nur für ein Konto, das Sie kontrollieren.\"",
+          "location": {
+            "line": 71,
+            "column": 5
+          },
+          "kind": "guidance",
           "status": "passed",
           "durationMs": 0
         },
         {
           "text": "I scroll to \"label=Email notifications\"",
+          "location": {
+            "line": 72,
+            "column": 5
+          },
+          "kind": "action",
           "status": "passed",
           "durationMs": 39
         },
         {
           "text": "I check \"label=Email notifications\"",
+          "location": {
+            "line": 73,
+            "column": 5
+          },
+          "kind": "action",
           "status": "passed",
-          "durationMs": 33
+          "durationMs": 36
         },
         {
           "text": "\"label=Email notifications\" is checked",
+          "location": {
+            "line": 74,
+            "column": 5
+          },
+          "kind": "assertion",
           "status": "passed",
           "durationMs": 1
         },
         {
           "text": "I click \"role=button:Save preferences\"",
+          "location": {
+            "line": 75,
+            "column": 5
+          },
+          "kind": "action",
           "status": "passed",
-          "durationMs": 33
+          "durationMs": 32
         },
         {
           "text": "\"role=status:Preferences result\" has text \"Preferences saved.\"",
+          "location": {
+            "line": 76,
+            "column": 5
+          },
+          "kind": "assertion",
           "status": "passed",
           "durationMs": 1
         },
         {
-          "text": "I explain \"Öffnen Sie Workspace preferences, aktivieren Sie Email notifications und wählen Sie Save preferences.\"",
+          "text": "I explain \"Scrollen Sie unter die Aufgabenliste zu Workspace preferences. Aktivieren Sie Email notifications und wählen Sie Save preferences.\"",
+          "location": {
+            "line": 77,
+            "column": 5
+          },
+          "kind": "guidance",
+          "status": "passed",
+          "durationMs": 0
+        },
+        {
+          "text": "I explain \"Unter der Schaltfläche erscheint die Meldung „Preferences saved.“\"",
+          "location": {
+            "line": 78,
+            "column": 5
+          },
+          "kind": "guidance",
           "status": "passed",
           "durationMs": 0
         },
         {
           "text": "I capture \"Einstellungen des Arbeitsbereichs\"",
+          "location": {
+            "line": 79,
+            "column": 5
+          },
+          "kind": "capture",
           "status": "passed",
-          "durationMs": 187
+          "durationMs": 146
         },
         {
           "text": "I reload the page",
+          "location": {
+            "line": 91,
+            "column": 5
+          },
+          "kind": "action",
           "status": "passed",
           "durationMs": 4
         },
         {
           "text": "\"label=Email notifications\" is checked",
+          "location": {
+            "line": 92,
+            "column": 5
+          },
+          "kind": "assertion",
           "status": "passed",
           "durationMs": 7
         }

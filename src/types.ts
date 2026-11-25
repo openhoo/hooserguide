@@ -138,6 +138,8 @@ export interface ResolvedMark extends Mark {
   bounds: { x: number; y: number; width: number; height: number };
 }
 export interface Capture {
+  /** One-based index of the executed step that produced this figure; absent in older reports. */
+  step?: number;
   id: string;
   title: string;
   description?: string;
@@ -150,11 +152,20 @@ export interface Capture {
   marks: ResolvedMark[];
   crop?: { x: number; y: number; width: number; height: number };
 }
+export interface SourceLocation {
+  line: number;
+  column: number;
+}
+export type ExecutionStepKind = 'action' | 'assertion' | 'guidance' | 'capture' | 'custom';
 export interface Chapter {
   variant?: ScreenVariant;
   title: string;
   feature: string;
   source: string;
+  /** Location in the executed feature file, or the Examples row for a Scenario Outline. */
+  location?: SourceLocation;
+  /** Digest of the exact feature bytes parsed by the runner. */
+  sourceSha256?: string;
   tags: string[];
   description: string;
   status: 'passed' | 'failed';
@@ -162,7 +173,14 @@ export interface Chapter {
   prerequisites?: string[];
   callouts?: Callout[];
   captures: Capture[];
-  steps: { text: string; status: 'passed' | 'failed'; error?: string; durationMs?: number }[];
+  steps: {
+    text: string;
+    kind?: ExecutionStepKind;
+    status: 'passed' | 'failed';
+    error?: string;
+    durationMs?: number;
+    location?: SourceLocation;
+  }[];
   error?: string;
 }
 export interface RunReport {

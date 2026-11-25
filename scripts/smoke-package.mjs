@@ -102,7 +102,8 @@ try {
         stderr: 'pipe',
       }),
     );
-    if ((await mcp.listTools()).tools.length !== 11) throw new Error('Installed MCP tools missing');
+    if (!(await mcp.listTools()).tools.some((tool) => tool.name === 'hooserguide_audit'))
+      throw new Error('Installed MCP audit tool missing');
     const status = await mcp.callTool({ name: 'hooserguide_status', arguments: {} });
     if (status.isError || status.structuredContent?.status !== 'passed')
       throw new Error('Installed MCP status failed');
@@ -116,6 +117,19 @@ try {
   );
   if (demo.status !== 'passed') throw new Error('Installed package demo failed');
   for (const path of Object.values(demo.artifacts)) await access(path);
+  const audit = JSON.parse(
+    execFileSync(binary, ['audit', demo.directory, '--strict', '--json'], {
+      cwd: root,
+      encoding: 'utf8',
+    }),
+  );
+  if (
+    audit.pdfHashVerified !== true ||
+    audit.verifiedImages !== 8 ||
+    audit.captures !== 4 ||
+    audit.visualReview !== 'required'
+  )
+    throw new Error('Installed demo audit did not cover all screenshots');
   const rebuilt = JSON.parse(
     execFileSync(
       binary,

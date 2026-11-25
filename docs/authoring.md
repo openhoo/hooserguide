@@ -19,6 +19,8 @@ In a `.feature` file, choose `hg-capture-lettered-arrow` to insert a letter badg
 
 An existing guide can run `npx hooserguide editor` beside its config. Setup creates dedicated workspace, snippet and schema files and preserves existing editor settings and tasks. The workspace runs the project's installed CLI.
 
+When reviewing a draft, lint also flags unfinished figure descriptions, captions without text, automation selectors in reader prose and a final interaction with no following assertion. A control named in a step can use `role=button:Save`; in a caption, call it **Save**. Custom steps may verify their own results: inspect their behavior before adding redundant assertions.
+
 ## Write the reader's instructions alongside the workflow
 
 Here is a chapter for an account settings page. Replace the path, accessible names and privacy selector with the ones in your application. The reload and final assertion verify that the display name survived the save.

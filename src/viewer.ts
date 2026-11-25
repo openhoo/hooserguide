@@ -6,7 +6,14 @@ const result = document.querySelector('#search-results');
 const empty = document.querySelector('#no-results');
 const sections = [...document.querySelectorAll('main > section')];
 const links = [...document.querySelectorAll('nav li')];
-const index = sections.map(section => section.textContent.toLocaleLowerCase());
+const index = sections.map(section => {
+  const walker = document.createTreeWalker(section, NodeFilter.SHOW_TEXT);
+  const words = [];
+  while (walker.nextNode()) {
+    if (!walker.currentNode.parentElement.closest('[aria-hidden="true"]')) words.push(walker.currentNode.textContent);
+  }
+  return words.join(' ').toLocaleLowerCase();
+});
 toolbar.hidden = false;
 const themeSelect = document.querySelector('#guide-theme');
 document.querySelector('.theme-picker').hidden = false;

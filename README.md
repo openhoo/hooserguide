@@ -25,7 +25,7 @@ The demo starts HooTasks on localhost, creates a task and saves a notification p
 From your application project, install the tool and create a guide:
 
 ```sh
-npm install -D github:openhoo/hooserguide#0.9.0
+npm install -D github:openhoo/hooserguide#0.10.0
 npx playwright install chromium
 npx hooserguide init docs/user-guide --base-url http://localhost:3000 --editor
 ```
@@ -60,6 +60,12 @@ npx hooserguide run --config docs/user-guide/hooserguide.config.json
 ```
 
 `lint` checks the spec without opening the app. `run` performs its actions, so use a test account and data you can change. A failed assertion or missing privacy mask prevents a successful export. Configure masks for private fields and review both screenshot variants before sharing. A passing report covers only the scenarios and screen profiles that ran.
+
+## Review a generated guide
+
+Run `npx hooserguide audit <run-directory>` on the directory printed by `run`. It checks the screenshot hashes, points to unfinished copy or empty legends, and flags PDF cuts that split a marked control or leave an entire figure part without a target. Add `--json` for machine-readable locations or `--strict` to fail on warnings. This command is available when running the current source checkout; older installations can use `inspect`.
+
+Use the locations to open the actual figures. In the offline HTML reader, select **Open image**, choose **Actual size**, and press Escape to return. Check the masked original as well as the annotated view, then inspect the exported PDF at reading size. The [review guide](docs/review.md) explains what to look for.
 
 ## Where to go next
 

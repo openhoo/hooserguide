@@ -317,6 +317,30 @@
           "source": {
             "type": "string"
           },
+          "sourceSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "column": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "line",
+              "column"
+            ],
+            "additionalProperties": false
+          },
           "tags": {
             "type": "array",
             "items": {
@@ -382,6 +406,36 @@
                 "text": {
                   "type": "string"
                 },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "action",
+                    "assertion",
+                    "guidance",
+                    "capture",
+                    "custom"
+                  ]
+                },
+                "location": {
+                  "type": "object",
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "column": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "line",
+                    "column"
+                  ],
+                  "additionalProperties": false
+                },
                 "status": {
                   "type": "string",
                   "enum": [
@@ -412,6 +466,11 @@
                 "id": {
                   "type": "string",
                   "pattern": "^[A-Za-z0-9_-]+$"
+                },
+                "step": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "title": {
                   "type": "string",

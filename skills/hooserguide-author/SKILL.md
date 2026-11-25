@@ -21,7 +21,7 @@ agent client. For changes to hooserguide itself, use its development skill.
 
 ## Author and execute
 
-Inspect actual controls; prefer accessible names and stable test IDs. Write one user task per scenario, explain the task in user language and assert its saved outcome. A click or screenshot alone does not prove persistence.
+Inspect actual controls; prefer accessible names and stable test IDs. Write one user task per scenario, explain the task in user language and assert its saved outcome. For a settings task, name where to find the control, what to select, and what to check afterward. If the chapter promises a saved choice, have both the walkthrough and the reader check the value after reopening. Keep browser selectors in executable steps and match the visible UI wording in reader copy.
 
 Use `hooserguide new "Task title" --template task|form|read-only --config <config>` to scaffold a chapter without overwriting existing features. Replace every `REPLACE_ME` with actual prose and app selectors. Scenario descriptions introduce individual chapters; `I explain:` supports nonempty multiline text docstrings. Search phrases with `hooserguide steps --search <term>` or `hooserguide_steps {search}`.
 
@@ -38,6 +38,8 @@ Read [mcp-workflow.md](references/mcp-workflow.md) when using MCP. Save the retu
 Read [customization.md](references/customization.md) for tag expressions, fail-fast, prerequisites, note/tip/warning steps, document identity, A4/Letter page geometry and screenshot defaults. Guide labels support German and English; author actual prose/captions in the requested language. Preferences and callouts are chapter guidance, while assertions verify app state.
 
 ## Review and deliver
+
+Check the installed CLI help or MCP tool list. On versions that provide it, run `hooserguide audit <run-directory>` or `hooserguide_audit {runId}`. A capture finding points to the figure and, on newer evidence, its executed step and feature line. Inspect that figure before changing it. For example, if one PDF continuation has none of the named controls, try a focus crop around the relevant panel and check whether a reader can still locate it.
 
 Read the exact report, compare requested coverage, inspect masked raw and annotated captures, open HTML at desktop/narrow widths and render actual PDF pages with available artifact tools. Use `$hooserguide-review` when available. A filtered passing run verifies only its recorded selection; inspect `skippedScenarios` for omitted execution. Check reference placement, legends, privacy, wrapping and screenshot slices.
 

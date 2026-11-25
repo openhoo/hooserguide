@@ -1,11 +1,12 @@
 import { glob } from 'node:fs/promises';
 import parseTagExpression from '@cucumber/tag-expressions';
+import { readerCopyIssues, uncheckedInteraction } from './reader-review.js';
 import { z } from 'zod';
 import { resolveConfig } from './config.js';
-import { parseFeature } from './gherkin.js';
+import { parseFeature, sourceLocation } from './gherkin.js';
 import { loadRegistry } from './runner.js';
 import { validateStepArguments } from './preflight.js';
-import { classifyStep } from './steps.js';
+import { classifyStep, executionStepKind } from './steps.js';
 import type { Config } from './types.js';
 
 const locationSchema = z.object({
@@ -65,10 +66,8 @@ export type AuthoringReport = z.infer<typeof authoringSchema>;
 export type AuthoringDiagnostic = z.infer<typeof diagnosticSchema>;
 
 function isAssertion(step: { text: string; type?: string }): boolean {
-  if (classifyStep(step.text) === 'custom') return step.type === 'Outcome';
-  return /^(?:"(?:[^"\\]|\\.)*" (?:is |has |contains text )|the URL is |the page title is )/.test(
-    step.text,
-  );
+  const kind = executionStepKind(step.text);
+  return kind === 'assertion' || (kind === 'custom' && step.type === 'Outcome');
 }
 
 /** Rank documented bindings without guessing user selectors or executing a handler. */
@@ -178,12 +177,10 @@ export async function lint(input: Config): Promise<AuthoringReport> {
     }
     for (const pickle of feature.pickles) {
       // Outlines reference the scenario then the Examples row. Keep the row as chapter location.
-      const at = (ids: readonly string[], last = false) => {
-        const node = (last ? [...ids].reverse() : ids)
-          .map((id) => feature.nodes.get(id))
-          .find(Boolean);
-        return { source, line: node?.line ?? 1, column: node?.column ?? 1 };
-      };
+      const at = (ids: readonly string[], last = false) => ({
+        source,
+        ...sourceLocation(feature.nodes, ids, last),
+      });
       const chapter = {
         ...at(pickle.astNodeIds, true),
         title: pickle.name,
@@ -221,6 +218,29 @@ export async function lint(input: Config): Promise<AuthoringReport> {
             ...(suggestions?.length ? { suggestions } : {}),
           });
       };
+      const checkCopy = (value: unknown, field: string, location = at(pickle.astNodeIds, true)) => {
+        if (typeof value !== 'string') return;
+        for (const issue of readerCopyIssues(value)) {
+          if (issue === 'DRAFT_COPY')
+            add(
+              'PLACEHOLDER',
+              `Unfinished placeholder in ${field}.`,
+              'Use the actual task and visible control names.',
+              'warning',
+              location,
+            );
+          else
+            add(
+              issue,
+              `Possible automation selector in ${field}.`,
+              'Use the visible control name unless the selector is part of this task.',
+              'warning',
+              location,
+            );
+        }
+      };
+      checkCopy(chapter.title, 'chapter title');
+      checkCopy(chapter.description, 'chapter introduction');
       if (!pickle.steps.length)
         add(
           'EMPTY_SCENARIO',
@@ -258,6 +278,7 @@ export async function lint(input: Config): Promise<AuthoringReport> {
         if (quoted) {
           try {
             const value = JSON.parse(quoted[1]!) as string;
+            checkCopy(value, 'chapter guidance', location);
             (step.text.startsWith('I explain') ? chapter.instructions : chapter.prerequisites).push(
               value,
             );
@@ -273,10 +294,25 @@ export async function lint(input: Config): Promise<AuthoringReport> {
             /* Quoting diagnosed above. */
           }
         }
-        if (step.text === 'I explain:' && step.argument?.docString)
+        if (step.text === 'I explain:' && step.argument?.docString) {
           chapter.instructions.push(step.argument.docString.content);
+          checkCopy(step.argument.docString.content, 'instruction', location);
+        }
+        const callout = /^I add a (?:note|warning|tip) (".*")$/.exec(step.text);
+        if (callout) {
+          try {
+            checkCopy(JSON.parse(callout[1]!), 'callout', location);
+          } catch {
+            /* diagnosed by preflight */
+          }
+        }
         if (classifyStep(step.text) === 'capture') {
-          let spec: { description?: string; marks?: unknown[]; masks?: unknown[] } = {};
+          let spec: {
+            autoLabels?: string;
+            description?: string;
+            marks?: unknown[];
+            masks?: unknown[];
+          } = {};
           let title = step.text.slice(10);
           try {
             title = JSON.parse(title);
@@ -286,6 +322,29 @@ export async function lint(input: Config): Promise<AuthoringReport> {
             if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) spec = parsed;
           } catch {
             /* Keep the figure in the outline even when its arguments need fixing. */
+          }
+          checkCopy(title, 'figure title', location);
+          checkCopy(spec.description, 'figure description', location);
+          if (Array.isArray(spec.marks)) {
+            for (const [n, item] of spec.marks.entries()) {
+              if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+              const mark = item as Record<string, unknown>;
+              checkCopy(mark.caption, `mark ${n + 1} caption`, location);
+              if (
+                (mark.label ||
+                  mark.leader ||
+                  config.captureDefaults?.autoLabels ||
+                  spec.autoLabels) &&
+                (typeof mark.caption !== 'string' || !mark.caption.trim())
+              )
+                add(
+                  'EMPTY_LEGEND',
+                  `Mark ${n + 1} has a reference badge without a caption.`,
+                  'Add a caption that names the control and explains what it does.',
+                  'warning',
+                  location,
+                );
+            }
           }
           chapter.captures.push({
             ...location,
@@ -336,16 +395,19 @@ export async function lint(input: Config): Promise<AuthoringReport> {
           'Chapter has no introduction.',
           'Add prose beneath Scenario: or Feature: before the first step.',
         );
-      if (
-        /\b(TODO|FIXME|REPLACE_ME)\b|<your[^>]*>/i.test(
-          [chapter.title, chapter.description, ...chapter.instructions].join('\n'),
-        )
-      )
-        add(
-          'PLACEHOLDER',
-          'Chapter contains unfinished placeholder prose.',
-          'Replace placeholder text with the actual task and app labels.',
+      if (chapter.assertions) {
+        const index = uncheckedInteraction(
+          pickle.steps.map((step) => ({ text: step.text, kind: executionStepKind(step.text) })),
         );
+        if (index !== undefined)
+          add(
+            'UNCHECKED_ACTION',
+            'The final interaction has no subsequent outcome assertion.',
+            'Check the result after the action; an assertion in the Background only verifies the starting state.',
+            'warning',
+            at(pickle.steps[index]!.astNodeIds),
+          );
+      }
       const previous = report.chapters
         .slice(0, -1)
         .find((item) => item.selected && item.title === chapter.title);

@@ -63,6 +63,8 @@ execution success, capture geometry, masking, report readers or exporters.
 - Preserve the pinned MIT notices for `src/pdfcn/`. Compose the guide in project
   code; adapt vendored components only when the change requires it.
 
+For audit work, reproduce the problem on a pinned run before changing a rule in `src/audit.ts`. Copy and interaction rules shared with authoring lint live in `src/reader-review.ts`. Exercise an intentional counterexample (for example a technical guide that teaches selectors), legacy reports and the strict CLI/MCP result. Treat a layout record as a claim about the export; visually verify the actual PDF before declaring a layout fix.
+
 ## Documentation and skill changes
 
 Keep the two audiences distinct: this skill supports tool development; the author

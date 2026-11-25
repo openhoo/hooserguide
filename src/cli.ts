@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { preparePages } from './pages.js';
 import { compareRuns } from './compare.js';
 import { bundle } from './bundle.js';
+import { auditRun, formatAudit } from './audit.js';
 import { inspectRun } from './evidence.js';
 import { loadConfig, manualSchema } from './config.js';
 import { run, validate, loadRegistry } from './runner.js';
@@ -36,6 +37,7 @@ Usage:
   hooserguide run [--config hooserguide.config.json] [--profile mobile] [--output output/guides] [--headed] [--no-pdf] [--json]
   hooserguide build <run-directory> [--output output/rebuilt] [--config hooserguide.config.json] [--no-pdf] [--json]
   hooserguide inspect <run-directory> [--json]
+  hooserguide audit <run-directory> [--strict] [--json]
   hooserguide compare <before-run> <after-run> [--json]
   hooserguide bundle <run-directory> [--output handbook.zip] [--json]
   hooserguide pages <run-directory> [--output public] [--json]
@@ -134,6 +136,7 @@ async function execute(args: string[]): Promise<void> {
       'compare',
       'bundle',
       'inspect',
+      'audit',
       'pages',
       'lint',
       'outline',
@@ -146,7 +149,7 @@ async function execute(args: string[]): Promise<void> {
     positionals.length >
     (command === 'compare'
       ? 3
-      : ['init', 'build', 'bundle', 'inspect', 'pages', 'new'].includes(command)
+      : ['init', 'build', 'bundle', 'inspect', 'audit', 'pages', 'new'].includes(command)
         ? 2
         : 1)
   )
@@ -192,6 +195,7 @@ async function execute(args: string[]): Promise<void> {
     ],
     pages: ['output', 'json'],
     inspect: ['json'],
+    audit: ['strict', 'json'],
     compare: ['json'],
     bundle: ['output', 'json'],
     demo: ['output', 'json'],
@@ -266,6 +270,13 @@ async function execute(args: string[]): Promise<void> {
           : formatOutline(result),
     );
     if (!result.valid || (values.strict && result.totals.warnings)) process.exitCode = 1;
+    return;
+  }
+  if (command === 'audit') {
+    if (!positionals[1]) throw new Error('audit requires a run directory');
+    const result = await auditRun(positionals[1]);
+    output(values.json ? JSON.stringify(result) : formatAudit(result));
+    if (result.errors || (values.strict && result.warnings)) process.exitCode = 1;
     return;
   }
   if (command === 'pages') {

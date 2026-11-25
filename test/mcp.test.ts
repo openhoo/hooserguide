@@ -38,6 +38,7 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
     await client.connect(transport);
     const tools = await client.listTools();
     assert.deepEqual(tools.tools.map((t) => t.name).sort(), [
+      'hooserguide_audit',
       'hooserguide_bundle',
       'hooserguide_compare_runs',
       'hooserguide_generate',
@@ -127,6 +128,20 @@ test('MCP stdio exposes tools, validates, executes a guide and returns the real 
     assert.ok(progress.every((p, i) => i === 0 || p >= progress[i - 1]!));
     const runId = (generated.structuredContent as any).runId;
     const directory = (generated.structuredContent as any).directory;
+    const audited = await client.callTool({
+      name: 'hooserguide_audit',
+      arguments: { runId, strict: true },
+    });
+    assert.equal(audited.isError, true);
+    const audit = (audited.structuredContent as any).audit;
+    assert.equal(audit.runId, runId);
+    assert.equal(audit.runStatus, 'passed');
+    assert.equal(audit.verifiedImages, 2);
+    assert.ok(audit.findings.some((f: any) => f.code === 'NO_INSTRUCTION' && f.chapter === 1));
+    assert.equal(
+      (await client.callTool({ name: 'hooserguide_audit', arguments: {} })).isError,
+      true,
+    );
     const reportResource = await client.readResource({
       uri: `hooserguide://runs/${runId}/report.json`,
     });

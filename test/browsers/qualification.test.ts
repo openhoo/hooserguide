@@ -223,6 +223,23 @@ for (const engine of selected) {
         await page.locator('#guide-search').fill('');
         await page.locator('#annotations').click();
         assert.match((await page.locator('figure img').getAttribute('src')) ?? '', /\.raw\.png$/);
+        const figureLink = page.locator('a.screen-image');
+        await figureLink.focus();
+        await page.keyboard.press('Enter');
+        const inspector = page.getByRole('dialog');
+        await inspector.waitFor();
+        assert.match((await inspector.getByRole('img').getAttribute('src')) ?? '', /\.raw\.png$/);
+        await inspector.locator('img').evaluate((el) => (el as HTMLImageElement).decode());
+        await inspector.getByRole('button', { name: 'View at actual size' }).click();
+        const imageArea = inspector.getByRole('region', { name: 'Screenshot' });
+        await imageArea.focus();
+        await page.keyboard.press('ArrowRight');
+        await page.waitForFunction(
+          () => document.querySelector('.inspector-canvas')!.scrollLeft > 0,
+        );
+        await page.keyboard.press('Escape');
+        await inspector.waitFor({ state: 'hidden' });
+        assert.ok(await figureLink.evaluate((el) => el === document.activeElement));
         assert.equal(
           await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
           false,

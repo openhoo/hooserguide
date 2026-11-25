@@ -5,6 +5,7 @@ import { basename, resolve, join } from 'node:path';
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import { compareResults, comparisonSchema } from './compare.js';
+import { auditRun, auditSchema } from './audit.js';
 import { bundle } from './bundle.js';
 import {
   loadConfig,
@@ -126,7 +127,7 @@ export function createMcpServer(configPath: string) {
     { name: 'hooserguide', version: VERSION },
     {
       instructions:
-        'Start with hooserguide_status and hooserguide_steps. Use existing browser/file tools to inspect the app and author Gherkin. Use hooserguide_lint for all source-located diagnostics and hooserguide_outline to review planned coverage; neither executes app workflows or supplies evidence. Validate and generate with the same profile and filters. Save runId; pin it in inspect_run, inspect_capture, rebuild and bundle. Compare two pinned runs to review revisions. Use the same profile and tagExpression/scenario filters in validation/generation. Check recorded selection and skippedScenarios for coverage. Read-only project/artifact resources support context attachment. Check isError and status, review both masked image variants and rendered PDFs. Rebuild uses old evidence, never a fresh app check. Configuration and plugins are trusted local code. This server uses stdio and one pinned config.',
+        'Start with hooserguide_status and hooserguide_steps. Use existing browser/file tools to inspect the app and author Gherkin. Use hooserguide_lint for all source-located diagnostics and hooserguide_outline to review planned coverage; neither executes app workflows or supplies evidence. Validate and generate with the same profile and filters. Save runId; pin it in audit, inspect_run, inspect_capture, rebuild and bundle. Compare two pinned runs to review revisions. Use the same profile and tagExpression/scenario filters in validation/generation. Check recorded selection and skippedScenarios for coverage. Read-only project/artifact resources support context attachment. Check isError and status, review both masked image variants and rendered PDFs. Rebuild uses old evidence, never a fresh app check. Configuration and plugins are trusted local code. This server uses stdio and one pinned config.',
     },
   );
   let active: { operation: 'generate' | 'rebuild'; startedAt: string } | undefined;
@@ -502,6 +503,30 @@ export function createMcpServer(configPath: string) {
     },
   );
   server.registerTool(
+    'hooserguide_audit',
+    {
+      title: 'Audit a generated guide',
+      description:
+        'Verify the images for one pinned run, locate editorial and PDF slice issues and suggest repairs. No application actions. Strict mode also fails on warnings. Visual review is still required.',
+      inputSchema: z.object({ runId: runIdSchema, strict: z.boolean().default(false) }).strict(),
+      outputSchema: z.object({ ...common, audit: auditSchema.optional() }).strict(),
+      annotations: readOnly,
+    },
+    async ({ runId, strict }) => {
+      try {
+        const audit = await auditRun(await managedRunDirectory((await config()).output, runId));
+        const failed = audit.errors > 0 || (strict && audit.warnings > 0);
+        return response({ status: failed ? 'failed' : 'passed', audit }, failed);
+      } catch (e) {
+        return failure(
+          e,
+          'AUDIT_FAILED',
+          'Select an existing run and restore its original evidence before reviewing it.',
+        );
+      }
+    },
+  );
+  server.registerTool(
     'hooserguide_inspect_run',
     {
       title: 'Read exact execution evidence',
@@ -852,7 +877,7 @@ export function createMcpServer(configPath: string) {
     [
       'review-user-guide',
       'Review one exact run, its execution report, images and exports.',
-      'Use status to find the intended runId, then pin it in inspect_run and inspect_capture. Require run.status and report.status passed for delivery, with all chapters and steps passing. Inspect annotated and masked raw variants; check hashVerified, references, privacy and PDF slices. Render actual PDF pages and view narrow HTML with available artifact/browser tools. Rebuilt outputs preserve old application evidence. State coverage and material limitations; do not regenerate data-changing workflows without authorization.',
+      'Use status to find the intended runId, then pin it in audit, inspect_run and inspect_capture. Use the audit findings to locate issues and confirm them in the artifacts. Require run.status and report.status passed for delivery, with all chapters and steps passing. Inspect annotated and masked raw variants; check hashVerified, references, privacy and PDF slices. Render actual PDF pages and view narrow HTML with available artifact/browser tools. Rebuilt outputs preserve old application evidence. State coverage and material limitations; do not regenerate data-changing workflows without authorization.',
     ],
   ] as const)
     server.registerPrompt(name, { description }, () => ({

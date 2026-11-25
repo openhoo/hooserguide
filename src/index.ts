@@ -9,6 +9,7 @@ export type * from './types.js';
 
 export { compareRuns } from './compare.js';
 export { bundle } from './bundle.js';
+export { auditRun, type AuditReport } from './audit.js';
 export { inspectRun } from './evidence.js';
 
 export { preparePages, type PagesOptions } from './pages.js';

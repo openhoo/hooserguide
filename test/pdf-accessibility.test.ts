@@ -9,7 +9,9 @@ import { build } from '../src/build.js';
 test('tagged PDF screenshots retain descriptive alternatives, including continuation parts', async () => {
   const root = await mkdtemp(join(tmpdir(), 'hooserguide-pdf-alt-'));
   try {
-    const result = await build('docs/demo', { output: root });
+    // Short landscape pages deliberately exercise continuation parts, even when
+    // the reader demo uses focused screenshots that fit on a portrait page.
+    const result = await build('docs/demo', { output: root, manual: { orientation: 'landscape' } });
     assert.equal(result.report.status, 'passed', result.report.exportError);
     const layout = JSON.parse(
       await readFile(join(result.directory, 'pdf-layout.json'), 'utf8'),
