@@ -171,13 +171,18 @@ test('editor setup and chapter templates work in a consumer project and preserve
     const lettered = Object.values(snippets).find(
       (item) => item.prefix === 'hg-capture-lettered-arrow',
     );
+    const adjusted = Object.values(snippets).find(
+      (item) => item.prefix === 'hg-capture-adjusted-mark',
+    );
     assert.ok(capture);
     assert.ok(lettered);
+    assert.ok(adjusted);
     const snippetFile = join(root, 'features/snippet.feature');
     for (const [snippet, alternative] of [
       [capture, false],
       [lettered, false],
       [lettered, true],
+      [adjusted, false],
     ] as const) {
       const expanded = snippet.body
         .join('\n')

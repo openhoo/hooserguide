@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.0 — 2026-11-25
+
+- Adjust the area of a screenshot mark with `offset` and signed `padding`. Shift an annotation toward an icon or inset one edge without changing the locator, crop or masked original. The editor, author skill and review skill show how to apply and check the adjustment.
+
 ## 0.10.0 — 2026-11-25
 
 - Audit a generated run from the CLI, TypeScript or a pinned MCP call. Findings locate unchecked actions, draft copy, empty legends, repeated figures and PDF slice problems. Strict mode can fail CI on warnings.

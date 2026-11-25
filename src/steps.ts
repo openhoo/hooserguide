@@ -87,7 +87,7 @@ export function builtinSteps(): StepRegistry {
     '"role=status:Result" has text "Saved"': 'Assert exact text.',
     'I explain "Select Save."': 'Add user-facing instructions.',
     'I capture "Settings"':
-      'Capture a screenshot. Use marks[].leader in the JSON docstring to connect a reference letter to a control; set width for a thinner arrow.',
+      'Capture a screenshot. Set marks[].offset to move a mark, or marks[].padding to adjust its edges. Use marks[].leader to connect a reference letter to a control; set width for a thinner arrow.',
   };
   registry.define(new RegExp(`^I open ${q}$`), async (c, url) => {
     await c.page.goto(unquote(url!), { waitUntil: 'domcontentloaded' });

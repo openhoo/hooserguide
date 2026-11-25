@@ -10,6 +10,8 @@ import {
   responsiveSchema,
   screenVariantSchema,
 } from './config.js';
+import { layoutAnnotations } from './annotations.js';
+import { markedBounds } from './mark-geometry.js';
 import { captureSchema, validateCapture } from './capture.js';
 import type { RunReport } from './types.js';
 
@@ -211,6 +213,9 @@ export function assertReportIntegrity(report: RunReport): void {
         title: capture.title,
         marks: capture.marks.map(({ bounds: _bounds, ...mark }) => mark),
       });
+      // A reported adjustment must be drawable even when no PDF is requested.
+      if (capture.marks.some((mark) => markedBounds(mark) !== mark.bounds))
+        layoutAnnotations(capture.width, capture.height, capture.marks);
       for (const mark of capture.marks) {
         if (mark.leader && !mark.label)
           throw new Error('A lettered leader is missing its reference label in the evidence');

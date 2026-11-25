@@ -66,14 +66,36 @@ for (const engine of selected) {
       assert.deepEqual([...raw.data.subarray(targetAt, targetAt + 3)], [0, 255, 0]);
       const viewport = await captureScreenshot(
         page,
-        { title: 'Scrolled viewport', marks: [{ target: '#target', label: '1' }] },
+        {
+          title: 'Scrolled viewport',
+          marks: [
+            {
+              target: '#target',
+              label: '1',
+              offset: { x: 6, y: -9 },
+              padding: { right: 3, bottom: -3 },
+            },
+          ],
+        },
         root,
         'viewport',
         ['#secret'],
       );
       const bounds = await page.locator('#target').boundingBox();
+      assert.ok(bounds);
       assert.deepEqual(viewport.marks[0]!.bounds, bounds);
       assert.equal(viewport.width, 800);
+      const outline = await sharp(join(root, viewport.image))
+        .extract({
+          left: Math.round(bounds.x + bounds.width + 6 + 3 + 5),
+          top: Math.round(bounds.y + bounds.height / 2 - 9),
+          width: 1,
+          height: 1,
+        })
+        .removeAlpha()
+        .raw()
+        .toBuffer();
+      assert.deepEqual([...outline], [225, 29, 72], 'The scrolled outline uses final CSS pixels');
       const full = await captureScreenshot(
         page,
         { title: 'Full page', fullPage: true, marks: [{ target: '#target', label: 'A' }] },

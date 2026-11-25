@@ -90,6 +90,8 @@ npx hooserguide lint
 
 For CI, `npx hooserguide lint --strict --json` exits 1 on warnings as well as errors. The JSON `valid` flag means zero errors. Completed reviews go to stdout even when invalid; config or plugin exceptions go to stderr. Background diagnostics point to their source steps; Outline chapters point to their Examples row. A parse error may use column 1.
 
+The editor's `hg-capture-adjusted-mark` snippet inserts a capture with relative x/y offsets and separate left/right padding. Use it when the locator measures a larger area than the control you mean to highlight. Check the [mark geometry](reference.md#adjust-the-area-a-mark-points-to) against an actual capture; static validation cannot measure the UI.
+
 ## Review the planned guide before execution
 
 After saving the example, use the same scenario filter for each command:

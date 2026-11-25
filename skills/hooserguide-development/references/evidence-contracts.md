@@ -26,6 +26,8 @@ transformations at high DPI. Do not draw annotations into the application's DOM.
 Motion freezing must retain previously paused animations. Reference labels are
 unique per capture and annotation bounds must fit the image.
 
+Keep `mark.bounds` as the measured element. Derive the visual rectangle from the signed per-mark `offset` and `padding` after viewport scaling and focus cropping. Use that same rectangle for overlays, arrow tips, PDF legends and slice audits. Compare the raw PNG and bounds before and after an adjustment; only the annotated image should change. Exercise outlines beside other marked controls and an inset inside a larger wrapper on narrow screens.
+
 PDF slicing must cover every screenshot pixel while keeping annotation groups
 together when possible. Legends belong beside the slice containing their target;
 long captions/instructions must paginate without dropped or off-page text.

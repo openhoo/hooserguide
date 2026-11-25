@@ -148,12 +148,39 @@ And I capture "Settings"
 | `marks[].kind`, `color`          | `box` (default), `arrow` or `both`. Colors use six-digit hex codes.                                                                                                                                                                                                                                                                         |
 | `label`, `caption`, `autoLabels` | Labels contain 1–4 ASCII letters or digits and must be unique per capture. Captions become legends. Captioned marks get numbers by default, while marks with `leader` get letters. Choose `"letters"` or `"numbers"` to set automatic labels; explicit labels take precedence. Older captions without labels remain unchanged when rebuilt. |
 | `marks[].leader`                 | Connect a reference badge to its target with a configurable arrow. With `leader`, omitted `kind` means `arrow`; use `both` to add an outline.                                                                                                                                                                                               |
+| `marks[].offset`                 | Shift the annotation target relative to the measured element: `{"x": 6, "y": -2}` moves it right 6 and up 2 screenshot CSS pixels. Omitted axes are zero.                                                                                                                                                                                   |
+| `marks[].padding`                | Expand (positive) or inset (negative) the annotation target. A number applies to all edges; an object sets `top`, `right`, `bottom` or `left`. Omitted edges are zero.                                                                                                                                                                      |
 | `marks[].from`                   | Optional arrow origin in screenshot CSS pixels. With `leader`, sets the exact badge center.                                                                                                                                                                                                                                                 |
 | `fullPage`                       | Default `false`: scroll the first mark into view and require all marks to fit. Use `true` to capture the document from its origin. Viewport crops on zoomed mobile pages account for the visual viewport.                                                                                                                                   |
 | `focus`, `padding`               | Crop around one visible element with 24 CSS pixels of padding by default (0–500 allowed). Marks must fit in the crop. See the [focused capture example](advanced.md#capture-a-specific-panel).                                                                                                                                              |
 | `masks`                          | Mask these targets in addition to the global config masks. Original and annotated PNGs come from the same masked image.                                                                                                                                                                                                                     |
 
 Each privacy selector must match after the page settles. If its match count or bounds change while the browser takes the screenshot, neither image is saved. Review both variants for any private information your masks did not cover. Font and animation-frame waits honor `timeoutMs`. Motion is paused for measuring; previously paused animations stay paused. Boxes, arrows and labels are drawn onto the captured image.
+
+### Adjust the area a mark points to
+
+Mark offsets and mark padding are available in 0.11.0 and later.
+
+Use the most specific visible target first. An icon button may have a large clickable area around a small glyph; sometimes the stable accessible locator identifies the button but the glyph has no separate locator. Use `offset` to shift the marked area and `padding` to resize it. For example, on a 44 × 44 pixel button with a 20 × 20 glyph four pixels right of center:
+
+```json
+{
+  "target": "role=button:Edit",
+  "kind": "box",
+  "label": "A",
+  "caption": "Open the editor.",
+  "padding": -12,
+  "offset": { "x": 4 }
+}
+```
+
+The adjusted region is 20 × 20 before the normal outline clearance is added. To change only one edge, use an object: `"padding": {"top": -4, "right": 8}` starts the mark four pixels lower and extends it eight pixels to the right. Distances are in the final screenshot's CSS pixels; each axis or edge accepts a number from −2000 to 2000, including fractions. Omitting an option, using an empty object, or setting all its values to zero preserves the original placement.
+
+The measured element stays in `report.json` as `marks[].bounds`. Hooserguide uses the adjusted area to place the outline, badge and arrow; an explicit `from` still uses fixed coordinates in the final image. Neither option changes the masked original or the focus crop. For more space around a **screenshot**, set the capture's top-level `padding` alongside `focus`. Capture rejects a region that collapses, leaves the image, or newly overlaps another marked control whose measured bounds did not overlap this one. Unmarked neighbors still need a visual check. Correct the values, or give a tight crop more room; then capture again and check neighboring controls in every profile.
+
+The Email alerts switch below draws its track beyond the button's measured bounds. The default frame cuts across the white thumb. Moving it seven pixels right and four down centers it on the track, but the frame is still too narrow. Keeping that offset and adding eight pixels on the left and ten on the right clears the track and thumb. The Sound switch stays outside the frame.
+
+![Three outlines on the same Email alerts switch: the default crosses the thumb, the shifted frame is still too narrow, and the expanded frame clears both ends of the track.](media/mark-offsets.png)
 
 ### Connect a reference badge to a control
 

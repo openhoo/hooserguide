@@ -139,6 +139,26 @@ export async function setupEditor(configPath: string) {
     description:
       'Capture with a lettered arrow and a matching caption. Choose side, width and tip.',
   };
+  snippets['Capture: Adjust the marked area'] = {
+    prefix: 'hg-capture-adjusted-mark',
+    scope: 'gherkin,feature',
+    body: [
+      'And I capture "${1:Toolbar}"',
+      '  """json',
+      '  {',
+      '    "description": "${2:Select Edit to change the title.}",',
+      '    "marks": [{',
+      '      "target": "${3:role=button:Edit}",',
+      '      "label": "A",',
+      '      "caption": "${4:Open the editor.}",',
+      '      "offset": { "x": ${5:2}, "y": ${6:0} },',
+      '      "padding": { "left": ${7:-2}, "right": ${8:-2} }',
+      '    }]',
+      '  }',
+      '  """',
+    ],
+    description: 'Shift the annotation target or adjust individual edges in screenshot CSS pixels.',
+  };
   for (const template of chapterTemplates)
     snippets[`Chapter: ${template}`] = {
       prefix: `hg-chapter-${template}`,

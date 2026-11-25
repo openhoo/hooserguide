@@ -29,6 +29,8 @@ Before validation, run `hooserguide lint --config <config> --json` or `hoosergui
 
 Read [authoring.md](references/authoring.md) for config fields, Gherkin examples, privacy masks, references, focus crops and custom steps. If a badge covers the control, use the lettered arrow example there to move the badge into clear space and choose its line width. Keep credentials out of specs and use environment-fill steps or ignored storage state. Apply masks to both screenshot variants; missing mask targets fail closed.
 
+If an outline crowds text, clips a painted icon, or includes a neighboring label, compare the visible control with the measured locator on the masked original. With Hooserguide 0.11.0 or later, use `marks[].offset` to shift the marked area and `marks[].padding` to expand or inset its edges; capture-level `padding` changes the whole focus crop. Regenerate the changed figure and check its target and nearest neighbor in every intended profile and the PDF.
+
 Validate, then generate with the **same profile and filters**. CLI: `hooserguide validate --config <config> --profile <name> --json`, then `hooserguide run` with matching flags. Omit the profile flag when using the default. MCP: `hooserguide_validate`, then `hooserguide_generate`. Check `isError` and structured status; repair failures before delivery.
 
 Read [mcp-workflow.md](references/mcp-workflow.md) when using MCP. Save the returned `runId` and pin it on all review/rebuild calls. Do not automatically retry a cancelled or failed generation: already completed app actions remain applied.

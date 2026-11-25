@@ -20,12 +20,18 @@ export interface LetterLeader {
   headSize?: number;
   head?: 'open' | 'filled';
 }
+/** Signed distances in screenshot CSS pixels; positive edges expand the marked area. */
+export type MarkPadding = number | { top?: number; right?: number; bottom?: number; left?: number };
 export interface Mark {
   target: Target;
   kind?: 'box' | 'arrow' | 'both';
   label?: string;
   caption?: string;
   color?: string;
+  /** Move the marked area relative to its target; positive x is right, positive y is down. */
+  offset?: { x?: number; y?: number };
+  /** Expand or inset the measured edges before the usual outline, arrow and badge layout. */
+  padding?: MarkPadding;
   leader?: LetterLeader;
   /** Arrow origin in screenshot CSS pixels; with leader, the exact badge center. */
   from?: { x: number; y: number };
@@ -135,6 +141,7 @@ export interface Config {
   branding?: Branding;
 }
 export interface ResolvedMark extends Mark {
+  /** Measured element in the final screenshot, before annotation offsets or padding. */
   bounds: { x: number; y: number; width: number; height: number };
 }
 export interface Capture {

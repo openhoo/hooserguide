@@ -25,7 +25,7 @@ The demo starts HooTasks on localhost, creates a task and saves a notification p
 From your application project, install the tool and create a guide:
 
 ```sh
-npm install -D github:openhoo/hooserguide#0.10.0
+npm install -D github:openhoo/hooserguide#0.11.0
 npx playwright install chromium
 npx hooserguide init docs/user-guide --base-url http://localhost:3000 --editor
 ```
@@ -69,14 +69,14 @@ Use the locations to open the actual figures. In the offline HTML reader, select
 
 ## Where to go next
 
-| I want to…                                              | Read                                                                                                                                                 |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Write a chapter, find a step or use the editor          | [Authoring guide](docs/authoring.md) · [Steps, selectors and config](docs/reference.md)                                                              |
-| Annotate a control, mask a field or crop a screenshot   | [Lettered arrows and line widths](docs/reference.md#connect-a-reference-badge-to-a-control) · [Capture options](docs/reference.md#capture-docstring) |
-| Compare desktop, tablet and mobile screenshots          | [Responsive guides](docs/responsive.md)                                                                                                              |
-| Change the theme, rebuild a PDF or share an offline ZIP | [Customization and delivery](docs/customization.md) · [Rebuild from existing evidence](docs/advanced.md#rebuild-from-existing-evidence)              |
-| Connect an agent or reuse a Playwright test             | [MCP, TypeScript API and agent skills](docs/integration.md)                                                                                          |
-| Generate in CI or publish a static handbook             | [GitLab component](docs/gitlab.md) · [GitHub and GitLab Pages](docs/pages.md)                                                                        |
+| I want to…                                              | Read                                                                                                                                                                                                               |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Write a chapter, find a step or use the editor          | [Authoring guide](docs/authoring.md) · [Steps, selectors and config](docs/reference.md)                                                                                                                            |
+| Annotate a control, mask a field or crop a screenshot   | [Move or resize a mark](docs/reference.md#adjust-the-area-a-mark-points-to) · [Lettered arrows](docs/reference.md#connect-a-reference-badge-to-a-control) · [Capture options](docs/reference.md#capture-docstring) |
+| Compare desktop, tablet and mobile screenshots          | [Responsive guides](docs/responsive.md)                                                                                                                                                                            |
+| Change the theme, rebuild a PDF or share an offline ZIP | [Customization and delivery](docs/customization.md) · [Rebuild from existing evidence](docs/advanced.md#rebuild-from-existing-evidence)                                                                            |
+| Connect an agent or reuse a Playwright test             | [MCP, TypeScript API and agent skills](docs/integration.md)                                                                                                                                                        |
+| Generate in CI or publish a static handbook             | [GitLab component](docs/gitlab.md) · [GitHub and GitLab Pages](docs/pages.md)                                                                                                                                      |
 
 Add `--skills` to `init` to install the [author](skills/hooserguide-author/SKILL.md) and [review](skills/hooserguide-review/SKILL.md) instructions alongside your guide. Run `npx hooserguide --help` for the full command list.
 

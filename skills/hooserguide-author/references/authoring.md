@@ -63,6 +63,10 @@ Use `focus: "testid=panel"` and `padding: 40` for a cropped screenshot of one fo
 
 Mark kinds are `box`, `arrow` and `both`. Labels accept 1–4 letters or digits. Colors use `#RRGGBB`; optional `from: {x, y}` sets arrow origins in screenshot CSS pixels. `fullPage: true` captures long pages and splits them into readable PDF images. For viewport screenshots all targets must fit together; split the capture when they do not. Locators can be strings (`role=button:Save`, `label=Name`, `text=Done`, `testid=save`, `css=.save`) or JSON objects (`{"role":"button","name":"Save"}`).
 
+If the control has a large hit area around a small icon, prefer a locator for the visible icon when one exists. Otherwise adjust **that mark**. On a 44 × 44 pixel button, `"padding": -12, "offset": {"x": 4}` selects a 20 × 20 pixel region four pixels right of the original center. Another option, `"padding": {"left": -4, "bottom": 3}`, insets only the left edge and extends the bottom edge. Positive `x` moves right; positive `y` moves down. Numbers are in screenshot CSS pixels from −2000 to 2000, including fractions. Omitted axes/edges are zero. The marking uses the adjusted region before outline clearance or arrow placement; a fixed `from` stays in final screenshot coordinates.
+
+The adjustment leaves the measured `bounds`, raw pixels, focus crop and privacy masks intact. Reduce an inset that collapses the region; if it extends outside a crop, adjust the mark or increase the capture's focus padding. If an adjustment newly overlaps a previously separate marked control, reduce it or choose a more precise target. Other controls can still be obscured, particularly on narrow screens. After an authorized run, compare both image variants: the badge, tip or outline should identify the exact same control on each requested profile. Check that nearby labels and values remain readable on the rendered PDF.
+
 For a compact icon or a status with text, use `leader` to connect the letter
 badge to its target. Keep the same reference in the caption legend and prose.
 With `leader`, omit `kind` or use `arrow` for the arrow alone; use `both` only

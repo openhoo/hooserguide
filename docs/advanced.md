@@ -25,6 +25,8 @@ And I capture "Task form in detail"
 
 The focus target must be one visible element and contain every mark after padding. The browser takes a masked full-page image, then crops both variants; the report keeps the crop's document coordinates. Explicit arrow origins are relative to the final crop. Very large documents are still subject to the browser's full-page screenshot limits.
 
+If the crop is correct but one outline includes an adjacent icon, keep the crop and fix that mark. Prefer a locator for the exact control. If the locator also covers blank space, for example, `"padding": {"right": -6}` on that mark insets its right edge by six screenshot CSS pixels. To move the entire annotation target without changing its size, use `"offset": {"x": -6}`. See [adjust the marked area](reference.md#adjust-the-area-a-mark-points-to) for an example combining the two.
+
 With `autoLabels: "letters"`, marks get A through Z, then AA, AB and so on. Explicit labels are preserved and skipped by the sequence. See the [capture reference](reference.md#capture-docstring) for numeric labels, padding limits and mask behavior.
 
 ![Focused screenshot with automatically assigned references](demo/screenshots/01-03.png)

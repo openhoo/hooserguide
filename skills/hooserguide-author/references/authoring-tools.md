@@ -8,6 +8,8 @@ workspace in a VS Code-compatible editor with Gherkin language support. Existing
 projects can use `editor --config <config>`; setup refuses to overwrite its files
 and preserves existing settings/tasks. Tasks use the installed consumer package.
 
+Type the `hg-capture-adjusted-mark` snippet at a new Gherkin step to insert a capture with x/y offsets and separate edge values. Use it when the clickable area is larger than the visible control. Set the distances from the observed control on the actual profile.
+
 `new "Task title" --template task|form|read-only --config <config>` creates a new
 feature beside the first feature pattern. `--output` is config-relative. Existing
 features are never overwritten. Replace `REPLACE_ME` intros, prerequisites,

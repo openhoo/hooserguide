@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { inspectRun, readRunArtifact } from './evidence.js';
 import { executionStepKind } from './steps.js';
 import { readerCopyIssues, uncheckedInteraction } from './reader-review.js';
+import { markedBounds, markIntersectsSlice } from './mark-geometry.js';
 import type { Capture } from './types.js';
 
 // Indices refer to report.json (and inspect_capture), including separate responsive executions.
@@ -209,9 +210,8 @@ async function reviewLayout(
       let unmarked = 0;
       let first = 0;
       for (const [index, slice] of slices.entries()) {
-        const hasTarget = entry.shot.marks.some(
-          ({ bounds }) =>
-            bounds.y < slice.top + slice.height && bounds.y + bounds.height > slice.top,
+        const hasTarget = entry.shot.marks.some((mark) =>
+          markIntersectsSlice(mark, slice.top, slice.height),
         );
         if (!hasTarget) {
           if (!unmarked) first = index + 1;
@@ -226,9 +226,8 @@ async function reviewLayout(
         );
     }
     for (const [m, mark] of entry.shot.marks.entries()) {
-      const seam = slices.find(
-        ({ top }) => top > mark.bounds.y && top < mark.bounds.y + mark.bounds.height,
-      );
+      const bounds = markedBounds(mark);
+      const seam = slices.find(({ top }) => top > bounds.y && top < bounds.y + bounds.height);
       if (seam)
         add('PDF_SPLIT_TARGET', { ...entry.at, mark: m + 1 }, `Cut at image row ${seam.top}.`);
     }

@@ -1,3 +1,4 @@
+import { resolveMarkedBounds } from './mark-geometry.js';
 import type { ResolvedMark } from './types.js';
 import { layoutLeader, layoutLeaderOutline, type LeaderArrow } from './leader.js';
 
@@ -40,10 +41,20 @@ export function badgeTextColor(color: string): '#142636' | '#ffffff' | '#000000'
 export function layoutAnnotations(
   width: number,
   height: number,
-  marks: ResolvedMark[],
+  measured: ResolvedMark[],
 ): AnnotationLayout[] {
+  const bounds = resolveMarkedBounds(width, height, measured);
+  const marks = measured.map((mark, i) =>
+    bounds[i] === mark.bounds ? mark : { ...mark, bounds: bounds[i]! },
+  );
+  // Keep both the marked area and the actual control clear when placing other references.
+  const moved = measured.flatMap((mark, i) =>
+    bounds[i] === mark.bounds ? [] : [{ i, bounds: mark.bounds }],
+  );
+  const otherMeasured = (i: number) => moved.filter((m) => m.i !== i).map((m) => m.bounds);
+  const neighbors = (i: number) => [...bounds.filter((_, j) => i !== j), ...otherMeasured(i)];
   const placed: Rectangle[] = [];
-  const layouts: AnnotationLayout[] = marks.map((mark) => {
+  const layouts: AnnotationLayout[] = marks.map((mark, i) => {
     const b = mark.bounds;
     // Lay out the existing annotations before reserving space for new leaders.
     if (mark.leader) return { box: b };
@@ -52,9 +63,8 @@ export function layoutAnnotations(
       above = 5,
       below = 5;
     const clearance = (gap: number) => Math.max(0, (gap - 3) / 2);
-    for (const other of marks) {
-      if (other === mark) continue;
-      const t = other.bounds;
+    const protectedTargets = moved.length ? [...bounds, ...otherMeasured(i)] : bounds;
+    for (const t of neighbors(i)) {
       if (t.x < b.x + b.width && t.x + t.width > b.x) {
         if (t.y >= b.y + b.height) below = Math.min(below, clearance(t.y - b.y - b.height));
         if (t.y + t.height <= b.y) above = Math.min(above, clearance(b.y - t.y - t.height));
@@ -102,8 +112,12 @@ export function layoutAnnotations(
       ]),
     );
     if (mark.from && mark.kind !== 'box') candidates.unshift(mark.from);
+    // An inset may deliberately sit inside a large wrapper. Prefer keeping its
+    // measured control readable, but don't make filling that wrapper impossible.
+    const original = b !== measured[i]!.bounds && !mark.from ? measured[i]!.bounds : undefined;
     let best: Rectangle | undefined,
-      bestScore = Infinity;
+      bestScore = Infinity,
+      bestOriginalOverlap = Infinity;
     for (const p of candidates) {
       const rect = {
         x: clamp(p.x - badgeWidth / 2, 2, Math.max(2, width - badgeWidth - 2)),
@@ -118,13 +132,15 @@ export function layoutAnnotations(
         height: rect.height + 6,
       };
       const score =
-        marks.reduce((n, m) => n + overlap(padded, m.bounds), 0) +
+        protectedTargets.reduce((n, r) => n + overlap(padded, r), 0) +
         placed.reduce((n, r) => n + 4 * overlap(padded, r), 0);
-      if (score < bestScore) {
+      const originalOverlap = original ? overlap(padded, original) : 0;
+      if (score < bestScore || (score === bestScore && originalOverlap < bestOriginalOverlap)) {
         best = rect;
         bestScore = score;
+        bestOriginalOverlap = originalOverlap;
       }
-      if (!score) break;
+      if (!score && !originalOverlap) break;
     }
     const badge = best!;
     if (mark.label) placed.push(badge);
@@ -145,11 +161,10 @@ export function layoutAnnotations(
     }
     return { box, badge: mark.label ? badge : undefined, arrow };
   });
-  const bounds = marks.map((mark) => mark.bounds);
   const outlines = new Map<number, Rectangle[]>();
   for (const [i, mark] of marks.entries()) {
     if (!mark.leader || mark.kind !== 'both') continue;
-    const blocked = [...bounds.filter((_, j) => i !== j), ...[...outlines.values()].flat()];
+    const blocked = [...neighbors(i), ...[...outlines.values()].flat()];
     const { box, bands } = layoutLeaderOutline(width, height, mark, blocked, placed);
     layouts[i] = { box };
     outlines.set(i, bands);
@@ -166,9 +181,15 @@ export function layoutAnnotations(
       width,
       height,
       mark,
-      blocked: [...bounds, ...[...outlines].flatMap(([j, bands]) => (i === j ? [] : bands))],
+      blocked: [
+        ...bounds,
+        ...otherMeasured(i),
+        ...[...outlines].flatMap(([j, bands]) => (i === j ? [] : bands)),
+      ],
       badges: placed,
       badgeObstacles: outlines.get(i),
+      preferBadgeOutside:
+        mark.bounds !== measured[i]!.bounds && !mark.from ? measured[i]!.bounds : undefined,
       otherLeaders,
     });
     layouts[i] = { ...layouts[i]!, badge, arrow };

@@ -203,6 +203,7 @@ export function layoutLeader({
   blocked,
   badges,
   badgeObstacles = [],
+  preferBadgeOutside,
   otherLeaders = [],
 }: {
   width: number;
@@ -211,6 +212,7 @@ export function layoutLeader({
   blocked: readonly Rectangle[];
   badges: readonly Rectangle[];
   badgeObstacles?: readonly Rectangle[];
+  preferBadgeOutside?: Rectangle;
   otherLeaders?: readonly LeaderArrow[];
 }): LeaderLayout {
   const label = mark.label;
@@ -226,6 +228,7 @@ export function layoutLeader({
   const blockedBadges = badges.map((badge) => expand(badge, badgeGuard));
   const obstacles = [b, ...blocked, ...blockedBadges];
   const previousPaint = otherLeaders.map(paint);
+  let fallback: LeaderLayout | undefined;
   function candidate(nearest: Point, outward: Point, distance: number, center?: Point) {
     if (distance < headSize + 2 - epsilon) return undefined;
     const to = offset(nearest, outward, targetGap);
@@ -258,6 +261,10 @@ export function layoutLeader({
       previousPaint.some((p) => paintHitsRectangle(p, badgePaint) || paintsTouch(newPaint, p))
     )
       return undefined;
+    if (preferBadgeOutside && overlaps(badgePaint, preferBadgeOutside)) {
+      fallback ??= { badge, arrow };
+      return undefined;
+    }
     return { badge, arrow };
   }
 
@@ -352,6 +359,7 @@ export function layoutLeader({
     }
   }
 
+  if (fallback) return fallback;
   const area = side === 'auto' ? 'around the target' : `on the ${side} side`;
   throw new Error(
     `Leader ${label} cannot fit ${area} at length ${length}; try a shorter length, another side, or more focus padding.`,

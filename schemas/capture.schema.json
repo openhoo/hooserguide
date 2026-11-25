@@ -278,6 +278,59 @@
             "type": "string",
             "pattern": "^#[0-9a-f]{6}$"
           },
+          "offset": {
+            "description": "Move this mark in screenshot CSS pixels: positive x goes right, positive y goes down. Omitted axes are zero.",
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number",
+                "minimum": -2000,
+                "maximum": 2000
+              },
+              "y": {
+                "type": "number",
+                "minimum": -2000,
+                "maximum": 2000
+              }
+            },
+            "additionalProperties": false
+          },
+          "padding": {
+            "description": "Extra space around the marked target, in screenshot CSS pixels. A number applies to all edges; omitted edges are zero. Negative values inset. Does not change the crop.",
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": -2000,
+                "maximum": 2000
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "top": {
+                    "type": "number",
+                    "minimum": -2000,
+                    "maximum": 2000
+                  },
+                  "right": {
+                    "type": "number",
+                    "minimum": -2000,
+                    "maximum": 2000
+                  },
+                  "bottom": {
+                    "type": "number",
+                    "minimum": -2000,
+                    "maximum": 2000
+                  },
+                  "left": {
+                    "type": "number",
+                    "minimum": -2000,
+                    "maximum": 2000
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          },
           "leader": {
             "description": "Connect a reference badge to its target. With from, the badge center is fixed; omit side and length.",
             "type": "object",

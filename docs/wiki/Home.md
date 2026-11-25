@@ -20,7 +20,7 @@ The demo runs a local task app and needs no account or API key. You can also rea
 
 ## Document your own app
 
-1. From your application project, run `npm install -D github:openhoo/hooserguide#0.10.0` and `npx playwright install chromium`.
+1. From your application project, run `npm install -D github:openhoo/hooserguide#0.11.0` and `npx playwright install chromium`.
 2. Start your app. Run `npx hooserguide init docs/user-guide --base-url http://localhost:3000 --editor` with its actual URL.
 3. Edit `docs/user-guide/features/get-started.feature`. Describe one reader task, assert its outcome, and capture the result. Use the [authoring walkthrough](../authoring.md#write-the-readers-instructions-alongside-the-workflow) and [step reference](../reference.md#built-in-step-phrases).
 4. Run `npx hooserguide lint --config docs/user-guide/hooserguide.config.json`, then `npx hooserguide run --config docs/user-guide/hooserguide.config.json`. The second command performs the actions in the scenario; use a test account and data you can change.

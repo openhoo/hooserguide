@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { targetSchema } from './config.js';
 import { target } from './steps.js';
 import { layoutAnnotations, badgeTextColor } from './annotations.js';
+import { maxMarkDistance } from './mark-geometry.js';
 import { leaderDefaults, leaderOutlineRadius } from './leader.js';
 import type { CaptureSpec, Capture, ResolvedMark, Target } from './types.js';
 
@@ -16,6 +17,7 @@ export const escapeXml = (value: string) =>
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
   );
 
+const markDistance = z.number().min(-maxMarkDistance).max(maxMarkDistance);
 export const captureSchema = z
   .object({
     title: z.string().trim().min(1),
@@ -40,6 +42,29 @@ export const captureSchema = z
               .string()
               .regex(/^#[0-9a-f]{6}$/i)
               .optional(),
+            offset: z
+              .object({ x: markDistance.optional(), y: markDistance.optional() })
+              .strict()
+              .optional()
+              .describe(
+                'Move this mark in screenshot CSS pixels: positive x goes right, positive y goes down. Omitted axes are zero.',
+              ),
+            padding: z
+              .union([
+                markDistance,
+                z
+                  .object({
+                    top: markDistance.optional(),
+                    right: markDistance.optional(),
+                    bottom: markDistance.optional(),
+                    left: markDistance.optional(),
+                  })
+                  .strict(),
+              ])
+              .optional()
+              .describe(
+                'Extra space around the marked target, in screenshot CSS pixels. A number applies to all edges; omitted edges are zero. Negative values inset. Does not change the crop.',
+              ),
             leader: z
               .object({
                 side: z

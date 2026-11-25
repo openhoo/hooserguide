@@ -15,6 +15,7 @@ import { PdfImage } from './pdfcn/components/pdf/pdf-image/pdf-image.js';
 import { PageNumber } from './pdfcn/components/pdf/page-number/page-number.js';
 import type { RunReport } from './types.js';
 import { brandingSchema } from './config.js';
+import { markIntersectsSlice } from './mark-geometry.js';
 import { planImageSlices } from './pdf-slices.js';
 import { manualLabels, pageGeometry } from './manual.js';
 import {
@@ -309,12 +310,7 @@ export async function renderPdf(report: RunReport, directory: string): Promise<v
                 fit="contain"
               />
               {capture.marks
-                .filter(
-                  (m) =>
-                    (m.label || m.caption) &&
-                    m.bounds.y < top + height &&
-                    m.bounds.y + m.bounds.height > top,
-                )
+                .filter((m) => (m.label || m.caption) && markIntersectsSlice(m, top, height))
                 .map((m, n) => (
                   <Text
                     key={n}
